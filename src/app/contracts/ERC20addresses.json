@@ -1,0 +1,28 @@
+{
+    "erc20": [
+        {
+            "nameToken": "WBTC",
+            "erc20decimals": 18,
+            "addressDevnet": "0x1234",
+            "addressTestnet": "0x456",
+            "addressTestnet2": "0x789",
+            "addressMainnet": "0xabc"
+        },
+        {
+            "nameToken": "ECU",
+            "erc20decimals": 2,
+            "addressDevnet": "0x77dcf954011175d60820091534dbef39a58a7a94bd75cb182c4270193b04a19",
+            "addressTestnet": "0x00",
+            "addressTestnet2": "0x00",
+            "addressMainnet": "0x00"
+        },
+        {
+            "nameToken": "ETH",
+            "erc20decimals": 18,
+            "addressDevnet": "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+            "addressTestnet": "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+            "addressTestnet2": "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+            "addressMainnet": "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
+        }
+    ]
+}

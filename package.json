@@ -1,0 +1,51 @@
+{
+  "name": "cairo1-js_for_starknet",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@chakra-ui/icons": "^2.1.1",
+    "@chakra-ui/react": "^2.8.2",
+    "@chakra-ui/system": "^2.6.2",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.0",
+    "@types/node": "20.11.30",
+    "@types/react": "18.2.67",
+    "@types/react-dom": "18.2.22",
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5",
+    "framer-motion": "^11.0.15",
+    "get-starknet-core": "4.0.0-next.4",
+    "material-react-toastify": "^2.0.1",
+    "next": "^14.1.4",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-icons": "^5.0.1",
+    "server-only": "^0.0.1",
+    "sharp": "^0.33.3",
+    "starknet": "6.8.0",
+    "swr": "^2.2.5",
+    "typescript": "^5.4.2",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "encoding": "^0.1.13",
+    "simple-zustand-devtools": "^1.1.0"
+  },
+  "findUnusedExports": {
+    "include": [
+      "./src/**/*.ts",
+      "./src/**/*.tsx",
+      "./src/**/*.d.ts",
+      "src/**/*.svelte"
+    ],
+    "exclude": [
+      "./.next/**/*"
+    ]
+  }
+}

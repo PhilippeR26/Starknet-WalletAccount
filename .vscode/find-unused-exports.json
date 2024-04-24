@@ -1,0 +1,9 @@
+{
+  "ignore": {
+    "files": [
+      "/D/cairo1JS/cairo1JS/.next/types/app/layout.ts",
+      "/D/cairo1JS/cairo1JS/.next/types/app/page.ts",
+      "/D/cairo1JS/cairo1JS/A1priv/A1priv.ts"
+    ]
+  }
+}

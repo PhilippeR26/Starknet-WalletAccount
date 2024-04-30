@@ -1,8 +1,8 @@
 import './globals.css'
 
 export const metadata = {
-  title: 'Cairo1-JS',
-  description: 'Demo of Starknet.js with Cairo 1',
+  title: 'Starknet-WalletAccount',
+  description: 'test of WalletAccount for Starknet',
 }
 
 export default function RootLayout({

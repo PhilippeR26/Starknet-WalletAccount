@@ -48,7 +48,7 @@ The official Starkware specification of the wallet API is here : https://github.
 
 The corresponding TypeScript library is here : https://github.com/starknet-io/types-js
 
-**An easier to read documentation I created is [here](doc/walletAPIspec.md)**
+**An easier to read Wallet API documentation I created is [here](doc/walletAPIspec.md)**
 
 ## Getting Started 🚀 :
 

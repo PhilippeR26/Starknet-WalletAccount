@@ -1,23 +1,15 @@
 "use client";
+import { useState } from "react";
 import Image from 'next/image'
 import styles from './page.module.css'
-import { Center, Spinner, Text, Button, Divider, Box, Tabs, TabList, Tab, TabPanels, TabPanel, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack, StackDivider } from '@chakra-ui/react';
+import { Center, Spinner, Text, Button, Divider, Box, Tabs, TabList, Tab, TabPanels, TabPanel, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack, StackDivider, ChakraProvider } from '@chakra-ui/react';
+import { constants as SNconstants, shortString } from 'starknet';
 import InteractContract from './components/client/Contract/InteractContract';
-import { useState } from "react";
-import { ChakraProvider } from '@chakra-ui/react'
 import { useStoreWallet } from './components/Wallet/walletContext';
-
-
-import { Permission, StarknetChainId, StarknetWindowObject, } from "../../old/core_old/StarknetWindowObject";
-//import { connect } from "get-starknet";
-
 import starknetJsImg from '../../public/Images/StarkNet-JS_logo.png';
 import WalletApiTag from './components/client/WalletHandle/WalletApiTag';
-import { callRequest } from './components/client/WalletHandle/callRequest';
-import { isBooleanObject } from 'util/types';
 import SelectWallet from './components/client/WalletHandle/SelectWallet';
 import WalletAccountTag from './components/client/WalletHandle/WalletAccountTag';
-import { encode, shortString } from 'starknet';
 import { useFrontendProvider } from './components/client/provider/providerContext';
 
 export default function Page() {
@@ -54,7 +46,8 @@ export default function Page() {
         <ChakraProvider>
             <div>
                 <p className={styles.bgText}>
-                    Test WalletAccount of Starknet.js v6.8.0 
+                    Test WalletAccount of Starknet.js v6.8.0 <br></br>
+                    with get-starknet-core v4.0.0-next.5
                 </p>
                 <Center>
                     <Image src={starknetJsImg} alt='starknet.js' width={150} />
@@ -110,7 +103,7 @@ export default function Page() {
                                                 address = {addressAccountFromContext}<br />
                                                 chain = {chainFromContext!=""? shortString.decodeShortString(chainFromContext):""}
                                                 <br />
-                                                provider = the frontend provider uses {Object.keys(StarknetChainId)[myFrontendProviderIndex] 
+                                                provider = the frontend provider uses {Object.keys(SNconstants.StarknetChainId)[myFrontendProviderIndex] 
                                                  }
                                                 <br />
                                                 isConnected={isConnected ? "Yes" : "No"}

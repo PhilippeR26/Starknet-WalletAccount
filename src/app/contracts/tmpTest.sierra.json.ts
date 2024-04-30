@@ -26,7 +26,7 @@ export const contractSierra: {
   /**
    * The class ABI, as supplied by the user declaring the class
    */
-  abi?: string
+  abi: string
 } = {
   "sierra_program": [
     "0x1",

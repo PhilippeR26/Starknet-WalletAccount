@@ -30,7 +30,7 @@ import { connect } from "get-starknet"; // v4.0.0
 const myFrontendProvider = "https://free-rpc.nethermind.io/sepolia-juno/v0_7";
 // UI to select a wallet :
 const selectedWallet = await connect({ modalMode: "alwaysAsk", modalTheme: "light" }); 
-const my WAccount = new WalletAccount(myFrontendProvider, selectedWallet);
+const my_WAccount = new WalletAccount(myFrontendProvider, selectedWallet);
 ```
 Then you can use all the power of Starknet.js, exactly as a with a normal Account instance.  
 And you have some extra functionalities :

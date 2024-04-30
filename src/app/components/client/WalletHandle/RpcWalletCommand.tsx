@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import * as constants from "@/utils/constants";
 import { StarknetChainIdEntry } from "@/utils/constants";
 import { useStoreWallet } from "../../Wallet/walletContext";
-import { AddDeclareTransactionParameters, AddDeclareTransactionResult, AddDeployAccountTransactionParameters, AddDeployAccountTransactionResult, AddInvokeTransactionParameters, AddInvokeTransactionResult, AddStarknetChainParameters, GetDeploymentDataResult, RequestAccountsParameters, SwitchStarknetChainParameters, WatchAssetParameters, type StarknetWindowObject } from "get-starknet-core";
+import { AddDeclareTransactionParameters, AddDeclareTransactionResult, AddInvokeTransactionParameters, AddInvokeTransactionResult, AddStarknetChainParameters, RequestAccountsParameters, SwitchStarknetChainParameters, WatchAssetParameters, type StarknetWindowObject } from "get-starknet-core";
 
 import { test1Abi } from "../../../contracts/abis/test1";
 import { contractSierra } from "@/app/contracts/tmpTest.sierra.json";
@@ -101,14 +101,16 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
             case constants.CommandWallet.wallet_addStarknetChain: {
                 const myChainId: AddStarknetChainParameters = {
                     id: param,
-                    chainId: shortString.encodeShortString(param),  // A 0x-prefixed hexadecimal string
-                    chainName: param,
-                    rpcUrls: ["http://192.168.1.44:6060"],
-                    nativeCurrency: {
-                        address: constants.addrETH, // Not part of the standard, but required by StarkNet as it can work with any ERC20 token as the fee token
+                    chain_id: shortString.encodeShortString(param),  // A 0x-prefixed hexadecimal string
+                    chain_name: param,
+                    rpc_urls: ["http://192.168.1.44:6060"],
+                    native_currency: {
+                        type:"ERC20",
+                        options:{address: constants.addrETH, // Not part of the standard, but required by StarkNet as it can work with any ERC20 token as the fee token
                         name: "ETHEREUM",
                         symbol: "ETH", // 2-6 characters long
                         decimals: 18,
+                    }
                     }
                 } // hex of string
                 
@@ -137,7 +139,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
                 const myParams: AddInvokeTransactionParameters = {
                     calls: [{
                         contract_address: contractAddress,
-                        entrypoint: funcName,
+                        entry_point: funcName,
                         calldata: myCalldata
                     }]
                 }
@@ -159,64 +161,16 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
             }
             case constants.CommandWallet.starknet_addDeclareTransaction: {
                 const myParams: AddDeclareTransactionParameters = {
+                    
                     compiled_class_hash: hash.computeCompiledClassHash(contractCasm),
                     contract_class: contractSierra,
+                    
                 }
                 
                 if (myWallet) {
                     let response: string = "";
                     try {
                         const resp = (await wallet.addDeclareTransaction(myWallet, myParams)) ;
-                        response=json.stringify(resp,undefined,2);
-                    } catch (err: any) {
-                        response = "Error = " + err.message
-                    }
-                    finally {
-                        setResponse(response);
-                        onOpen();
-                    }
-                }
-                break;
-            }
-            case constants.CommandWallet.starknet_addDeployAccountTransaction: {
-
-                const decClassHash = "0x061dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f"; // OZ 0.8.1
-                const privateKey = stark.randomAddress();
-                console.log('New account :\nprivateKey=', privateKey);
-                const starkKeyPub = ec.starkCurve.getStarkKey(privateKey);
-                // calculate address
-                const OZaccountConstructorCallData = CallData.compile([starkKeyPub]);
-                const OZcontractAddress = hash.calculateContractAddressFromHash(starkKeyPub, decClassHash, OZaccountConstructorCallData, 0);
-                console.log('Precalculated account address=', OZcontractAddress);
-                // fund account address
-                // const myCalldata = CallData.compile([OZcontractAddress, cairo.uint256(5 * 10 ** 15)])
-                // const myTransferParams: AddInvokeTransactionParameters = {
-                //     calls: [{
-                //         contract_address: constants.addrETH,
-                //         entrypoint: "transfer",
-                //         calldata: myCalldata
-                //     }]
-                // }
-                // const myTransferRequest = {
-                //     type: command,
-                //     params: myTransferParams
-                // };
-                // const responseTransfer = await callRequest(myTransferRequest);
-                // const txtResponseTransfer: string = typeof (responseTransfer) == "string" ?
-                //     responseTransfer : (responseTransfer as AddInvokeTransactionResult).transaction_hash;
-                // console.log("transfer TH=", txtResponseTransfer);
-                // await wait(5000);
-                console.log("Start deploy account");
-                // deploy account
-                const myParams: AddDeployAccountTransactionParameters = {
-                    class_hash: decClassHash,
-                    contract_address_salt: starkKeyPub,
-                    constructor_calldata: [starkKeyPub]
-                }
-                if (myWallet) {
-                    let response: string = "";
-                    try {
-                        const resp = (await wallet.addDeployAccountTransaction(myWallet, myParams)) ;
                         response=json.stringify(resp,undefined,2);
                     } catch (err: any) {
                         response = "Error = " + err.message

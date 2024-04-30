@@ -45,7 +45,7 @@ export async function scanObjectForWalletsCustom(
 const checkCompatibility = async (myWallet: StarknetWindowObject) => {
     let isCompatible: boolean = false;
     try {
-        await myWallet.request({ type: "starknet_supportedSpecs" });
+        await myWallet.request({ type: "wallet_supportedSpecs" });
         isCompatible = true;
     } catch {
         (err: any) => { console.log("Wallet compatibility failed.\n", err) };
@@ -96,7 +96,7 @@ export default function SelectWallet() {
         if (isConnectedWallet) {
             const chainId = (await wallet.requestChainId(selectedWallet)) as string;
             setChain(chainId);
-            setCurrentFrontendProviderIndex((Object.values(SNconstants.StarknetChainId) as string[]).indexOf(chainId));
+            setCurrentFrontendProviderIndex(chainId===SNconstants.StarknetChainId.SN_MAIN?0:2);
             console.log("change Provider index to :", myFrontendProviderIndex);
         }
         setSelectWalletUI(false);

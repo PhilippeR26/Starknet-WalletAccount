@@ -1,4 +1,4 @@
-> version : v1.1.0 xx/xx/2024, in accordance with official spec https://github.com/starkware-libs/starknet-specs/pull/203/files  
+> version : v1.1.0 xx/xx/2024, in accordance with official spec https://github.com/starkware-libs/starknet-specs/wallet-api/wallet_rpc.json  
 > version : v1.0.2 08/feb/2024  
 > version : v1.0.1 07/feb/2024  
 

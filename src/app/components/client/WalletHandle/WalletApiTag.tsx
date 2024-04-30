@@ -2,7 +2,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import { Text, Spinner, Center, Divider, Box, SimpleGrid, Button, useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Tooltip } from "@chakra-ui/react";
 import { GetBlockResponse, constants as SNconstants, shortString, validateAndParseAddress, wallet } from "starknet";
-import { AccountChangeEventHandler, NetworkChangeEventHandler, type StarknetChainId } from "get-starknet-core";
+import { AccountChangeEventHandler, NetworkChangeEventHandler } from "get-starknet-core";
 
 import { useStoreBlock, dataBlockInit } from "../Block/blockContext";
 import { useStoreWallet } from '../../Wallet/walletContext';
@@ -46,12 +46,12 @@ export default function WalletApiTag() {
             };
             selectedWallet?.on("accountsChanged", handleAccount);
 
-            const handleNetwork: NetworkChangeEventHandler = (chainId?: SNconstants.StarknetChainId, accounts?: string[]) => {
+            const handleNetwork: NetworkChangeEventHandler = (chainId?: string, accounts?: string[]) => {
                 console.log("network change subscription=", chainId);
                 if (!!chainId) {
                     setRespChangedNetwork(chainId);
                     setChain(chainId); //zustand
-                    setCurrentFrontendProviderIndex((Object.values(SNconstants.StarknetChainId) as string[]).indexOf(chainId));
+                    setCurrentFrontendProviderIndex(chainId===SNconstants.StarknetChainId.SN_MAIN?0:2);
                     console.log("change Provider index to", chainId);
                 };
                 setTime2(getTime());

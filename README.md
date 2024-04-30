@@ -4,7 +4,10 @@
 
 This repo contains a DAPP to interact with the Starknet blockchain, using the new wallet API.
 
-> You can test this DAPP ; it's already deployed TODO! [here](/).
+**You can test this DAPP ; it's already deployed [here](https://starknet-wallet-account.vercel.app/)**.
+
+> [!IMPORTANT]
+> Stars are appreciated!
 
 ### Wallet API entry points :
 The `Wallet API` tab is exposing all the low level entry points of this new API :
@@ -13,7 +16,8 @@ The `Wallet API` tab is exposing all the low level entry points of this new API 
 ### WalletAccount usage :
 The `WalletAccount` tab allows you to test some features of this new class of Starknet.js v6.8.
 ![](./Images/WalletAccount.png)
-Let's see more in detail this WalletAccount. It's very similar to a Starknet.js `Account` class. There is anyway a huge difference : the private key is hold in a browser wallet (as ArgentX or Braavos), and any signature is managed by the wallet.  
+Let's see more in detail this WalletAccount.  
+It's very similar to a Starknet.js `Account` class. There is anyway a huge difference : the private key is hold in a browser wallet (as ArgentX or Braavos), and any signature is managed by the wallet.  
 The architecture is : 
 <p align="center">
   <img src="./Images/architecture.png" />

@@ -11,6 +11,7 @@ import WalletApiTag from './components/client/WalletHandle/WalletApiTag';
 import SelectWallet from './components/client/WalletHandle/SelectWallet';
 import WalletAccountTag from './components/client/WalletHandle/WalletAccountTag';
 import { useFrontendProvider } from './components/client/provider/providerContext';
+import LowerBanner from "./components/client/LowerBanner";
 
 export default function Page() {
 
@@ -127,6 +128,7 @@ export default function Page() {
                     )
                     }
                 </div>
+                <LowerBanner></LowerBanner>
             </div >
         </ChakraProvider>
     )

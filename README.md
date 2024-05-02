@@ -31,14 +31,16 @@ You can also create your own UI to select the wallet. In this DAPP, I have creat
 So, you instantiate a new Wallet account with :
 ```typescript
 import { connect } from "get-starknet"; // v4.0.0
+import { WalletAccount } from "starknet"; // v6.8.0 min
 const myFrontendProvider = "https://free-rpc.nethermind.io/sepolia-juno/v0_7";
 // UI to select a wallet :
 const selectedWallet = await connect({ modalMode: "alwaysAsk", modalTheme: "light" }); 
 const my_WAccount = new WalletAccount(myFrontendProvider, selectedWallet);
 ```
+
 Then you can use all the power of Starknet.js, exactly as a with a normal Account instance.  
 And you have some extra functionalities :
-- subscription to account / network change in the wallet.
+- subscription to these events : account / network changes in the wallet.
 - direct access to the wallet API entry points.
 
 

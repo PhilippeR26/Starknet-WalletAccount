@@ -82,12 +82,12 @@ This document is a documentation of the new interface between DAPPS and Starknet
 # Connect the wallet :
 You have first to select which wallet to use.
 ```typescript
-import { StarknetWindowObject, connect } from "get-starknet";
+import { StarknetWindowObject, connect } from "get-starknet"; // v4.0.0 mini
 
 const myWallet: StarknetWindowObject = await connect({ modalMode: "alwaysAsk", modalTheme: "light" });
 ```
 
-You can now use the commands proposed by the wallet :
+You can now use the commands proposed by the wallet (here with Starknet.js v6.8.0 mini) :
 ```typescript
 const myCall: Call = myContract.populate(
   "increase_balance", 

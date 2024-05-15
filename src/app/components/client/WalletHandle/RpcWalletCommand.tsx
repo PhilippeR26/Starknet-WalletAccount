@@ -39,10 +39,18 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         switch (command) {
             case constants.CommandWallet.wallet_requestAccounts: {
                 if (myWallet) {
-                    const response = await wallet.requestAccounts(myWallet);
-                    const txtResponse = addAddressPadding(response[0]);
-                    setResponse(txtResponse);
-                    onOpen();
+                    let txtResponse: string = "";
+                    try {
+                        const response: string[] = await wallet.requestAccounts(myWallet);
+                        txtResponse = addAddressPadding(response[0]);
+                    } catch (err: any) {
+                        txtResponse = "Error "+err.code+" = " + err.message
+                    }
+                    finally {
+                        setResponse(txtResponse);
+                        onOpen();
+                    }
+
                 }
                 break;
             }
@@ -74,7 +82,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
                     try {
                         response = (await wallet.watchAsset(myWallet, myAsset)) ? "true" : "false";
                     } catch (err: any) {
-                        response = "Error = " + err.message
+                        response = "Error "+err.code+" = " + err.message
                     }
                     finally {
                         setResponse(response);
@@ -89,7 +97,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
                     try {
                         response = (await wallet.switchStarknetChain(myWallet, param as SNconstants.StarknetChainId)) ? "true" : "false";
                     } catch (err: any) {
-                        response = "Error = " + err.message
+                        response = "Error "+err.code+" = " + err.message
                     }
                     finally {
                         setResponse(response);
@@ -105,21 +113,22 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
                     chain_name: param,
                     rpc_urls: ["http://192.168.1.44:6060"],
                     native_currency: {
-                        type:"ERC20",
-                        options:{address: constants.addrETH, // Not part of the standard, but required by StarkNet as it can work with any ERC20 token as the fee token
-                        name: "ETHEREUM",
-                        symbol: "ETH", // 2-6 characters long
-                        decimals: 18,
-                    }
+                        type: "ERC20",
+                        options: {
+                            address: constants.addrETH, // Not part of the standard, but required by StarkNet as it can work with any ERC20 token as the fee token
+                            name: "ETHEREUM",
+                            symbol: "ETH", // 2-6 characters long
+                            decimals: 18,
+                        }
                     }
                 } // hex of string
-                
+
                 if (myWallet) {
                     let response: string = "";
                     try {
                         response = (await wallet.addStarknetChain(myWallet, myChainId)) ? "true" : "false";
                     } catch (err: any) {
-                        response = "Error = " + err.message
+                        response = "Error "+err.code+" = " + err.message
                     }
                     finally {
                         setResponse(response);
@@ -130,7 +139,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
             }
             case constants.CommandWallet.starknet_addInvokeTransaction: {
                 // param other than 100 will be reverted.
-                const contractAddress = getChainId === SNconstants.StarknetChainId.SN_MAIN ?  "0x02bD907B978F58ceDf616cFf5CdA213d63Daa3AD28Dd3C1Ea17cA6CF5E1D395F" : "0x037BFDeB9c262566183211B89E85b871518eb0c32CBcb026dcE9A486560a03E0"; // Sepolia Testnet
+                const contractAddress = getChainId === SNconstants.StarknetChainId.SN_MAIN ? "0x02bD907B978F58ceDf616cFf5CdA213d63Daa3AD28Dd3C1Ea17cA6CF5E1D395F" : "0x037BFDeB9c262566183211B89E85b871518eb0c32CBcb026dcE9A486560a03E0"; // Sepolia Testnet
                 const contractCallData = new CallData(test1Abi);
                 const funcName = "test_fail";
                 const myCalldata = contractCallData.compile(funcName, {
@@ -146,11 +155,11 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
                 if (myWallet) {
                     let response: string = "";
                     try {
-                        console.log("execute call =",myParams)
-                        const resp = (await wallet.addInvokeTransaction(myWallet, myParams)) ;
-                        response=json.stringify(resp,undefined,2);
+                        console.log("execute call =", myParams)
+                        const resp = (await wallet.addInvokeTransaction(myWallet, myParams));
+                        response = json.stringify(resp, undefined, 2);
                     } catch (err: any) {
-                        response = "Error = " + err.message
+                        response = "Error "+err.code+" = " + err.message
                     }
                     finally {
                         setResponse(response);
@@ -161,19 +170,19 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
             }
             case constants.CommandWallet.starknet_addDeclareTransaction: {
                 const myParams: AddDeclareTransactionParameters = {
-                    
+
                     compiled_class_hash: hash.computeCompiledClassHash(contractCasm),
                     contract_class: contractSierra,
-                    
+
                 }
-                
+
                 if (myWallet) {
                     let response: string = "";
                     try {
-                        const resp = (await wallet.addDeclareTransaction(myWallet, myParams)) ;
-                        response=json.stringify(resp,undefined,2);
+                        const resp = (await wallet.addDeclareTransaction(myWallet, myParams));
+                        response = json.stringify(resp, undefined, 2);
                     } catch (err: any) {
-                        response = "Error = " + err.message
+                        response = "Error "+err.code+" = " + err.message
                     }
                     finally {
                         setResponse(response);
@@ -185,31 +194,31 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
             case constants.CommandWallet.starknet_signTypedData: {
                 const myTypedData: TypedData = {
                     domain: {
-                      name: "Example DApp",
-                      chainId: SNconstants.StarknetChainId.SN_SEPOLIA,
-                      version: "0.0.3",
+                        name: "Example DApp",
+                        chainId: SNconstants.StarknetChainId.SN_SEPOLIA,
+                        version: "0.0.3",
                     },
                     types: {
-                      StarkNetDomain: [
-                        { name: "name", type: "string" },
-                        { name: "chainId", type: "felt" },
-                        { name: "version", type: "string" },
-                      ],
-                      Message: [{ name: "message", type: "felt" }],
+                        StarkNetDomain: [
+                            { name: "name", type: "string" },
+                            { name: "chainId", type: "felt" },
+                            { name: "version", type: "string" },
+                        ],
+                        Message: [{ name: "message", type: "felt" }],
                     },
                     primaryType: "Message",
                     message: {
-                      message: "1234",
+                        message: "1234",
                     },
-                  
+
                 };
                 if (myWallet) {
                     let response: string = "";
                     try {
-                        const resp = (await wallet.signMessage(myWallet, myTypedData)) ;
-                        response=json.stringify(resp,undefined,2);
+                        const resp = (await wallet.signMessage(myWallet, myTypedData));
+                        response = json.stringify(resp, undefined, 2);
                     } catch (err: any) {
-                        response = "Error = " + err.message
+                        response = "Error "+err.code+" = " + err.message
                     }
                     finally {
                         setResponse(response);
@@ -222,10 +231,10 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
                 if (myWallet) {
                     let response: string = "";
                     try {
-                        const resp = (await wallet.supportedSpecs(myWallet)) ;
-                        response=json.stringify(resp,undefined,2);
+                        const resp = (await wallet.supportedSpecs(myWallet));
+                        response = json.stringify(resp, undefined, 2);
                     } catch (err: any) {
-                        response = "Error = " + err.message
+                        response = "Error "+err.code+" = " + err.message
                     }
                     finally {
                         setResponse(response);
@@ -238,10 +247,10 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
                 if (myWallet) {
                     let response: string = "";
                     try {
-                        const resp = (await wallet.getPermissions(myWallet)) ;
-                        response=json.stringify(resp,undefined,2);
+                        const resp = (await wallet.getPermissions(myWallet));
+                        response = json.stringify(resp, undefined, 2);
                     } catch (err: any) {
-                        response = "Error = " + err.message
+                        response = "Error "+err.code+" = " + err.message
                     }
                     finally {
                         setResponse(response);
@@ -254,10 +263,10 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
                 if (myWallet) {
                     let response: string = "";
                     try {
-                        const resp = (await wallet.deploymentData(myWallet)) ;
-                        response=json.stringify(resp,undefined,2);
+                        const resp = (await wallet.deploymentData(myWallet));
+                        response = json.stringify(resp, undefined, 2);
                     } catch (err: any) {
-                        response = "Error = " + err.message
+                        response = "Error "+err.code+" = " + err.message
                     }
                     finally {
                         setResponse(response);

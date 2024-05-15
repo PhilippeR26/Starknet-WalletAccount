@@ -112,8 +112,8 @@ export default function WalletApiTag() {
                 />
                 <RpcWalletCommand
                     command={constants.CommandWallet.wallet_watchAsset}
-                    param={constants.addrxASTR}
-                    symbol={"xASTR"}
+                    param={chainFromContext===SNconstants.StarknetChainId.SN_MAIN?constants.addrLORDmainnet:constants.addrLORDtestnet}
+                    symbol={"LORD"}
                 />
                 <RpcWalletCommand
                     command={constants.CommandWallet.wallet_switchStarknetChain}

@@ -270,7 +270,7 @@ export const contractSierra: {
         "function_idx": 0
       },
       {
-        "selector": "0x227924caf06a1e5427b93e9ef63cf861e3fe3969c0dac9980477e466f3b887e",
+        "selector": "0x270e4150d05435cf5743f48c90c2f9aa66d874c76cbbe5992728d9581852f18",
         "function_idx": 1
       }
     ],
@@ -301,7 +301,7 @@ export const contractSierra: {
         },
         {
           "type": "function",
-          "name": "get_name2",
+          "name": "get_name1",
           "inputs": [],
           "outputs": [
             {
@@ -319,5 +319,5 @@ export const contractSierra: {
       "variants": []
     }
   ]
-)
+  )
 }

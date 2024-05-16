@@ -200,6 +200,7 @@ export default function WalletAccountTag() {
 
 
     return (
+        <>
         <VStack
             divider={<StackDivider borderColor='gray.300' />}
             spacing={3}
@@ -281,17 +282,6 @@ export default function WalletAccountTag() {
                 ) : null}
             </>
             <>
-                <p>Deploy account with a WalletAccount :</p>
-                <Tooltip hasArrow label="not supported by ArgentX" bg='yellow.100' color='black'>
-                <Button
-                    backgroundColor="orange"
-                    isDisabled={true}
-                    onClick={() => {
-                        handleInvokeWalletAccount()
-                    }} >Deploy account
-                </Button></Tooltip>
-            </>
-            <>
                 <p>Sign message with a WalletAccount :</p>
                 <Button
                     onClick={() => {
@@ -306,5 +296,7 @@ export default function WalletAccountTag() {
                 ) : null}
             </>
         </VStack>
-    )
+        <br/>
+        </>
+        )
 }

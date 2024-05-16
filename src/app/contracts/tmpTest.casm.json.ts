@@ -554,7 +554,7 @@ export const contractCasm: CairoAssembly = {
         ]
       },
       {
-        "selector": "0x270e4150d05435cf5743f48c90c2f9aa66d874c76cbbe5992728d9581852f18",
+        "selector": "0x227924caf06a1e5427b93e9ef63cf861e3fe3969c0dac9980477e466f3b887e",
         "offset": 169,
         "builtins": [
           "range_check"

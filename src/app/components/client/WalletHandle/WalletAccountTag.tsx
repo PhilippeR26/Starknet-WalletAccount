@@ -5,7 +5,7 @@ import { useState } from "react";
 import styles from '../../../page.module.css'
 import { Contract, WalletAccount, json, num, shortString, validateAndParseAddress, type TypedData, constants as SNconstants } from "starknet";
 import { rejectContract } from "@/app/contracts/reject.sierra.json";
-import { Cairo1ContractAddress, myFrontendProviders } from "@/utils/constants";
+import { RejectContractAddress, myFrontendProviders } from "@/utils/constants";
 import { useFrontendProvider } from "../provider/providerContext";
 import { useStoreWallet } from "../../Wallet/walletContext";
 
@@ -174,12 +174,12 @@ export default function WalletAccountTag() {
     const DefineContract = () => {
         SetTestContract(new Contract(
             rejectContract.abi,
-            Cairo1ContractAddress[myFrontendProviderIndex],
+            RejectContractAddress[myFrontendProviderIndex],
             myFrontendProviders[myFrontendProviderIndex]
         ))
         SetTestContractWA(new Contract(
             rejectContract.abi,
-            Cairo1ContractAddress[myFrontendProviderIndex],
+            RejectContractAddress[myFrontendProviderIndex],
             myWalletAccount
         ))
     }
@@ -257,10 +257,10 @@ export default function WalletAccountTag() {
             </>
             <>
                 <p>Declare with a WalletAccount :</p>
-                <Tooltip hasArrow label="not supported by any wallet" bg='yellow.100' color='black'>
+                <Tooltip hasArrow label="Accept the 2 transactions" bg='yellow.100' color='black'>
                 <Button
                     backgroundColor="orange"
-                    isDisabled={true}
+                    isDisabled={false}
                     onClick={() => {
                         handleInvokeWalletAccount()
                     }} >Declare Class

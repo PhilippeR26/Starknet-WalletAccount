@@ -1,4 +1,4 @@
-export const test1Abi= [
+export const rejectAbi= [
   {
     "type": "impl",
     "name": "TestReject",
@@ -33,6 +33,17 @@ export const test1Abi= [
       },
       {
         "type": "function",
+        "name": "get_nonce",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::felt252"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
         "name": "init_count",
         "inputs": [
           {
@@ -42,8 +53,20 @@ export const test1Abi= [
         ],
         "outputs": [],
         "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "process_nonce",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
       }
     ]
+  },
+  {
+    "type": "constructor",
+    "name": "constructor",
+    "inputs": []
   },
   {
     "type": "event",

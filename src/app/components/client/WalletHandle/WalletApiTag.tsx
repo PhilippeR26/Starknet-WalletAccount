@@ -131,7 +131,7 @@ export default function WalletApiTag() {
                 <RpcWalletCommand
                     command={constants.CommandWallet.starknet_addDeclareTransaction}
                     param="Object"
-                    tip="Declare only once the same contract. Change contract in DAPP code each time."
+                    tip="Accept the 2 transactions"
                 />
                 {/* <RpcWalletCommand
                     command={constants.CommandWallet.starknet_addDeployAccountTransaction}

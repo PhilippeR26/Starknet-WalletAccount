@@ -7,7 +7,7 @@ import { useStoreWallet } from '../../Wallet/walletContext';
 import { Text, Button, Center, Spinner, Box } from "@chakra-ui/react";
 import styles from '../../../page.module.css'
 
-import { test1Abi } from "../../../contracts/abis/test1";
+import { rejectAbi } from "../../../contracts/abis/rejectAbi";
 import TransactionStatus from '../Transaction/TransactionStatus';
 
 const contractAddress = "0x697d3bc2e38d57752c28be0432771f4312d070174ae54eef67dd29e4afb174";
@@ -24,7 +24,7 @@ export default function PlayWithCairo1() {
     const [balance, setBalance] = useState<number>(0);
     const [transactionHash, setTransactionHash] = useState<string>("");
 
-    const cairo1Contract = new Contract(test1Abi, contractAddress, providerSN);
+    const cairo1Contract = new Contract(rejectAbi, contractAddress, providerSN);
     if (accountFromContext) { cairo1Contract.connect(accountFromContext); }
 
     useEffect(() => {

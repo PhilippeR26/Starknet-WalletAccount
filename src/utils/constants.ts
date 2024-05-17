@@ -26,8 +26,8 @@ export const myFrontendProviders: ProviderInterface[] = [
     new RpcProvider({ nodeUrl: "https://starknet-testnet.public.blastapi.io/rpc/v0_7" }),
     new RpcProvider({ nodeUrl: "https://free-rpc.nethermind.io/sepolia-juno/v0_7" })];
 
-export const Cairo1ContractAddress: string[] = [
-    "0x02bd907b978f58cedf616cff5cda213d63daa3ad28dd3c1ea17ca6cf5e1d395f", // mainnet
-    "0x002e9aB2D7DbD8eb3a3cBE628dB705ce5f797Dd256Bd3EAf57bb654f5dEc7512", // testnet
-    "0x037bfdeb9c262566183211b89e85b871518eb0c32cbcb026dce9a486560a03e0", // sepolia
+export const RejectContractAddress: string[] = [
+    "0x541b0409e65bf546ff6c3090f4c07c53938b20c1f659250b84ce5eb66d4485e", // mainnet
+    "0x00", // testnet deprecated
+    "0x4d0f60ba43be97d44257a77e6123f11df89350396480af6ed0cbc81c8179592", // sepolia
 ];

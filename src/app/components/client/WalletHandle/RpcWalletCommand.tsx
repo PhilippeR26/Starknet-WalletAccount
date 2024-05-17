@@ -212,7 +212,8 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
               }]
             }
             const txH = await wallet.addInvokeTransaction(myWallet,myParams0);
-            // no waitForTransaction, as no relation with the next invoke.
+
+            await constants.myFrontendProviders[myFrontendProviderIndex].waitForTransaction(txH.transaction_hash);
             const myParams: AddDeclareTransactionParameters = {
 
               compiled_class_hash: hash.computeCompiledClassHash(getHelloTestCasm(declareNonce)),

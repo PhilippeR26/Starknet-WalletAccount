@@ -131,7 +131,7 @@ export default function WalletApiTag() {
                 <RpcWalletCommand
                     command={constants.CommandWallet.starknet_addDeclareTransaction}
                     param="Object"
-                    tip="Accept the 2 transactions"
+                    tip="2 transactions to accept, separated by few seconds"
                 />
                 {/* <RpcWalletCommand
                     command={constants.CommandWallet.starknet_addDeployAccountTransaction}

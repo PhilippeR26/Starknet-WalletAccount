@@ -391,7 +391,7 @@ const resp = await myWallet.request(type: "wallet_requestChainId");
 
 ## wallet_deploymentData :
 ### Usage :
-Request to the current wallet the data required to deploy a account. 
+Request the deployment data of an account created, but not yet deployed. 
 ### Input :
 No parameters.
 ### Output :
@@ -406,16 +406,22 @@ response : interface AccountDeploymentData {
 }
 ```
 ### Behavior :
-Provides the data that will used by the wallet to deploy a contract.
+Provides the data that will be used by the wallet to deploy an existing account (existing in the wallet, but not yet in the network).  
+- If the current account is already deployed, the method fails with this error : 
+```typescript
+interface ACCOUNT_ALREADY_DEPLOYED {
+  code: TBD;
+  message: 'An error occurred (ACCOUNT_ALREADY_DEPLOYED)';
+}
+``` 
 ### Example :
 ```typescript
 const resp = await myWallet.request(type: "wallet_deploymentData");
 // resp = {
 //   address: "0x0111fb83be44a70468d51cfcf8bccd4190cf119e4b2f83530ea13b5d35b9849d",
 //   class_hash: "0x03a5029a79d1849f58229e22f7f2b96bdd1dc8680e6cd5530a3122839f2ab878",
-//   salt: 0,
-//   calldata: ["0x46574567ec34"],
-//   sigdata?: [],
+//   salt: ""0xd3d12fb38fcc210966bcecd2ed83ba44b67e794209b994d1bac08f37f78e8e",
+//   calldata: [ "0xd3d12fb38fcc210966bcecd2ed83ba44b67e794209b994d1bac08f37f78e8e", "0x0" ],
 //   version:  1,
 // }
 ```
@@ -581,7 +587,7 @@ interface StarknetDomain extends Record<string, unknown> {
 ```
 ### Output :
 ```typescript
-response : string[] // Signature. Standard signature is 2 felts.
+response : string[] // Signature. Standard signature is 2 felts, but depending of the wallet, response length can be different.
 ```
 ### Behavior :
 - If the user accepted to sign, the response type is the signature.

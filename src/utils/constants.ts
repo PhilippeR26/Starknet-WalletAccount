@@ -11,7 +11,6 @@ export enum CommandWallet {
     wallet_switchStarknetChain = "wallet_switchStarknetChain",
     starknet_addInvokeTransaction = "starknet_addInvokeTransaction",
     starknet_addDeclareTransaction = "starknet_addDeclareTransaction",
-    starknet_addDeployAccountTransaction = "starknet_addDeployAccountTransaction",
     starknet_signTypedData = "starknet_signTypedData",
     starknet_supportedSpecs = "starknet_supportedSpecs",
     wallet_requestChainId = "wallet_requestChainId",
@@ -31,3 +30,6 @@ export const RejectContractAddress: string[] = [
     "0x00", // testnet deprecated
     "0x4d0f60ba43be97d44257a77e6123f11df89350396480af6ed0cbc81c8179592", // sepolia
 ];
+
+// OpenZeppelin 0.8.1. Exists in Mainnet & Sepolia
+export const accountClass = "0x061dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f";

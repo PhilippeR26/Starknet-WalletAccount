@@ -286,7 +286,7 @@ export default function WalletAccountTag() {
                 </>
                 <>
                     <p>Declare with a WalletAccount :</p>
-                    <Tooltip hasArrow label="Accept the 2 transactions" bg='yellow.100' color='black'>
+                    <Tooltip hasArrow label="Accept the 2 transactions, with a delay of 10s between each one." bg='yellow.100' color='black'>
                         <Button
                             backgroundColor="orange"
                             isDisabled={false}

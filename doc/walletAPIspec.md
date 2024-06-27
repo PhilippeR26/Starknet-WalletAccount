@@ -1,9 +1,14 @@
-> version : v1.1.0 02/may/2024, in accordance with official spec https://github.com/starkware-libs/starknet-specs/wallet-api/wallet_rpc.json  
+# Starknet Wallet API
+
+> version : v1.2.1 14/june/2024, details for invoke params with Starknet.js v6
+> version : v1.2.0 27/may/2024, in accordance with official spec https://github.com/starkware-libs/starknet-specs/wallet-api/wallet_rpc.json  
+> version : v1.1.0 02/may/2024 
 > version : v1.0.2 08/feb/2024  
 > version : v1.0.1 07/feb/2024  
 
 This document is a documentation of the new interface between DAPPS and Starknet browser wallets.
 
+- [Starknet Wallet API](#starknet-wallet-api)
 - [Connect the wallet :](#connect-the-wallet-)
 - [Subscription to events :](#subscription-to-events-)
     - [Subscription :](#subscription-)
@@ -77,6 +82,15 @@ This document is a documentation of the new interface between DAPPS and Starknet
     - [Output :](#output--10)
     - [Behavior :](#behavior--10)
     - [Example :](#example--10)
+  - [wallet\_supportedWalletApi :](#wallet_supportedwalletapi-)
+    - [Usage :](#usage--11)
+    - [Input :](#input--11)
+    - [Output :](#output--11)
+    - [Behavior :](#behavior--11)
+    - [Example :](#example--11)
+- [Wallet API version :](#wallet-api-version-)
+  - [Example :](#example--12)
+  - [Error :](#error-)
 
 
 # Connect the wallet :
@@ -476,7 +490,12 @@ const funcName = "increase_balance";
 const myCall = myContract.populate(funcName, {
     amount: 200
 });
-const resp = await myWallet.request(type: "wallet_addInvokeTransaction", params: [myCall]);
+const myCallAPI = {
+  contract_address: myCall.contractAddress,
+  entry_point: myCall.entrypoint,
+  calldata: myCall.calldata as Calldata
+};
+const resp = await myWallet.request(type: "wallet_addInvokeTransaction", params: [myCallAPI]);
 // resp = {transaction_hash: "0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929"}
 ```
 
@@ -678,3 +697,42 @@ response : string[]
 const resp = await myWallet.request(type: "wallet_supportedSpecs");
 // resp = ["0.6","0.7"]
 ```
+
+## wallet_supportedWalletApi :
+### Usage :
+Returns a list of Wallet API versions compatible with the wallet. 
+### Input :
+No parameters.
+### Output :
+```typescript
+response : string[]
+```
+### Behavior :
+- The response is an array of strings. Each string is the version of a supported Wallet API version. Includes only the 2 main digits, with the `.` as separator ; example : `0.7`.
+### Example :
+```typescript
+const resp = await myWallet.request(type: "wallet_supportedWalletApi");
+// resp = ["0.7","0.8"]
+```
+
+
+# Wallet API version :
+
+All entries of this Wallet API have an optional parameter to define the version of API used to create the request. 
+## Example :
+```typescript
+const myParams = {
+  api_version: "0.7"
+}
+const resp = await myWallet.request(type: "wallet_requestChainId", params: myParams);
+// resp = "0x534e5f5345504f4c4941"
+```
+## Error :
+In case of version not supported by the Wallet, an Error is returned : 
+```typescript
+interface API_VERSION_NOT_SUPPORTED {
+  code: 162;
+  message: 'An error occurred (API_VERSION_NOT_SUPPORTED)';
+}
+```
+

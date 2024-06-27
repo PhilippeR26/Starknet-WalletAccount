@@ -16,9 +16,10 @@ export enum CommandWallet {
     wallet_requestChainId = "wallet_requestChainId",
     wallet_getPermissions = "wallet_getPermissions",
     wallet_deploymentData = "wallet_deploymentData",
+    wallet_supportedWalletApi = "wallet_supportedWalletApi",
 }
 
-export type StarknetChainIdEntry = keyof typeof SNconstants.StarknetChainId;
+// export type StarknetChainIdEntry = keyof typeof SNconstants.StarknetChainId;
 
 export const myFrontendProviders: ProviderInterface[] = [
     new RpcProvider({ nodeUrl: "https://starknet-mainnet.public.blastapi.io/rpc/v0_7" }),
@@ -33,3 +34,5 @@ export const RejectContractAddress: string[] = [
 
 // OpenZeppelin 0.8.1. Exists in Mainnet & Sepolia
 export const accountClass = "0x061dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f";
+
+export const compatibleApiVersions: string[]=["0.7"];

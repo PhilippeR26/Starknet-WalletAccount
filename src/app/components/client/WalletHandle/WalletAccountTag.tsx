@@ -138,7 +138,8 @@ export default function WalletAccountTag() {
         const myTypedData: TypedData = {
             domain: {
                 name: "Example DApp",
-                chainId: SNconstants.StarknetChainId.SN_SEPOLIA,
+                //chainId: SNconstants.StarknetChainId.SN_SEPOLIA,
+                chainId:'0x534e5f5345504f4c4941',
                 version: "0.0.3",
             },
             types: {
@@ -235,7 +236,8 @@ export default function WalletAccountTag() {
                 spacing={3}
             >
                 <>
-                    <Center fontSize={16} fontWeight={700} color={"firebrick"}> Use of {Object.keys(SNconstants.StarknetChainId)[myFrontendProviderIndex]} network </Center>
+                    {/* <Center fontSize={16} fontWeight={700} color={"firebrick"}> Use of {Object.keys(SNconstants.StarknetChainId)[myFrontendProviderIndex]} network </Center> */}
+                    <Center fontSize={16} fontWeight={700} color={"firebrick"}> Use of {'TBD'} network </Center>
                     <Center fontSize={14} color={"darkred"}> my frontend provider Id : {myFrontendProviderIndex}  </Center>
                     <Center fontSize={13} color={"darkred"}> contractAddress : {validateAndParseAddress(testContract.address)}  </Center>
                     <Center fontSize={13} color={"darkred"}> WalletAccountAddress : {!!myWalletAccount ? validateAndParseAddress(myWalletAccount.address) : ""}  </Center>

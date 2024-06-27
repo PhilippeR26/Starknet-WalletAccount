@@ -2,7 +2,8 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import { Text, Spinner, Center, Divider, Box, SimpleGrid, Button, useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Tooltip } from "@chakra-ui/react";
 import { GetBlockResponse, constants as SNconstants, shortString, validateAndParseAddress, wallet } from "starknet";
-import { AccountChangeEventHandler, NetworkChangeEventHandler } from "get-starknet-core";
+import {WALLET_API } from "@starknet-io/types-js";
+
 
 import { useStoreBlock, dataBlockInit } from "../Block/blockContext";
 import { useStoreWallet } from '../../Wallet/walletContext';
@@ -35,7 +36,7 @@ export default function WalletApiTag() {
     useEffect(
         () => {
             console.log("subscribe to events.");
-            const handleAccount: AccountChangeEventHandler = (accounts: string[] | undefined) => {
+            const handleAccount: WALLET_API.AccountChangeEventHandler = (accounts: string[] | undefined) => {
                 console.log("accounts change subscription=", accounts);
                 if (accounts?.length) {
                     const textAddr = validateAndParseAddress(accounts[0])
@@ -46,12 +47,14 @@ export default function WalletApiTag() {
             };
             selectedWallet?.on("accountsChanged", handleAccount);
 
-            const handleNetwork: NetworkChangeEventHandler = (chainId?: string, accounts?: string[]) => {
+            const handleNetwork: WALLET_API.NetworkChangeEventHandler = (chainId?: string, accounts?: string[]) => {
                 console.log("network change subscription=", chainId);
                 if (!!chainId) {
                     setRespChangedNetwork(chainId);
                     setChain(chainId); //zustand
-                    setCurrentFrontendProviderIndex(chainId===SNconstants.StarknetChainId.SN_MAIN?0:2);
+                    //setCurrentFrontendProviderIndex(chainId===SNconstants.StarknetChainId.SN_MAIN?0:2);
+                    setCurrentFrontendProviderIndex(chainId==='0x534e5f4d41494e'?0:2);
+                    
                     console.log("change Provider index to", chainId);
                 };
                 setTime2(getTime());
@@ -112,12 +115,15 @@ export default function WalletApiTag() {
                 />
                 <RpcWalletCommand
                     command={constants.CommandWallet.wallet_watchAsset}
-                    param={chainFromContext===SNconstants.StarknetChainId.SN_MAIN?constants.addrLORDmainnet:constants.addrLORDtestnet}
+                    //param={chainFromContext===SNconstants.StarknetChainId.SN_MAIN?constants.addrLORDmainnet:constants.addrLORDtestnet}
+                    param={chainFromContext==='0x534e5f4d41494e'?constants.addrLORDmainnet:constants.addrLORDtestnet}
+                    
                     symbol={"LORD"}
                 />
                 <RpcWalletCommand
                     command={constants.CommandWallet.wallet_switchStarknetChain}
-                    param={SNconstants.StarknetChainId.SN_MAIN}
+                    //param={SNconstants.StarknetChainId.SN_MAIN}
+                    param={'0x534e5f4d41494e'}
                 />
                 <RpcWalletCommand
                     command={constants.CommandWallet.wallet_addStarknetChain}
@@ -141,6 +147,11 @@ export default function WalletApiTag() {
                     command={constants.CommandWallet.starknet_signTypedData}
                     param="Object"
                 />
+                 <RpcWalletCommand
+                    command={constants.CommandWallet.wallet_supportedWalletApi}
+                    param=""
+                />
+
                 <RpcWalletCommand
                     command={constants.CommandWallet.starknet_supportedSpecs}
                     param=""

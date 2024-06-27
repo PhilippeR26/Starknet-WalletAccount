@@ -1,10 +1,10 @@
 
 import { useStoreWallet } from "../../Wallet/walletContext";
-import { RpcMessage } from "get-starknet-core";
+import {WALLET_API } from "@starknet-io/types-js";
 
-export type Response = Pick<RpcMessage, "result">["result"];
+export type Response = Pick<WALLET_API.RpcMessage, "result">["result"];
 
-export async function callRequest(call: Omit<RpcMessage, "result">): Promise<Response | string> {
+export async function callRequest(call: Omit<WALLET_API.RpcMessage, "result">): Promise<Response | string> {
     const myWallet = useStoreWallet.getState().StarknetWalletObject;
     if (!myWallet) {
         console.log("No wallet connected.");

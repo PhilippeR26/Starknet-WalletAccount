@@ -1,11 +1,11 @@
 import { Box, Button, Center, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure, forwardRef, Tooltip } from "@chakra-ui/react";
-import { CallData, GetBlockResponse, constants as SNconstants, TypedData, cairo, ec, encode, hash, json, shortString, stark, addAddressPadding, wallet, Contract } from "starknet";
+import { CallData, GetBlockResponse, constants as SNconstants, TypedData, cairo, ec, encode, hash, json, shortString, stark, addAddressPadding, wallet, Contract, type Call, type Calldata } from "starknet";
 import React, { useEffect, useState } from "react";
 
 import * as constants from "@/utils/constants";
-import { RejectContractAddress, StarknetChainIdEntry } from "@/utils/constants";
+import { RejectContractAddress } from "@/utils/constants";
 import { useStoreWallet } from "../../Wallet/walletContext";
-import { AddDeclareTransactionParameters, AddDeclareTransactionResult, AddInvokeTransactionParameters, AddInvokeTransactionResult, AddStarknetChainParameters, RequestAccountsParameters, SwitchStarknetChainParameters, WatchAssetParameters, type StarknetWindowObject } from "get-starknet-core";
+import {WALLET_API } from "@starknet-io/types-js";
 
 import { rejectAbi } from "../../../contracts/abis/rejectAbi";
 import { getHelloTestSierra } from "@/app/contracts/declareHelloTestSierra";
@@ -39,6 +39,9 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
   const getChainId = useStoreWallet(state => state.chain);
   const [testRejectContract, SetRejectContract] = useState<Contract>(new Contract(rejectContract.abi, "0x00"));
 
+  const selectedApiVersion = useStoreWallet(state => state.selectedApiVersion);
+
+
   const DefineRejectContract = () => {
     SetRejectContract(new Contract(
       rejectContract.abi,
@@ -66,7 +69,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         if (myWallet) {
           let txtResponse: string = "";
           try {
-            const response: string[] = await wallet.requestAccounts(myWallet);
+            const response: string[] = await wallet.requestAccounts(myWallet, undefined);
             txtResponse = addAddressPadding(response[0]);
           } catch (err: any) {
             txtResponse = "Error " + err.code + " = " + err.message
@@ -81,7 +84,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
       }
       case constants.CommandWallet.wallet_requestChainId: {
         if (myWallet) {
-          const param: RequestAccountsParameters = {};
+          const param: WALLET_API.RequestAccountsParameters = {};
           const response = await wallet.requestChainId(myWallet);
           setResponse(response + " (" + shortString.decodeShortString(response) + ")");
           onOpen();
@@ -90,7 +93,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
       }
       case constants.CommandWallet.wallet_watchAsset: {
         if (myWallet) {
-          const myAsset: WatchAssetParameters = {
+          const myAsset: WALLET_API.WatchAssetParameters = {
             type: "ERC20",
             options: {
               address: param,
@@ -132,7 +135,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         break;
       }
       case constants.CommandWallet.wallet_addStarknetChain: {
-        const myChainId: AddStarknetChainParameters = {
+        const myChainId: WALLET_API.AddStarknetChainParameters = {
           id: param,
           chain_id: shortString.encodeShortString(param),  // A 0x-prefixed hexadecimal string
           chain_name: param,
@@ -165,19 +168,29 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
 
       case constants.CommandWallet.starknet_addInvokeTransaction: {
         // param other than 100 will be reverted.
-        const contractAddress = getChainId === SNconstants.StarknetChainId.SN_MAIN ? RejectContractAddress[myFrontendProviderIndex] : RejectContractAddress[myFrontendProviderIndex]; // Sepolia Testnet
-        const contractCallData = new CallData(rejectAbi);
+        const contractAddress = RejectContractAddress[myFrontendProviderIndex];
+        //const contractCallData = new CallData(rejectAbi);
         const funcName = "test_fail";
-        const myCalldata = contractCallData.compile(funcName, {
-          p1: Number(param)
-        });
-        const myParams: AddInvokeTransactionParameters = {
+        //  const myCalldata = contractCallData.compile(funcName, {
+        //    p1: Number(param)
+        //  });
+
+        // const myParams: AddInvokeTransactionParameters = {
+        //   calls: [{
+        //     contract_address: contractAddress,
+        //     entry_point: funcName,
+        //     calldata: myCalldata
+        //   }]
+        // }
+        //const contract=new Contract(rejectAbi,contractAddress,undefined);
+        const myCall: Call = new Contract(rejectAbi, contractAddress, undefined).populate(funcName, { p1: Number(param) });
+        const myParams: WALLET_API.AddInvokeTransactionParameters = {
           calls: [{
-            contract_address: contractAddress,
-            entry_point: funcName,
-            calldata: myCalldata
+            contract_address: myCall.contractAddress,
+            entry_point: myCall.entrypoint,
+            calldata: myCall.calldata as Calldata
           }]
-        }
+        };
         if (myWallet) {
           let response: string = "";
           try {
@@ -204,17 +217,17 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
             const declareNonce = await testRejectContract.get_nonce() as number;
             const contractCallData = new CallData(rejectAbi);
             const funcName = "process_nonce";
-            const myParams0: AddInvokeTransactionParameters = {
+            const myParams0: WALLET_API.AddInvokeTransactionParameters = {
               calls: [{
                 contract_address: testRejectContract.address,
                 entry_point: funcName,
                 calldata: []
               }]
             }
-            const txH = await wallet.addInvokeTransaction(myWallet,myParams0);
+            const txH = await wallet.addInvokeTransaction(myWallet, myParams0);
 
             await constants.myFrontendProviders[myFrontendProviderIndex].waitForTransaction(txH.transaction_hash);
-            const myParams: AddDeclareTransactionParameters = {
+            const myParams: WALLET_API.AddDeclareTransactionParameters = {
 
               compiled_class_hash: hash.computeCompiledClassHash(getHelloTestCasm(declareNonce)),
               contract_class: getHelloTestSierra(declareNonce),
@@ -236,8 +249,9 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
       case constants.CommandWallet.starknet_signTypedData: {
         const myTypedData: TypedData = {
           domain: {
-            name: "Example DApp",
-            chainId: SNconstants.StarknetChainId.SN_SEPOLIA,
+            name: "Example DApp", 
+            //chainId: SNconstants.StarknetChainId.SN_SEPOLIA,
+            chainId: '0x534e5f5345504f4c4941',
             version: "0.0.3",
           },
           types: {
@@ -258,6 +272,23 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
           let response: string = "";
           try {
             const resp = (await wallet.signMessage(myWallet, myTypedData));
+            response = json.stringify(resp, undefined, 2);
+          } catch (err: any) {
+            response = "Error " + err.code + " = " + err.message
+          }
+          finally {
+            setResponse(response);
+            onOpen();
+          }
+        }
+        break;
+      }
+      case constants.CommandWallet.wallet_supportedWalletApi: {
+        if (myWallet) {
+          let response: string = "";
+          try {
+            // ************* TODO : change function name when implemented in Starknet.js *********
+            const resp = (await wallet.supportedSpecs(myWallet));
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message

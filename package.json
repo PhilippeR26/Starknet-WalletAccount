@@ -30,7 +30,7 @@
     "react-icons": "^5.2.1",
     "server-only": "^0.0.1",
     "sharp": "^0.33.4",
-    "starknet": "6.10.0",
+    "starknet": "^6.11.0",
     "swr": "^2.2.5",
     "typescript": "^5.5.2",
     "zustand": "^4.5.2"

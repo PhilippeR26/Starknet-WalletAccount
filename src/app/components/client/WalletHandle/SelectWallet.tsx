@@ -100,15 +100,14 @@ export default function SelectWallet() {
         if (isConnectedWallet) {
             const chainId = (await wallet.requestChainId(selectedWallet)) as string;
             setChain(chainId);
-            //setCurrentFrontendProviderIndex(chainId === StarknetChainId.SN_MAIN ? 0 : 2);
-            setCurrentFrontendProviderIndex(chainId === '0x534e5f4d41494e' ? 0 : 2);
+            setCurrentFrontendProviderIndex(chainId === SNconstants.StarknetChainId.SN_MAIN ? 0 : 2);
+            
             console.log("change Provider index to :", myFrontendProviderIndex);
         }
         // ********** TODO : replace supportedSpecs by api versions when available in SNJS
         setWalletApi(await wallet.supportedSpecs(selectedWallet));
 
         setSelectWalletUI(false);
-        // console.log("End of handleSelectedWallet", isConnected);
     }
 
     useEffect(

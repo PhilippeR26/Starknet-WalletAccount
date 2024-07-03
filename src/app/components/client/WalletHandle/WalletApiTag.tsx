@@ -52,8 +52,7 @@ export default function WalletApiTag() {
                 if (!!chainId) {
                     setRespChangedNetwork(chainId);
                     setChain(chainId); //zustand
-                    //setCurrentFrontendProviderIndex(chainId===SNconstants.StarknetChainId.SN_MAIN?0:2);
-                    setCurrentFrontendProviderIndex(chainId==='0x534e5f4d41494e'?0:2);
+                    setCurrentFrontendProviderIndex(chainId===SNconstants.StarknetChainId.SN_MAIN?0:2);
                     
                     console.log("change Provider index to", chainId);
                 };
@@ -115,15 +114,12 @@ export default function WalletApiTag() {
                 />
                 <RpcWalletCommand
                     command={constants.CommandWallet.wallet_watchAsset}
-                    //param={chainFromContext===SNconstants.StarknetChainId.SN_MAIN?constants.addrLORDmainnet:constants.addrLORDtestnet}
-                    param={chainFromContext==='0x534e5f4d41494e'?constants.addrLORDmainnet:constants.addrLORDtestnet}
-                    
+                    param={chainFromContext===SNconstants.StarknetChainId.SN_MAIN?constants.addrLORDmainnet:constants.addrLORDtestnet}
                     symbol={"LORD"}
                 />
                 <RpcWalletCommand
                     command={constants.CommandWallet.wallet_switchStarknetChain}
-                    //param={SNconstants.StarknetChainId.SN_MAIN}
-                    param={'0x534e5f4d41494e'}
+                    param={SNconstants.StarknetChainId.SN_MAIN}
                 />
                 <RpcWalletCommand
                     command={constants.CommandWallet.wallet_addStarknetChain}

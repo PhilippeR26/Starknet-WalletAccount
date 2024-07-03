@@ -19,7 +19,7 @@ export enum CommandWallet {
     wallet_supportedWalletApi = "wallet_supportedWalletApi",
 }
 
-// export type StarknetChainIdEntry = keyof typeof SNconstants.StarknetChainId;
+export type StarknetChainIdEntry = keyof typeof SNconstants.StarknetChainId;
 
 export const myFrontendProviders: ProviderInterface[] = [
     new RpcProvider({ nodeUrl: "https://starknet-mainnet.public.blastapi.io/rpc/v0_7" }),

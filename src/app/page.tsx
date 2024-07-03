@@ -1,8 +1,9 @@
 "use client";
+
 import { useState } from "react";
 import Image from 'next/image'
 import styles from './page.module.css'
-import { Center, Spinner, Text, Button, Divider, Box, Tabs, TabList, Tab, TabPanels, TabPanel, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, VStack, StackDivider, ChakraProvider, Select } from '@chakra-ui/react';
+import { Center, Button, Box, Tabs, TabList, Tab, TabPanels, TabPanel, ChakraProvider, Select } from '@chakra-ui/react';
 import { constants as SNconstants, shortString} from 'starknet';
 import InteractContract from './components/client/Contract/InteractContract';
 import { useStoreWallet } from './components/Wallet/walletContext';
@@ -55,7 +56,7 @@ export default function Page() {
   };
 
   const handleConnect330Click = async () => {
-    console.log("open get-starknet");
+    console.log("open get-starknet. Do not work with v4.0.0!!!");
     const getWalletSWO = await connect({ modalMode: "alwaysAsk", modalTheme: "light" });
     console.log(getWalletSWO);
     
@@ -67,7 +68,7 @@ export default function Page() {
     <ChakraProvider>
       <div>
         <p className={styles.bgText}>
-          Test WalletAccount of Starknet.js v6.10.0 <br></br>
+          Test WalletAccount of Starknet.js v6.11.0 <br></br>
           with get-starknet-core v4.0.0
         </p>
         <Center>
@@ -138,8 +139,7 @@ export default function Page() {
                         address = {addressAccountFromContext}<br />
                         chain = {chainFromContext != "" ? shortString.decodeShortString(chainFromContext) : ""}
                         <br />
-                        {/* provider = the frontend provider uses {Object.keys(StarknetChainId)[myFrontendProviderIndex] */}
-                        provider = the frontend provider uses { 'TBD'
+                        provider = the frontend provider uses {Object.keys(SNconstants.StarknetChainId)[myFrontendProviderIndex]
                         }
                         <br />
                         isConnected={isConnected ? "Yes" : "No"}

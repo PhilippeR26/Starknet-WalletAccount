@@ -250,8 +250,8 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         const myTypedData: TypedData = {
           domain: {
             name: "Example DApp", 
-            //chainId: SNconstants.StarknetChainId.SN_SEPOLIA,
-            chainId: '0x534e5f5345504f4c4941',
+            chainId: SNconstants.StarknetChainId.SN_SEPOLIA,
+            // chainId: '0x534e5f5345504f4c4941',
             version: "0.0.3",
           },
           types: {

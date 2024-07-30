@@ -23,7 +23,8 @@ export async function scanObjectForWalletsCustom(
     const listNames: string[] = AllObjectsNames.filter((name: string) =>
         name.startsWith("starknet")
     );
-    const Wallets: WALLET_API.StarknetWindowObject[] = Object.values(
+    console.log({listNames});
+    const wallets: WALLET_API.StarknetWindowObject[] = Object.values(
         [...new Set(listNames)].reduce<Record<string, WALLET_API.StarknetWindowObject>>(
             (wallets, name: string) => {
                 const wallet = obj[name] as WALLET_API.StarknetWindowObject;
@@ -33,7 +34,8 @@ export async function scanObjectForWalletsCustom(
             {}
         )
     );
-    const validWallets: ValidWallet[] = await Promise.all(Wallets.map(
+    console.log({wallets});
+    const validWallets: ValidWallet[] = await Promise.all(wallets.map(
         async (wallet: WALLET_API.StarknetWindowObject) => {
             const isValid = await checkCompatibility(wallet);
             return { wallet: wallet, isValid: isValid } as ValidWallet;

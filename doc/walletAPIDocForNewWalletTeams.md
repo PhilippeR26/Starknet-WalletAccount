@@ -1,116 +1,55 @@
-# Starknet Wallet API
-# Documentation for wallet teams
+# Starknet Wallet API <!-- omit from toc -->
+**Documentation for wallet teams**
 
 > version : v1.0.0 28/jul/2024. 
 
-This document is a documentation of the new interface between DAPPS and Starknet browser wallets.
-
-- [Starknet Wallet API](#starknet-wallet-api)
-- [Documentation for wallet teams](#documentation-for-wallet-teams)
-- [Connect the wallet :](#connect-the-wallet-)
+This document is explaining how Starknet browser wallets can use the new interface with Starknet DAPPs.
+- [Implementation in window object :](#implementation-in-window-object-)
+- [DAPP connection to the wallet :](#dapp-connection-to-the-wallet-)
 - [Subscription to events :](#subscription-to-events-)
-    - [Subscription :](#subscription-)
-      - [accountsChanged :](#accountschanged-)
-      - [networkChanged :](#networkchanged-)
-    - [Un-subscription :](#un-subscription-)
 - [Available commands :](#available-commands-)
   - [wallet\_getPermissions :](#wallet_getpermissions-)
-    - [Usage :](#usage-)
-    - [Input :](#input-)
-    - [Output :](#output-)
-    - [Behavior :](#behavior-)
-    - [Example :](#example-)
   - [wallet\_requestAccounts :](#wallet_requestaccounts-)
-    - [Usage :](#usage--1)
-    - [Input :](#input--1)
-    - [Output :](#output--1)
-    - [Behavior :](#behavior--1)
-    - [Example :](#example--1)
   - [wallet\_watchAsset :](#wallet_watchasset-)
-    - [Usage :](#usage--2)
-    - [Input :](#input--2)
-    - [Output :](#output--2)
-    - [Behavior :](#behavior--2)
-    - [Example :](#example--2)
   - [wallet\_addStarknetChain :](#wallet_addstarknetchain-)
-    - [Usage :](#usage--3)
-    - [Input :](#input--3)
-    - [Output :](#output--3)
-    - [Behavior :](#behavior--3)
-    - [Example :](#example--3)
   - [wallet\_switchStarknetChain :](#wallet_switchstarknetchain-)
-    - [Usage :](#usage--4)
-    - [Input :](#input--4)
-    - [Output :](#output--4)
-    - [Behavior :](#behavior--4)
-    - [Example :](#example--4)
   - [wallet\_requestChainId :](#wallet_requestchainid-)
-    - [Usage :](#usage--5)
-    - [Input :](#input--5)
-    - [Output :](#output--5)
-    - [Behavior :](#behavior--5)
-    - [Example :](#example--5)
   - [wallet\_deploymentData :](#wallet_deploymentdata-)
-    - [Usage :](#usage--6)
-    - [Input :](#input--6)
-    - [Output :](#output--6)
-    - [Behavior :](#behavior--6)
-    - [Example :](#example--6)
   - [wallet\_addInvokeTransaction :](#wallet_addinvoketransaction-)
-    - [Usage :](#usage--7)
-    - [Input :](#input--7)
-    - [Output :](#output--7)
-    - [Behavior :](#behavior--7)
-    - [Example :](#example--7)
   - [wallet\_addDeclareTransaction :](#wallet_adddeclaretransaction-)
-    - [Usage :](#usage--8)
-    - [Input :](#input--8)
-    - [Output :](#output--8)
-    - [Behavior :](#behavior--8)
-    - [Example :](#example--8)
   - [wallet\_signTypedData :](#wallet_signtypeddata-)
-    - [Usage :](#usage--9)
-    - [Input :](#input--9)
-    - [Output :](#output--9)
-    - [Behavior :](#behavior--9)
-    - [Example :](#example--9)
   - [wallet\_supportedSpecs :](#wallet_supportedspecs-)
-    - [Usage :](#usage--10)
-    - [Input :](#input--10)
-    - [Output :](#output--10)
-    - [Behavior :](#behavior--10)
-    - [Example :](#example--10)
   - [wallet\_supportedWalletApi :](#wallet_supportedwalletapi-)
-    - [Usage :](#usage--11)
-    - [Input :](#input--11)
-    - [Output :](#output--11)
-    - [Behavior :](#behavior--11)
-    - [Example :](#example--11)
 - [Wallet API version :](#wallet-api-version-)
   - [Example :](#example--12)
   - [Error :](#error-)
 
+# Implementation in window object :
+The Wallet has to add a new object in the global `window` object (representing the browser's window). Its name has to start with `starknet` and should not use a name already implemented by the others wallet.   
+Example of existing names : `starknet_bitkeep`, `starknet_okxwallet`, `starknet_braavos`, `starknet_argentx`.
 
-# Connect the wallet :
-You have first to select which wallet to use.
-```typescript
-import { StarknetWindowObject, connect } from "get-starknet"; // v4.0.0 mini
+This object has to be conform to the `StarknetWindowObject` interface,  defined in https://github.com/starknet-io/types-js/blob/main/src/wallet-api/StarknetWindowObject.ts
 
-const myWallet: StarknetWindowObject = await connect({ modalMode: "alwaysAsk", modalTheme: "light" });
-```
+In particular, some keys are necessary to describe the wallet. They will be used by the DAPP for the UI of wallet selection :
 
-You can now use the commands proposed by the wallet (here with Starknet.js v6.8.0 mini) :
-```typescript
-const myCall: Call = myContract.populate(
-  "increase_balance", 
-  { amount: 200 });
+![](../Images/selectWallet.png)
 
-const myRequest = {
-    type: "wallet_addInvokeTransaction",
-    params: [myCall],
-}
-const response = await myWallet.request(myRequest);
-```
+These keys are :
+- .id (ex: `argentx`)
+- .name (ex: `Argent X`). Will be displayed by the DAPP.
+- .version (ex: `3.4.5`). Can be used optionally by the DAPP.
+- .icon (ex: `"data:image/svg+xml;base64,Cjxzdmcgd2lkdGg9..."`). A string defining the logo of the wallet. It will be used by the DAPP.
+
+
+https://github.com/starknet-io/get-starknet/blob/%40starknet-io/get-starknet%404.0.0/packages/core/src/main.ts
+
+# DAPP connection to the wallet :
+Using the get-starknet v4 library (or its own code), the DAPP will search all the Starknet wallets implemented in the browser, and will ask to the user to select one of them.  
+All readings in Starknet will be performed without using the Wallet, but it will be involved in all write operations. This sharing is handled by the Starknet.js library.  
+![](../Images/architecture.png)  
+Starknet.js is a complete SDK for Starknet. You can install it with `npm install starknet@6.11.0`.
+
+Some additional management methods have to be provided by the wallet ; they will also be described hereunder. 
 
 # Subscription to events :
 You can subscribe to 2 events : 
@@ -168,11 +107,24 @@ enum Permission {
 - If authorized, returns an array of strings. The first item content is  `accounts` (equal to `Permission.Accounts` enum).
 - If not authorized, the response is an empty array.
 ### Example :
+#### On DAPP side : 
 ```typescript
 const resp = await myWallet.request(type: "wallet_getPermissions");
 // resp = ["accounts"]
 ```
-
+#### On Wallet side :
+This command is silent on Wallet side. No display on UI.
+```typescript
+export const starknetWindowObject: StarknetWindowObject = {
+  ...
+  request: async (call) => {
+    if (call.type === "wallet_getPermissions") {
+      const perm = 
+      return await hdfghdf(call.params)
+    }
+  }
+}
+```
 ## wallet_requestAccounts :
 ### Usage :
 Get the account address of the wallet active account. 
@@ -440,7 +392,7 @@ const resp = await myWallet.request(type: "wallet_deploymentData");
 
 ## wallet_addInvokeTransaction :
 ### Usage :
-Send one or several transaction(s) to the network. 
+The user want to send one or several transaction(s) to the network. 
 ### Input :
 ```typescript
 interface AddInvokeTransactionParameters {
@@ -459,6 +411,13 @@ response : interface AddInvokeTransactionResult {
 }
 ```
 ### Behavior :
+- Using its UI, the wallet ask to the user to validate or reject the transaction(s).  
+- It's the responsibility of the wallet to ask to the user which token he wants to use to pay the fees (can't be handled by the user DAPP, as it's not a parameter of this entrypoint).  
+- The wallet should display the estimated fees prior.
+ 
+Example of UI:  
+![](../Images/executeTx.png)
+
 - If the user approved the transaction in the wallet, the response is the transaction hash.
 - If an error occurred with these parameters, fails with Error :
 ```typescript
@@ -482,6 +441,7 @@ interface UNKNOWN_ERROR {
 }
 ```
 ### Example :
+#### On DAPP side : 
 ```typescript
 const contractAddress = "0x697d3bc2e38d57752c28be0432771f4312d070174ae54eef67dd29e4afb174";
 const funcName = "increase_balance";
@@ -495,6 +455,94 @@ const myCallAPI = {
 };
 const resp = await myWallet.request(type: "wallet_addInvokeTransaction", params: [myCallAPI]);
 // resp = {transaction_hash: "0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929"}
+```
+#### On Wallet side :
+```typescript
+import { Account, RpcProvider } from "starknet";
+// provider initialization
+const myProvider = new RpcProvider({ nodeUrl: "https://free-rpc.nethermind.io/sepolia-juno/v0_7" }); // example with a Starknet Testnet public node
+// account initialization
+const account0 = new Account(myProvider, accountAddress0, privateKey0);
+```
+With current Starknet v0.13.2, you can use ETH or STRK tokens to pay the fees. ETH fees are handled by a "legacy V2" transaction ; STRK fees are handled by a "V3" transaction.  
+Currently there is no fee market. So if enough fees are proposed, the transaction is entering in a queue, and will be processed First In, First Out. The amount of fees depends of the complexity of the Cairo code to process in Starknet.
+To estimate the fees of a "legacy V2" transaction :
+```typescript
+const { suggestedMaxFee: estimatedFee1 } = await account0.estimateInvokeFee(calls, {version: 2});
+```
+
+The complete answer for a "legacy V2" transaction :
+```typescript
+{
+  overall_fee: 2499000034986n,
+  gas_consumed: 2499n,
+  gas_price: 1000000014n,
+  unit: 'WEI',
+  suggestedMaxFee: 3748500052479n,
+  resourceBounds: {
+    l2_gas: { max_amount: '0x0', max_price_per_unit: '0x0' },
+    l1_gas: { max_amount: '0xabc', max_price_per_unit: '0x59682f15' }
+  }
+}
+```
+
+To estimate the fees of a V3 transaction :
+```typescript
+const { suggestedMaxFee: estimatedFee1 } = await account0.estimateInvokeFee(calls, {version: 3});
+```
+
+The complete answer for a V3 transaction :
+```typescript
+{
+  overall_fee: 46098414083169n,
+  gas_consumed: 2499n,
+  gas_price: 18446744331n,
+  unit: 'FRI',
+  suggestedMaxFee: 69147621124753n,
+  resourceBounds: {
+    l2_gas: { max_amount: '0x0', max_price_per_unit: '0x0' },
+    l1_gas: { max_amount: '0xabc', max_price_per_unit: '0x671447890' }
+  }
+}
+```
+
+The estimation of the fees isn't ultra accurate, and an extra fees of 50% is automatically added by `estimateInvokeFee()`.  
+In some cases, it's not enough. Depending of the wallet strategy, the transactions are proposed with low extra fees but there is a risk to have some transactions reverted, or the probability of success is very high but the extra fees have to be increased with
+```typescript
+import { stark } from "starknet";
+// to add 10% of fees
+const increasedFees = stark.estimatedFeeToMaxFee(estimatedFee1, 0.1);
+```
+
+If the user approve the transaction, it can be processed with
+```typescript
+const resp = await account0.execute(calls);
+const txReceipt = await myProvider.waitForTransaction(resp.transaction_hash);
+```
+> [!TIP]
+> To obtain the transaction receipt, you have to wait about 12 seconds. At the price of extra requests to the node, you can reduce this delay to improve the user experience
+with this option :
+>  ```typescript
+>  const txReceipt = await myProvider.waitForTransaction(resp.transaction_hash, {retryInterval: 2000});
+>  // The node is queried each 2 seconds
+>  ```
+
+The transaction receipt will provide several data about the processing of the transaction(s), in particular if it succeed :
+```typescript
+txReceipt.match({
+  success: (txR: SuccessfulTransactionReceiptResponse) => {
+    console.log('Success =', txR);
+  },
+  rejected: (txR: RejectedTransactionReceiptResponse) => {
+    console.log('Rejected =', txR);
+  },
+  reverted: (txR: RevertedTransactionReceiptResponse) => {
+    console.log('Reverted =', txR);
+  },
+  error: (err: Error) => {
+    console.log('An error occurred =', err);
+  },
+});
 ```
 
 ## wallet_addDeclareTransaction :

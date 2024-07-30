@@ -3,10 +3,9 @@
 
 > version : v1.0.0 29/jul/2024. 
 
-This document is explaining how Starknet browser wallets have to modify their code to migrate from Get-Starknet v3 to v4.
+This document is explaining how Starknet browser wallet teams have to modify their code to migrate from Get-Starknet v3 to v4.
 - [SWO V4 (Starknet Window Object) :](#swo-v4-starknet-window-object-)
 - [DAPP connection to the wallet :](#dapp-connection-to-the-wallet-)
-- [Subscription to events :](#subscription-to-events-)
 - [Available commands :](#available-commands-)
   - [wallet\_getPermissions :](#wallet_getpermissions-)
   - [wallet\_requestAccounts :](#wallet_requestaccounts-)
@@ -21,17 +20,18 @@ This document is explaining how Starknet browser wallets have to modify their co
   - [wallet\_supportedSpecs :](#wallet_supportedspecs-)
   - [wallet\_supportedWalletApi :](#wallet_supportedwalletapi-)
 - [Wallet API version :](#wallet-api-version-)
+- [Subscription to events :](#subscription-to-events-)
 
 # SWO V4 (Starknet Window Object) :
-The Wallet has still to create a new object called SWO (Starknet Window Object), implemented into the global `window` object (representing the browser's window). The SWO name has still to start with `starknet` and should not use a name already implemented by the others wallet.   
+The Wallet has still to create a new object called SWO (Starknet Window Object), implemented into the global `window` object (representing the browser's window). The SWO name has still to start with `starknet` and should not use a name already implemented by the other wallets.   
 Example of existing names : `starknet_bitkeep`, `starknet_okxwallet`, `starknet_braavos`, `starknet_argentx`.
 
-The content of this object is deeply modified ; it contains no more any Account or Provider objects ; most of the interactions are now handled by the `request` entrypoint. The SWO has to be conform to the `StarknetWindowObject` interface, defined in https://github.com/starknet-io/types-js/blob/main/src/wallet-api/StarknetWindowObject.ts
+The content of this object is deeply modified ; it contains no more any Account or Provider objects ; most of the interactions are now handled by the `request` property. The SWO has to be conform to the `StarknetWindowObject` interface, defined in https://github.com/starknet-io/types-js/blob/main/src/wallet-api/StarknetWindowObject.ts
 
 > [!NOTE]
 > On Wallet side, the library get-starknet is not necessary ; only the SWO interface from the `types-js` library is needed.
 
-The SWO still needs some properties that are necessary to describe the wallet. They will be used in the DAPP for the window of wallet selection :  
+The SWO still needs to provide some properties that are necessary to describe the wallet. They will be used in the DAPP in the window of wallet selection :  
 ![](../Images/selectWallet.png)
 
 These keys are :
@@ -40,57 +40,18 @@ These keys are :
 - .version (ex: `3.4.5`). Can be used optionally by the DAPP.
 - .icon (ex: `"data:image/svg+xml;base64,Cjxzdmcgd2lkdGg9..."`). A string defining the logo of the wallet. It will be used by the DAPP.
 
-
-https://github.com/starknet-io/get-starknet/blob/%40starknet-io/get-starknet%404.0.0/packages/core/src/main.ts
-
 # DAPP connection to the wallet :
 Using the get-starknet v4 library, the DAPP will search all the Starknet wallets implemented in the browser, and will ask to the user to select one of them.  
-All readings in Starknet are now fully performed outside of the Wallet, but this one is of course still involved in all write operations. This sharing is handled by the `WalletAccount` class, in the Starknet.js library.  
+All readings of Starknet requested by the DAPP are now fully performed outside of the Wallet, but this one is of course still involved in all write operations. This sharing is handled by the `WalletAccount` class, in the Starknet.js library.  
 ![](../Images/architecture.png)  
 
-Some additional management methods have to be provided by the wallet. They will also be described hereunder. 
-
-# Subscription to events :
-You can subscribe to 2 events : 
-- `accountsChanged` : Triggered each time you change the current account in the wallet.
-- `networkChanged` : Triggered each time you change the current network in the wallet.
-
-At each change of network, both account and network events are occurring.  
-At each change of account, only the account event is occurring.  
-
-### Subscription :  
-#### accountsChanged :
-```typescript
-const handleAccount: AccountChangeEventHandler = (accounts: string[] | undefined) => {
-    if (accounts?.length) {
-        const textAddr = accounts[0] // hex string
-        setChangedAccount(textAddr); // from a useState
-    };
-};
-myWallet?.on("accountsChanged", handleAccount);
-```
-
-#### networkChanged :
-```typescript
-const handleNetwork: NetworkChangeEventHandler = (chainId?: string, accounts?: string[]) => {
-    if (!!chainId) { setRespChangedNetwork(chainId) }; // from a useState
-}
-myWallet?.on("networkChanged", handleNetwork);
-```
-
-### Un-subscription :
-Similar to subscription, using `.off` method.
-```typescript
-wallet.off("accountsChanged", handleAccount);
-wallet.off('networkChanged', handleNetwork);
-```
-
 # Available commands : 
-All these commands can be used with `myWallet.request()` :
+The `request` property of the SWO is now the main channel of communication. The WalletAccount class of Starknet.js will use this channel to work with the Wallet.
+Let's see all the entrypoints that a Wallet will have to process (from the official Wallet API spec available [here](https://github.com/starkware-libs/starknet-specs/blob/master/wallet-api/wallet_rpc.json)) :
 
 ## wallet_getPermissions :
 ### Usage :
-Indicate if the active account is authorized by the wallet to interact with the DAPP. 
+Indicate if the active account of the Wallet is authorized to interact with the DAPP. 
 ### Input :
 No parameters.
 ### Output :
@@ -100,30 +61,22 @@ response : Permission[]
 enum Permission {
   Accounts = "accounts",
 }
-
 ```
 ### Behavior :
 - If authorized, returns an array of strings. The first item content is  `accounts` (equal to `Permission.Accounts` enum).
 - If not authorized, the response is an empty array.
+- This command is silent on Wallet side. No display on UI.
 ### Example :
 #### On DAPP side : 
 ```typescript
 const resp = await myWallet.request(type: "wallet_getPermissions");
-// resp = ["accounts"]
 ```
 #### On Wallet side :
-This command is silent on Wallet side. No display on UI.
-```typescript
-export const starknetWindowObject: StarknetWindowObject = {
-  ...
-  request: async (call) => {
-    if (call.type === "wallet_getPermissions") {
-      const perm = 
-      return await hdfghdf(call.params)
-    }
-  }
-}
+The wallet has to answer for example :
 ```
+resp = ["accounts"]
+```
+
 ## wallet_requestAccounts :
 ### Usage :
 Get the account address of the wallet active account. 
@@ -734,7 +687,7 @@ const resp = await myWallet.request(type: "wallet_signTypedData", params: myType
 
 ## wallet_supportedSpecs :
 ### Usage :
-Returns a list of rpc spec versions compatible with the wallet. 
+Returns a list of Starknet rpc spec versions compatible with the wallet. 
 ### Input :
 No parameters.
 ### Output :
@@ -743,10 +696,16 @@ response : string[]
 ```
 ### Behavior :
 - The response is an array of strings. Each string is the version of a supported starknet API version. Includes only the 2 main digits, with the`.` as separator ; example : `0.7`.
+- The current Starknet API is v0.7.2, and its official repo is [here](https://github.com/starkware-libs/starknet-specs/tree/master/api).
 ### Example :
+#### On DAPP side :
 ```typescript
 const resp = await myWallet.request(type: "wallet_supportedSpecs");
-// resp = ["0.6","0.7"]
+```
+#### On Wallet side :
+The wallet has to answer for example :
+```
+resp = ["0.6","0.7"]
 ```
 
 ## wallet_supportedWalletApi :
@@ -759,17 +718,23 @@ No parameters.
 response : string[]
 ```
 ### Behavior :
-- The response is an array of strings. Each string is the version of a supported Wallet API version. Includes only the 2 main digits, with the `.` as separator ; example : `0.7`.
+- The response has to be an array of strings. Each string is the version of a supported Wallet API version. Includes only the 2 main digits, with the `.` as separator ; example : `0.7`.
+- The current Wallet API version is v0.7.2. The repo of the official Wallet API is [here](https://github.com/starkware-libs/starknet-specs/blob/master/wallet-api/wallet_rpc.json).
 ### Example :
+#### On DAPP side :
 ```typescript
 const resp = await myWallet.request(type: "wallet_supportedWalletApi");
-// resp = ["0.7","0.8"]
+```
+#### On Wallet side :
+The wallet has to answer for example :
+```
+resp = ["0.7","0.8"]
 ```
 
-
 # Wallet API version :
-
 All entries of this Wallet API have an optional parameter to define the version of API used to create the request. 
+Today, only v0.7 is supported.
+
 ## Example :<!-- omit from toc -->
 ```typescript
 const myParams = {
@@ -785,5 +750,40 @@ interface API_VERSION_NOT_SUPPORTED {
   code: 162;
   message: 'An error occurred (API_VERSION_NOT_SUPPORTED)';
 }
+```
+
+# Subscription to events :
+You can subscribe to 2 events : 
+- `accountsChanged` : Triggered each time you change the current account in the wallet.
+- `networkChanged` : Triggered each time you change the current network in the wallet.
+
+At each change of network, both account and network events are occurring.  
+At each change of account, only the account event is occurring.  
+
+### Subscription :  
+#### accountsChanged :
+```typescript
+const handleAccount: AccountChangeEventHandler = (accounts: string[] | undefined) => {
+    if (accounts?.length) {
+        const textAddr = accounts[0] // hex string
+        setChangedAccount(textAddr); // from a useState
+    };
+};
+myWallet?.on("accountsChanged", handleAccount);
+```
+
+#### networkChanged :
+```typescript
+const handleNetwork: NetworkChangeEventHandler = (chainId?: string, accounts?: string[]) => {
+    if (!!chainId) { setRespChangedNetwork(chainId) }; // from a useState
+}
+myWallet?.on("networkChanged", handleNetwork);
+```
+
+### Un-subscription :
+Similar to subscription, using `.off` method.
+```typescript
+wallet.off("accountsChanged", handleAccount);
+wallet.off('networkChanged', handleNetwork);
 ```
 

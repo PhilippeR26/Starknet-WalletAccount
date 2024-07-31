@@ -42,12 +42,15 @@ These keys are :
 
 # DAPP connection to the wallet :
 Using the get-starknet v4 library, the DAPP will search all the Starknet wallets implemented in the browser, and will ask to the user to select one of them.  
-All readings of Starknet requested by the DAPP are now fully performed outside of the Wallet, but this one is of course still involved in all write operations. This sharing is handled by the `WalletAccount` class, in the Starknet.js library.  
+All readings of Starknet requested by the DAPP are now fully performed outside of the Wallet, but this one is of course still involved in all write operations. This sharing is handled by the `WalletAccount` class, in the Starknet.js library (documentation [here](https://www.starknetjs.com/docs/next/guides/walletaccount/)).  
 ![](../Images/architecture.png)  
 
 # Available commands : 
-The `request` property of the SWO is now the main channel of communication. The WalletAccount class of Starknet.js will use this channel to work with the Wallet.
-Let's see all the entrypoints that a Wallet will have to process (from the official Wallet API spec available [here](https://github.com/starkware-libs/starknet-specs/blob/master/wallet-api/wallet_rpc.json)) :
+The `request` property of the SWO is now the main channel of communication. The WalletAccount class of Starknet.js will use this channel to work with the Wallet.  
+Let's see all the entrypoints that a Wallet will have to process (listed in the official Wallet API spec available [here](https://github.com/starkware-libs/starknet-specs/blob/master/wallet-api/wallet_rpc.json)).  
+All types shown hereunder are available [here](https://github.com/starknet-io/types-js/blob/main/src/wallet-api/components.ts).  
+You can test each entrypoint of your Wallet with this test DAPP : https://starknet-wallet-account.vercel.app/
+![](../Images/Api.png)
 
 ## wallet_getPermissions :
 ### Usage :
@@ -69,17 +72,21 @@ enum Permission {
 ### Example :
 #### On DAPP side : 
 ```typescript
-const resp = await myWallet.request(type: "wallet_getPermissions");
+const resp = await myWalletAccount.getPermissions();
 ```
 #### On Wallet side :
 The wallet has to answer for example :
 ```
 resp = ["accounts"]
 ```
+### DAPP authorization :
+First time the DAPP is performing a request to the current account of the Wallet, the UI is requesting a validation to connect the current account (of the current network) to this DAPP.
+![](../Images/ConnectDAPP.png)
+Then the DAPP request is processed.
 
 ## wallet_requestAccounts :
 ### Usage :
-Get the account address of the wallet active account. 
+Get the address of the active account of the Wallet. 
 ### Input :
 ```typescript
 interface RequestAccountsParameters {
@@ -91,12 +98,17 @@ interface RequestAccountsParameters {
 response : string[]
 ```
 ### Behavior :
-- Returns an array of hex string ; just use the first element.
+- Returns an array of hex string ; the first element contains the account address.
 - Optional silentMode : if true, the wallet will not show the wallet-unlock UI in case of a locked wallet, nor the dApp-approve UI in case of a non-allowed dApp.
 ### Example :
+#### On DAPP side : 
 ```typescript
-const resp = await myWallet.request(type: "wallet_requestAccounts");
-// resp = ["0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929"]
+const resp = await myWalletAccount.requestAccounts();
+```
+#### On Wallet side :
+The wallet has to answer for example :
+```
+resp = ["0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929"]
 ```
   
 ## wallet_watchAsset :
@@ -120,9 +132,11 @@ interface WatchAssetParameters {
 response : boolean
 ```
 ### Behavior :
-- The wallet opens a window to ask if you agree to add this token in the display list. If you agree, returns `true`. 
+- The wallet opens a window to ask the user to  agree to add this token in the display list. If agreed, returns `true`. 
+
 ![](../Images/addToken.png)
-- The optional parameters are rather useless, as they are automatically recovered by the blockchain data. Whatever you provide, the blockchain data are priority.
+> [!CAUTION]
+>  Take care of the optional parameters ; for obvious safety reason, it's preferable to have these parameters recovered from the blockchain by the Wallet.
 - If the address is not an ERC20, the method fails with this error : 
 ```typescript
 interface NOT_ERC20 {
@@ -130,7 +144,7 @@ code: 111;
 }
 message: 'An error occurred (NOT_ERC20)';
 ```
-- If the token is already displayed, the result is `true`.
+- If the token is already displayed, no UI change, the result is `true`.
 - If the user decline the proposal, the method fails with this error : 
 ```typescript
 interface USER_REFUSED_OP {
@@ -151,6 +165,7 @@ interface UNKNOWN_ERROR {
 ```
 
 ### Example :
+#### On DAPP side : 
 ```typescript
 const addrxASTR = "0x005EF67D8c38B82ba699F206Bf0dB59f1828087A710Bad48Cc4d51A2B0dA4C29";
 const myAsset: WatchAssetParameters = {
@@ -162,9 +177,35 @@ const myAsset: WatchAssetParameters = {
       symbol: "xASTR"
   }
 }
-const resp = await myWallet.request(type: "wallet_watchAsset", params: myAsset);
-// resp = true
+const resp = await myWalletAccount.watchAsset(myAsset);
 ```
+#### On Wallet side :
+It's recommended to not rely the optional parameters and to recover them from the Starknet network.
+```typescript
+import { type Abi, Contract, RpcProvider } from "starknet";
+const myProvider = new RpcProvider({nodeUrl: nodeUrlOfCurrentNetwork});
+let isDeployed: boolean;
+let abiERC20Contract: Abi; 
+try {
+    const contractSierra = await myProvider.getClassAt(asset.options.address);
+    abiERC20Contract = contractSierra.abi;
+    isDeployed = true;
+    } catch { isDeployed = false }
+if (!abiERC20Contract || !isDeployed) {
+    throw new Error("Not Valid address");
+}
+const erc20Contract = new Contract(abiERC20Contract, asset.options.address, myProvider);
+const decimals = await erc20Contract.call("decimals") as bigint;
+const name = await erc20Contract.call("name") as string;
+const symbol = await erc20Contract.call("symbol") as string;
+```
+
+The wallet has to answer for example :
+```
+resp = true
+```
+> [!NOTE]
+> It's a good practice if the Wallet includes in its UI a way to manage and remove tokens of the display list.
   
 ## wallet_addStarknetChain :
 ### Usage :
@@ -173,7 +214,7 @@ Add a new network in the list of networks of the wallet.
 ```typescript
 interface AddStarknetChainParameters {
   id: string
-  chain_id: string // A 0x-prefixed hexadecimal string
+  chain_id: string // A 0x-prefixed hexadecimal string, of encoded name
   chain_name: string
   rpc_ urls?: string[]
   block_explorer_urls?: string[]
@@ -187,7 +228,7 @@ interface AddStarknetChainParameters {
       image?: string // A string url of the token logo
     }
   } 
-  icon_urls?: string[] // Currently ignored.
+  icon_urls?: string[] // A string defining the logo of the wallet.
 }
 ```
 ### Output :
@@ -195,7 +236,9 @@ interface AddStarknetChainParameters {
 response : boolean
 ```
 ### Behavior :
-- The wallet opens a window to ask if you agree to add this network in the wallet. If you agree, returns `true`. 
+- The wallet opens a window to ask if the user agree to add this network in the wallet. If agreed, returns `true`. 
+
+![](../Images/addNetwork.png)
 - If something is inconsistent in the input data, fails with error :
 ```typescript
 interface INVALID_REQUEST_PAYLOAD {
@@ -203,7 +246,7 @@ interface INVALID_REQUEST_PAYLOAD {
   message: 'An error occurred (INVALID_REQUEST_PAYLOAD)';
 }
 ```
-- If the network is already listed, the result is `true`.
+- If the network is already listed, no UI change, the result is `true`.
 - If the user decline the proposal, the method fails with this error : 
 ```typescript
 interface USER_REFUSED_OP {
@@ -238,6 +281,8 @@ const myChain: AddStarknetChainParameters = {
 const resp = await myWallet.request(type: "wallet_addStarknetChain", params: myChain);
 // resp = true
 ```
+> [!NOTE]
+> It's a good practice if the Wallet includes in its UI a way to manage and remove networks of the list.
  
 ## wallet_switchStarknetChain :
 ### Usage :
@@ -535,6 +580,8 @@ response : interface AddDeclareTransactionResult {
 }
 ```
 ### Behavior :
+-UI
+[](../Images/declare.png)
 - If the user approved the declaration in the wallet, the response type is `AddDeclareTransactionResult`.
 - If the user approved the declaration in the wallet, and if the class is already declared, the function throw an error :
 ```typescript

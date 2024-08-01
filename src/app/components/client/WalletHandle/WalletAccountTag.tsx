@@ -90,7 +90,7 @@ export default function WalletAccountTag() {
     const handleDeployContractWalletAccount = () => {
         let response: string = "N/A";
 
-        myWalletAccount?.deploymentData({ classHash: "0x05f3614e8671257aff9ac38e929c74d65b02d460ae966cd826c9f04a7fa8e0d4" })
+        myWalletAccount?.deployContract({ classHash: "0x05f3614e8671257aff9ac38e929c74d65b02d460ae966cd826c9f04a7fa8e0d4" })
             .then(
                 async (result: any) => {
                     const txH = result.transaction_hash;

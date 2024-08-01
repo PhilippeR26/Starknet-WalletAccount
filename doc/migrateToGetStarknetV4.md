@@ -236,6 +236,7 @@ interface AddStarknetChainParameters {
 response : boolean
 ```
 ### Behavior :
+- Starknet is implemented in 2 networks : Mainnet (SN_MAINNET) & Testnet (SN_SEPOLIA). Nevertheless, some Devnets, or some layer 3 networks, used by DAPPs, have to be accessed by the Wallet.
 - The wallet opens a window to ask if the user agree to add this network in the wallet. If agreed, returns `true`. 
 
 ![](../Images/addNetwork.png)
@@ -315,7 +316,7 @@ if (urlNum === undefined) {
 }
 ```
 
-As for `wallet_watchAsset`, it's recommended to recover the fee token data directly from the network. See [here](#on-wallet-side--2)  
+As for `wallet_watchAsset`, it's recommended to recover the fee token data directly from the network. See [here](#on-wallet-side--2).  
 The wallet has to answer for example :
 ```
 resp = true
@@ -338,16 +339,16 @@ response : boolean
 ```
 ### Behavior :
 - The wallet opens a window to ask if you agree to change the current network in the wallet. If you agree, returns `true`. 
+
 ![](../Images/switchNetwork.png)
-- If something is inconsistent in the input data, the method fails with this error :
+- If the network is already the current one, no UI change, the result is `true`.
+- If the network is not listed by the Wallet, the method fails with this error :
 ```typescript
 interface UNLISTED_NETWORK {
   code: 112;
   message: 'An error occurred (UNLISTED_NETWORK)';
 }
 ```
-- If the network is already the current one, the result is `true`.
-- If the network is not existing, fails with Error 112 "Network details are incorrect".
 - If the user decline the proposal, the method fails with this error : 
 ```typescript
 interface USER_REFUSED_OP {
@@ -363,14 +364,19 @@ interface UNKNOWN_ERROR {
 }
 ```
 ### Example :
+#### On DAPP side : 
 ```typescript
 const myChainId: SwitchStarknetChainParameters = {
     chainId: "0x534e5f5345504f4c4941" // SN_SEPOLIA
 }
-const resp = await myWallet.request(type: "wallet_switchStarknetChain", params: myChainId);
-// resp = true
+const resp = await myWalletAccount.switchStarknetChain(myChainId);
 ```
+#### On Wallet side :
 
+The wallet has to answer for example :
+```
+resp = true
+```
 ## wallet_requestChainId :
 ### Usage :
 Returns the chainId of the current network of the wallet. 
@@ -380,20 +386,26 @@ No parameters.
 ```typescript
 response : string
 ```
-common chainId :
+main chainIds :
   SN_MAIN = "0x534e5f4d41494e",
   SN_SEPOLIA = "0x534e5f5345504f4c4941",
 ### Behavior :
-- No errors possible for this method.
+- No impact on UI.
+- No errors for this method.
 ### Example :
+#### On DAPP side : 
 ```typescript
-const resp = await myWallet.request(type: "wallet_requestChainId");
-// resp = "0x534e5f5345504f4c4941"
+const resp = await myWalletAccount.getChainId();
+```
+#### On Wallet side :
+The wallet has to answer for example :
+```
+resp = "0x534e5f5345504f4c4941"
 ```
 
 ## wallet_deploymentData :
 ### Usage :
-Request the deployment data of an account created, but not yet deployed. 
+Request the deployment data of an account created in the Wallet, but not yet deployed in Starknet. 
 ### Input :
 No parameters.
 ### Output :
@@ -417,15 +429,29 @@ interface ACCOUNT_ALREADY_DEPLOYED {
 }
 ``` 
 ### Example :
+#### On DAPP side : 
 ```typescript
-const resp = await myWallet.request(type: "wallet_deploymentData");
-// resp = {
-//   address: "0x0111fb83be44a70468d51cfcf8bccd4190cf119e4b2f83530ea13b5d35b9849d",
-//   class_hash: "0x03a5029a79d1849f58229e22f7f2b96bdd1dc8680e6cd5530a3122839f2ab878",
-//   salt: ""0xd3d12fb38fcc210966bcecd2ed83ba44b67e794209b994d1bac08f37f78e8e",
-//   calldata: [ "0xd3d12fb38fcc210966bcecd2ed83ba44b67e794209b994d1bac08f37f78e8e", "0x0" ],
-//   version:  1,
-// }
+const resp = await mySWO.request(type: "wallet_deploymentData");
+```
+#### On Wallet side :
+- The salt is most of the time the Public Key of the account.
+- The address can be calculated this way (if you deploy the account using the Universal Deployer Contract) :  
+```typescript
+const salt = stark.randomAddress();
+const addressDepl = hash.calculateContractAddressFromHash(ec.starkCurve.pedersen(account0.address, salt), classHash, constructor, constants.UDC.ADDRESS);
+```
+> [!IMPORTANT]
+> The way you calculate the address has to be in accordance with the way you will deploy it in Starknet.
+
+The wallet has to answer for example :
+```
+resp = {
+   address: "0x0111fb83be44a70468d51cfcf8bccd4190cf119e4b2f83530ea13b5d35b9849d",
+   class_hash: "0x03a5029a79d1849f58229e22f7f2b96bdd1dc8680e6cd5530a3122839f2ab878",
+   salt: ""0xd3d12fb38fcc210966bcecd2ed83ba44b67e794209b994d1bac08f37f78e8e",
+   calldata: [ "0xd3d12fb38fcc210966bcecd2ed83ba44b67e794209b994d1bac08f37f78e8e", "0x0" ],
+   version:  1,
+}
 ```
 
 ## wallet_addInvokeTransaction :
@@ -595,7 +621,7 @@ interface AddDeclareTransactionParameters {
   compiled_class_hash: string // The hash of the Cairo assembly resulting from the Sierra compilation
   contract_class: {
     sierra_program: string[] // The list of Sierra instructions of which the program consists
-    contract_class_version: string // The version of the contract class object. Currently, the Starknet OS supports version 0.1.0
+    contract_class_version: string // The version of the contract class object. Currently, the Starknet OS supports version "0.1.0"
     entry_points_by_type: { // Entry points by type
       CONSTRUCTOR: SIERRA_ENTRY_POINT[]
       EXTERNAL: SIERRA_ENTRY_POINT[]
@@ -618,8 +644,8 @@ response : interface AddDeclareTransactionResult {
 }
 ```
 ### Behavior :
--UI
-[](../Images/declare.png)
+-The wallet opens a window to ask if you agree to declare a new class.
+![](../Images/declare.png)
 - If the user approved the declaration in the wallet, the response type is `AddDeclareTransactionResult`.
 - If the user approved the declaration in the wallet, and if the class is already declared, the function throw an error :
 ```typescript
@@ -628,7 +654,7 @@ interface INVALID_REQUEST_PAYLOAD {
   message: 'An error occurred (INVALID_REQUEST_PAYLOAD)';
 }
 ```
-  same error if an error occurred in the network.
+Same error if an error occurred in the network.
 - If the user decline the proposal, the method fails with this error : 
 ```typescript
 interface USER_REFUSED_OP {
@@ -644,18 +670,58 @@ interface UNKNOWN_ERROR {
 }
 ```
 ### Example :
+#### On DAPP side : 
 ```typescript
-const myParams: AddDeclareTransactionParameters = {
-    compiled_class_hash: hash.computeCompiledClassHash(contractCasm),
-    contract_class: {
-        sierra_program: contractSierra.sierra_program,
-        contract_class_version: "0x01",
-        entry_points_by_type: contractSierra.entry_points_by_type,
-        abi:json.stringify(contractSierra.abi),
-    },
+const resp = await myWalletAccount.declare({
+  contract: sierraContract, 
+  casm: casmContract
+});
+```
+#### On Wallet side :
+- If you want to check if a class is already declared :
+```typescript
+const compiledContract: CompiledContract = {
+    sierra_program: myParams.contract_class.sierra_program,
+    entry_points_by_type: myParams.contract_class.entry_points_by_type,
+    contract_class_version: myParams.contract_class.contract_class_version,
+    abi: json.parse(myParams.contract_class.abi)
 }
-const resp = await myWallet.request(type: "wallet_addDeclareTransaction", params: myParams);
-// resp = {transaction_hash: "0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929", class_hash: "0x2bfd9564754d9b4a326da62b2f22b8fea7bbeffd62da4fcaea986c323b7aeb"}
+let isDeclared: boolean;
+try {
+    const classHash = myParams.class_hash
+        ?
+        myParams.class_hash
+        : 
+        hash.computeContractClassHash(compiledContract);
+    await myProvider.getClassByHash(classHash);
+    isDeclared = true;
+} catch { isDeclared = false }
+```
+- To declare the contract class with the incoming parameters :
+```typescript
+import { json } from "starknet";
+if (myParams.contract_class.contract_class_version != "0.1.0") {
+        throw new Error("Invalid contract version");
+    }
+    const payload: DeclareContractPayload = {
+        contract: compiledContract,
+        compiledClassHash: myParams.compiled_class_hash
+    }
+    const res = await account0.declare(payload);
+    // res type =
+    // {
+    //   transaction_hash: string,
+    //   class_hash: string
+    // }
+```
+> [!NOTE]
+> If the class is already declared, `account.declare()` will fail.
+
+The wallet has to answer for example :
+```
+ resp = {
+  transaction_hash: "0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929",
+  class_hash: "0x2bfd9564754d9b4a326da62b2f22b8fea7bbeffd62da4fcaea986c323b7aeb"}
 ```
 
 ## wallet_signTypedData : 

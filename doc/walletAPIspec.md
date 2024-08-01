@@ -443,7 +443,7 @@ interface AddDeclareTransactionParameters {
   compiled_class_hash: string // The hash of the Cairo assembly resulting from the Sierra compilation
   contract_class: {
     sierra_program: string[] // The list of Sierra instructions of which the program consists
-    contract_class_version: string // The version of the contract class object. Currently, the Starknet OS supports version 0.1.0
+    contract_class_version: string // The version of the contract class object. Currently, the Starknet OS supports version "0.1.0"
     entry_points_by_type: { // Entry points by type
       CONSTRUCTOR: SIERRA_ENTRY_POINT[]
       EXTERNAL: SIERRA_ENTRY_POINT[]

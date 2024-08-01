@@ -80,8 +80,8 @@ The wallet has to answer for example :
 resp = ["accounts"]
 ```
 ### DAPP authorization :
-First time the DAPP is performing a request to the current account of the Wallet, the UI is requesting a validation to connect the current account (of the current network) to this DAPP.
-![](../Images/ConnectDAPP.png)
+First time the DAPP is performing a request to the current account of the Wallet (all requests, except `wallet_getPermission`), the UI is requesting a validation to connect the current Wallet account (of the current Wallet network) to this DAPP.  
+![](../Images/ConnectDAPP.png)  
 Then the DAPP request is processed.
 
 ## wallet_requestAccounts :
@@ -136,7 +136,7 @@ response : boolean
 
 ![](../Images/addToken.png)
 > [!CAUTION]
->  Take care of the optional parameters ; for obvious safety reason, it's preferable to have these parameters recovered from the blockchain by the Wallet.
+>  Take care of the optional parameters ; for obvious safety reason, it's preferable to have these parameters recovered by the Wallet, from the blockchain.
 - If the address is not an ERC20, the method fails with this error : 
 ```typescript
 interface NOT_ERC20 {
@@ -180,7 +180,7 @@ const myAsset: WatchAssetParameters = {
 const resp = await myWalletAccount.watchAsset(myAsset);
 ```
 #### On Wallet side :
-It's recommended to not rely the optional parameters and to recover them from the Starknet network.
+It's recommended to not rely the optional parameters and to recover them from the Starknet network :
 ```typescript
 import { type Abi, Contract, RpcProvider } from "starknet";
 const myProvider = new RpcProvider({nodeUrl: nodeUrlOfCurrentNetwork});
@@ -205,7 +205,7 @@ The wallet has to answer for example :
 resp = true
 ```
 > [!NOTE]
-> It's a good practice if the Wallet includes in its UI a way to manage and remove tokens of the display list.
+> It's a good practice when the Wallet includes in its UI a way to manage and remove tokens of the display list.
   
 ## wallet_addStarknetChain :
 ### Usage :
@@ -216,15 +216,15 @@ interface AddStarknetChainParameters {
   id: string
   chain_id: string // A 0x-prefixed hexadecimal string, of encoded name
   chain_name: string
-  rpc_ urls?: string[]
+  rpc_urls?: string[]
   block_explorer_urls?: string[]
   native_currency?: {
     type: 'ERC20'; // The asset's interface, e.g. 'ERC20'
     options: {
-      address: string // A 0x-prefixed hexadecimal string
-      name?: string
-      symbol?: string // 2-6 characters long
-      decimals?: number
+      address: string // The hexadecimal Starknet address of the token contract
+      name?: string // The name of the token - not in spec
+      symbol?: string // A ticker symbol or shorthand, up to 5 alphanumerical characters
+      decimals?: number // The number of asset decimals
       image?: string // A string url of the token logo
     }
   } 
@@ -262,6 +262,7 @@ interface UNKNOWN_ERROR {
 }
 ```
 ### Example :
+#### On DAPP side :
 ```typescript
 const myChain: AddStarknetChainParameters = {
     id: "ZORG",
@@ -278,11 +279,49 @@ const myChain: AddStarknetChainParameters = {
         }
     }
 }
-const resp = await myWallet.request(type: "wallet_addStarknetChain", params: myChain);
-// resp = true
+const resp = await myWalletAccount.addStarknetChain(myChain);
+```
+#### On Wallet side :
+To verify that this request is describing an alive Starknet network :  
+```typescript
+const TIMEOUT = 4000;
+
+function wait(delay: number) { // ms
+    return new Promise((res) => {
+        setTimeout(res, delay);
+    });
+}
+async function testNode(url: string, idx: number): Promise<number | undefined> {
+    const provider = new RpcProvider({ nodeUrl: url });
+    try {
+        const chainId = await provider.getChainId();
+        if (chainId == newChain.chainId) {
+            return idx
+        }
+        await wait(TIMEOUT);
+        return undefined;
+    } catch {
+        await wait(TIMEOUT);
+        return undefined;
+    }
+};
+const urlNum: (number | undefined) = await Promise.any(newChain.rpcUrls.map((url: string, idx: number) => {
+    return testNode(url, idx);
+}));
+if (urlNum === undefined) {
+    console.log("Not connected.");
+} else {
+    console.log("Connected to url #", urlNum);
+}
+```
+
+As for `wallet_watchAsset`, it's recommended to recover the fee token data directly from the network. See [here](#on-wallet-side--2)  
+The wallet has to answer for example :
+```
+resp = true
 ```
 > [!NOTE]
-> It's a good practice if the Wallet includes in its UI a way to manage and remove networks of the list.
+> It's a good practice when the Wallet includes in its UI a way to manage and remove networks of the list.
  
 ## wallet_switchStarknetChain :
 ### Usage :
@@ -523,8 +562,7 @@ const resp = await account0.execute(calls,{
 const txReceipt = await myProvider.waitForTransaction(resp.transaction_hash);
 ```
 > [!TIP]
-> To obtain the transaction receipt, you have to wait about 12 seconds. At the price of extra requests to the node, you can reduce this delay to improve the user experience
-with this option :
+> To obtain the transaction receipt, you have to wait about 12 seconds. At the price of extra requests to the node, you can reduce this delay to improve the user experience, using this option :
 >  ```typescript
 >  const txReceipt = await myProvider.waitForTransaction(resp.transaction_hash, {retryInterval: 2000});
 >  // The node is queried each 2 seconds
@@ -660,7 +698,8 @@ interface StarknetDomain extends Record<string, unknown> {
 response : string[] // Signature. Standard signature is 2 felts, but depending of the wallet, response length can be different.
 ```
 ### Behavior :
-- If the user accepted to sign, the response type is the signature.
+- If the user accepted to sign, the response is a signature.  
+![](../Images/signMessage.png)  
 - If an error occurred in the network, fails with Error :
 ```typescript
 interface INVALID_REQUEST_PAYLOAD {

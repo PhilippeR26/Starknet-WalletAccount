@@ -906,9 +906,9 @@ interface API_VERSION_NOT_SUPPORTED {
 ```
 
 # Subscription to events :
-You can subscribe to 2 events : 
-- `accountsChanged` : Triggered each time you change the current account in the wallet.
-- `networkChanged` : Triggered each time you change the current network in the wallet.
+Users can subscribe to 2 events : 
+- `accountsChanged` : Triggered each time the current account in the wallet is changed.
+- `networkChanged` : Triggered each time the current network in the wallet is changed.
 
 At each change of network, both account and network events are occurring.  
 At each change of account, only the account event is occurring.  

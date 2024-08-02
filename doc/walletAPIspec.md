@@ -106,7 +106,7 @@ enum Permission {
 - If not authorized, the response is an empty array.
 ### Example :
 ```typescript
-const resp = await myWallet.request(type: "wallet_getPermissions");
+const resp = await myWallet.request({type: "wallet_getPermissions"});
 // resp = ["accounts"]
 ```
 
@@ -128,7 +128,7 @@ response : string[]
 - Optional silentMode : if true, the wallet will not show the wallet-unlock UI in case of a locked wallet, nor the dApp-approve UI in case of a non-allowed dApp.
 ### Example :
 ```typescript
-const resp = await myWallet.request(type: "wallet_requestAccounts");
+const resp = await myWallet.request({type: "wallet_requestAccounts"});
 // resp = ["0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929"]
 ```
   
@@ -194,7 +194,7 @@ const myAsset: WatchAssetParameters = {
       symbol: "xASTR"
   }
 }
-const resp = await myWallet.request(type: "wallet_watchAsset", params: myAsset);
+const resp = await myWallet.request({type: "wallet_watchAsset", params: myAsset});
 // resp = true
 ```
   
@@ -267,7 +267,7 @@ const myChain: AddStarknetChainParameters = {
         }
     }
 }
-const resp = await myWallet.request(type: "wallet_addStarknetChain", params: myChain);
+const resp = await myWallet.request(walletEvents);
 // resp = true
 ```
  
@@ -314,7 +314,7 @@ interface UNKNOWN_ERROR {
 const myChainId: SwitchStarknetChainParameters = {
     chainId: "0x534e5f5345504f4c4941" // SN_SEPOLIA
 }
-const resp = await myWallet.request(type: "wallet_switchStarknetChain", params: myChainId);
+const resp = await myWallet.request({type: "wallet_switchStarknetChain", params: myChainId});
 // resp = true
 ```
 
@@ -334,7 +334,7 @@ common chainId :
 - No errors possible for this method.
 ### Example :
 ```typescript
-const resp = await myWallet.request(type: "wallet_requestChainId");
+const resp = await myWallet.request({type: "wallet_requestChainId"});
 // resp = "0x534e5f5345504f4c4941"
 ```
 
@@ -365,7 +365,7 @@ interface ACCOUNT_ALREADY_DEPLOYED {
 ``` 
 ### Example :
 ```typescript
-const resp = await myWallet.request(type: "wallet_deploymentData");
+const resp = await myWallet.request({type: "wallet_deploymentData"});
 // resp = {
 //   address: "0x0111fb83be44a70468d51cfcf8bccd4190cf119e4b2f83530ea13b5d35b9849d",
 //   class_hash: "0x03a5029a79d1849f58229e22f7f2b96bdd1dc8680e6cd5530a3122839f2ab878",
@@ -430,7 +430,7 @@ const myCallAPI = {
   entry_point: myCall.entrypoint,
   calldata: myCall.calldata as Calldata
 };
-const resp = await myWallet.request(type: "wallet_addInvokeTransaction", params: [myCallAPI]);
+const resp = await myWallet.request({type: "wallet_addInvokeTransaction", params: [myCallAPI]});
 // resp = {transaction_hash: "0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929"}
 ```
 
@@ -500,7 +500,7 @@ const myParams: AddDeclareTransactionParameters = {
         abi:json.stringify(contractSierra.abi),
     },
 }
-const resp = await myWallet.request(type: "wallet_addDeclareTransaction", params: myParams);
+const resp = await myWallet.request({type: "wallet_addDeclareTransaction", params: myParams});
 // resp = {transaction_hash: "0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929", class_hash: "0x2bfd9564754d9b4a326da62b2f22b8fea7bbeffd62da4fcaea986c323b7aeb"}
 ```
 
@@ -612,7 +612,7 @@ const myTypedData: TypedData = {
       },
   }
 }
-const resp = await myWallet.request(type: "wallet_signTypedData", params: myTypedData);
+const resp = await myWallet.request({type: "wallet_signTypedData", params: myTypedData});
 // resp = ["0x490864293786342333657489548354947743460397232672997805795441858116745355019", "0x2855273948349341532300559537680769749551471477465497884530979636925080056604"]
 ```
 
@@ -629,7 +629,7 @@ response : string[]
 - The response is an array of strings. Each string is the version of a supported starknet API version. Includes only the 2 main digits, with the`.` as separator ; example : `0.7`.
 ### Example :
 ```typescript
-const resp = await myWallet.request(type: "wallet_supportedSpecs");
+const resp = await myWallet.request({type: "wallet_supportedSpecs"});
 // resp = ["0.6","0.7"]
 ```
 
@@ -646,7 +646,7 @@ response : string[]
 - The response is an array of strings. Each string is the version of a supported Wallet API version. Includes only the 2 main digits, with the `.` as separator ; example : `0.7`.
 ### Example :
 ```typescript
-const resp = await myWallet.request(type: "wallet_supportedWalletApi");
+const resp = await myWallet.request({type: "wallet_supportedWalletApi}");
 // resp = ["0.7","0.8"]
 ```
 
@@ -659,7 +659,7 @@ All entries of this Wallet API have an optional parameter to define the version 
 const myParams = {
   api_version: "0.7"
 }
-const resp = await myWallet.request(type: "wallet_requestChainId", params: myParams);
+const resp = await myWallet.request({type: "wallet_requestChainId", params: myParams});
 // resp = "0x534e5f5345504f4c4941"
 ```
 ## Error :<!-- omit from toc -->s

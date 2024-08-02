@@ -1,5 +1,5 @@
 import { Box, Button, Center, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure, forwardRef, Tooltip } from "@chakra-ui/react";
-import { CallData, GetBlockResponse, constants as SNconstants, TypedData, cairo, ec, encode, hash, json, shortString, stark, addAddressPadding, wallet, Contract, type Call, type Calldata, TypedDataRevision } from "starknet";
+import { CallData, GetBlockResponse, constants as SNconstants, TypedData, cairo, ec, encode, hash, json, shortString, stark, addAddressPadding, wallet, Contract, type Call, type Calldata, TypedDataRevision, typedData } from "starknet";
 import React, { useEffect, useState } from "react";
 
 import * as constants from "@/utils/constants";
@@ -254,7 +254,6 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
             chainId: SNconstants.StarknetChainId.SN_SEPOLIA,
             version: "1.0.2",
             revision: TypedDataRevision.ACTIVE,
-            // hashing_function:"pedersen" // or "poseidon" 
           },
           message: {
             MessageId: 345,
@@ -274,7 +273,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
                 Qty: "18.4569325643",
                 Unit: "ETH",
                 Token_address: "0x69b49c2cc8b16e80e86bfc5b0614a59aa8c9b601569c7b80dde04d3f3151b79",
-                Amount: 18456932564300000000n,
+                Amount: "0x100243260D270EB00",
               }
             },
             Comment1: "Monkey with banana, sunglasses,",
@@ -373,10 +372,6 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
                 name: "version",
                 type: "string",
               },
-              // {
-              //   name: "hashing_function",
-              //   type: "string",
-              // },
             ],
           },
         };
@@ -384,7 +379,11 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         if (myWallet) {
           let response: string = "";
           try {
-            const resp = (await wallet.signMessage(myWallet, myTypedData));
+            const addr=(await myWallet.request({type: "wallet_requestAccounts"}))[0];
+            const testH=typedData.getMessageHash(myTypedData,addr);
+            console.log({testH});
+            const resp = await wallet.signMessage(myWallet, myTypedData);
+            console.log("OK");
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message

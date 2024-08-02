@@ -726,7 +726,7 @@ The wallet has to answer for example :
 
 ## wallet_signTypedData : 
 ### Usage :
-Returns the signature of an EIP712 "like" message, made by the current account of the wallet. 
+Display and returns the signature of an EIP712 "like" message. 
 ### Input :
 ```typescript
 interface TypedData {
@@ -764,9 +764,14 @@ interface StarknetDomain extends Record<string, unknown> {
 response : string[] // Signature. Standard signature is 2 felts, but depending of the wallet, response length can be different.
 ```
 ### Behavior :
-- If the user accepted to sign, the response is a signature.  
+See [SNIP-12](https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-12.md) if you want to see the detailed specification.  
+> [!NOTE]
+> There are 2 formats of message to handle :
+> - TypedDataRevision.LEGACY (with `StarkNetDomain` and Pedersen hash)
+> - TypedDataRevision.ACTIVE (with `StarknetDomain` and Poseidon hash)
+- The UI is showing the message in a manner the user can easily understand it, with a complete understanding of what he has to accept. If he accept to sign it, the response is a signature.  
 ![](../Images/signMessage.png)  
-- If an error occurred in the network, fails with Error :
+- If an error is identified in the message format, the method fails with this error :
 ```typescript
 interface INVALID_REQUEST_PAYLOAD {
   code: 114;
@@ -788,54 +793,50 @@ interface UNKNOWN_ERROR {
 }
 ```
 ### Example :
+#### On DAPP side : 
 ```typescript
 const myTypedData: TypedData = {
-      types: {
-          StarkNetDomain: [
+          domain: {
+            name: "Example DApp", 
+            chainId: SNconstants.StarknetChainId.SN_SEPOLIA,
+            // chainId: '0x534e5f5345504f4c4941',
+            version: "0.0.3",
+            revision: TypedDataRevision.ACTIVE
+          },
+          types: {
+            StarknetDomain: [
               { name: "name", type: "string" },
+              { name: "chainId", type: "felt" },
               { name: "version", type: "string" },
-              { name: "chainId", type: "string" },
-          ],
-          Airdrop: [
-              { name: "address", type: "string" },
-              { name: "amount", type: "string" }
-          ],
-          Validate: [
-              { name: "id", type: "string" },
-              { name: "from", type: "string" },
-              { name: "amount", type: "string" },
-              { name: "nameGamer", type: "string" },
-              { name: "endDate", type: "string" },
-              { name: "itemsAuthorized", type: "string*" }, // array of string
-              { name: "chkFunction", type: "selector" }, // name of function
-              { name: "rootList", type: "merkletree", contains: "Airdrop" } // root of a merkle tree
-          ]
-      },
-      primaryType: "Validate",
-      domain: {
-          name: "myDapp", 
-          version: "1",
-          chainId: shortString.encodeShortString("SN_GOERLI"), 
-      message: {
-          id: "0x0000004f000f",
-          from: "0x2c94f628d125cd0e86eaefea735ba24c262b9a441728f63e5776661829a4066",
-          amount: "400",
-          nameGamer: "Hector26",
-          endDate: "0x27d32a3033df4277caa9e9396100b7ca8c66a4ef8ea5f6765b91a7c17f0109c",
-          itemsAuthorized: ["0x01", "0x03", "0x0a", "0x0e"],
-          chkFunction: "check_authorization",
-          rootList: [
-              {
-                  address: "0x69b49c2cc8b16e80e86bfc5b0614a59aa8c9b601569c7b80dde04d3f3151b79",
-                  amount: "1554785",
-              }
-          ]
-      },
-  }
-}
-const resp = await myWallet.request(type: "wallet_signTypedData", params: myTypedData);
-// resp = ["0x490864293786342333657489548354947743460397232672997805795441858116745355019", "0x2855273948349341532300559537680769749551471477465497884530979636925080056604"]
+              { name: "revision", type: "string" },
+            ],
+            Message: [{ name: "message", type: "felt" }],
+          },
+          primaryType: "Message",
+          message: {
+            message: "1234",
+          },
+        };
+const resp = await myWalletAccount.signMessage(myTypedData);
 ```
+#### On Wallet side :
+- To hash a SNIP-12 message :
+```typescript
+const msgHash = typedData.getMessageHash(myTypedData, account0.address);
+// or
+const msgHash=await myAccount.hashMessage(myTypedData);
+```
+- To hash & sign a SNIP-12 message :
+```typescript
+const resultSignature: Signature = await account.signMessage(typedDataValidate) as WeierstrassSignatureType;
+```
+The wallet has to answer for example :
+```
+resp = ["0x490864293786342333657489548354947743460397232672997805795441858116745355019", "0x2855273948349341532300559537680769749551471477465497884530979636925080056604"]
+```
+> [!NOTE]
+> The message can be more complex than the above basic example, with nested objects. An example of complex message is available [here](https://github.com/PhilippeR26/starknet.js-workshop-typescript/blob/72c3452716faabfefd2afe3d42b929985a6365e4/src/scripts/signature/4c.signSnip12vActive.ts#L20-L151). How this message should be displayed :  
+> ![](../Images/signatureNestedMessage.png)
 
 ## wallet_supportedSpecs :
 ### Usage :

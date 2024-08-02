@@ -1,11 +1,11 @@
 import { Box, Button, Center, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure, forwardRef, Tooltip } from "@chakra-ui/react";
-import { CallData, GetBlockResponse, constants as SNconstants, TypedData, cairo, ec, encode, hash, json, shortString, stark, addAddressPadding, wallet, Contract, type Call, type Calldata } from "starknet";
+import { CallData, GetBlockResponse, constants as SNconstants, TypedData, cairo, ec, encode, hash, json, shortString, stark, addAddressPadding, wallet, Contract, type Call, type Calldata, TypedDataRevision } from "starknet";
 import React, { useEffect, useState } from "react";
 
 import * as constants from "@/utils/constants";
 import { RejectContractAddress } from "@/utils/constants";
 import { useStoreWallet } from "../../Wallet/walletContext";
-import {WALLET_API } from "@starknet-io/types-js";
+import { WALLET_API } from "@starknet-io/types-js";
 
 import { rejectAbi } from "../../../contracts/abis/rejectAbi";
 import { getHelloTestSierra } from "@/app/contracts/declareHelloTestSierra";
@@ -247,27 +247,140 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
       }
 
       case constants.CommandWallet.starknet_signTypedData: {
-        const myTypedData: TypedData = {
+        const myTypedData: TypedData =
+        {
           domain: {
-            name: "Example DApp", 
+            name: "Dappland",
             chainId: SNconstants.StarknetChainId.SN_SEPOLIA,
-            // chainId: '0x534e5f5345504f4c4941',
-            version: "0.0.3",
+            version: "1.0.2",
+            revision: TypedDataRevision.ACTIVE,
+            // hashing_function:"pedersen" // or "poseidon" 
           },
-          types: {
-            StarkNetDomain: [
-              { name: "name", type: "string" },
-              { name: "chainId", type: "felt" },
-              { name: "version", type: "string" },
-            ],
-            Message: [{ name: "message", type: "felt" }],
-          },
-          primaryType: "Message",
           message: {
-            message: "1234",
+            MessageId: 345,
+            From: {
+              Name: "Edmund",
+              Address: "0x7e00d496e324876bbc8531f2d9a82bf154d1a04a50218ee74cdd372f75a551a",
+            },
+            To: {
+              Name: "Alice",
+              Address: "0x69b49c2cc8b16e80e86bfc5b0614a59aa8c9b601569c7b80dde04d3f3151b79",
+            },
+            Nft_to_transfer: {
+              Collection: "Stupid monkeys",
+              Address: "0x69b49c2cc8b16e80e86bfc5b0614a59aa8c9b601569c7b80dde04d3f3151b79",
+              Nft_id: 112,
+              Negotiated_for: {
+                Qty: "18.4569325643",
+                Unit: "ETH",
+                Token_address: "0x69b49c2cc8b16e80e86bfc5b0614a59aa8c9b601569c7b80dde04d3f3151b79",
+                Amount: 18456932564300000000n,
+              }
+            },
+            Comment1: "Monkey with banana, sunglasses,",
+            Comment2: "and red hat.",
+            Comment3: "",
           },
+          primaryType: "TransferERC721",
+          types: {
+            Account1: [
+              {
+                name: "Name",
+                type: "string",
+              },
+              {
+                name: "Address",
+                type: "felt",
+              },
+            ],
+            Nft: [
+              {
+                name: "Collection",
+                type: "string",
+              },
+              {
+                name: "Address",
+                type: "felt",
+              },
+              {
+                name: "Nft_id",
+                type: "felt",
+              },
+              {
+                name: "Negotiated_for",
+                type: "Transaction",
+              },
+            ],
+            Transaction: [
+              {
+                name: "Qty",
+                type: "string",
+              },
+              {
+                name: "Unit",
+                type: "string",
+              },
+              {
+                name: "Token_address",
+                type: "felt",
+              },
+              {
+                name: "Amount",
+                type: "felt",
+              },
+            ],
+            TransferERC721: [
+              {
+                name: "MessageId",
+                type: "felt",
+              },
+              {
+                name: "From",
+                type: "Account1",
+              },
+              {
+                name: "To",
+                type: "Account1",
+              },
+              {
+                name: "Nft_to_transfer",
+                type: "Nft",
+              },
+              {
+                name: "Comment1",
+                type: "string",
+              },
+              {
+                name: "Comment2",
+                type: "string",
+              },
+              {
+                name: "Comment3",
+                type: "string",
+              },
 
+            ],
+            StarknetDomain: [
+              {
+                name: "name",
+                type: "string",
+              },
+              {
+                name: "chainId",
+                type: "felt",
+              },
+              {
+                name: "version",
+                type: "string",
+              },
+              // {
+              //   name: "hashing_function",
+              //   type: "string",
+              // },
+            ],
+          },
         };
+
         if (myWallet) {
           let response: string = "";
           try {

@@ -359,7 +359,7 @@ Provides the data that will be used by the wallet to deploy an existing account 
 - If the current account is already deployed, the method fails with this error : 
 ```typescript
 interface ACCOUNT_ALREADY_DEPLOYED {
-  code: TBD;
+  code: 115;
   message: 'An error occurred (ACCOUNT_ALREADY_DEPLOYED)';
 }
 ``` 

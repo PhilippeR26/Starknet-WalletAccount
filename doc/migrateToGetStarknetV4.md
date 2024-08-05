@@ -23,10 +23,10 @@ This document is explaining how Starknet browser wallet teams have to modify the
 - [Subscription to events :](#subscription-to-events-)
 
 # SWO V4 (Starknet Window Object) :
-The Wallet has still to create a new object called SWO (Starknet Window Object), implemented into the global `window` object (representing the browser's window). The SWO name has still to start with `starknet` and should not use a name already implemented by the other wallets.   
+The Wallet has still to create a new object called SWO (Starknet Window Object), and to implement it into the global `window` object (representing the browser's window). The SWO name has still to start with `starknet` and should not use a name already implemented by the other wallets.   
 Example of existing names : `starknet_bitkeep`, `starknet_okxwallet`, `starknet_braavos`, `starknet_argentx`.
 
-The content of this object is deeply modified ; it contains no more any Account or Provider objects ; most of the interactions are now handled by the `request` property. The SWO has to be conform to the `StarknetWindowObject` interface, defined in https://github.com/starknet-io/types-js/blob/main/src/wallet-api/StarknetWindowObject.ts
+The content of this SWO object is deeply modified ; it contains no more any Account or Provider objects ; most of the interactions are now handled by the `request` property. The SWO has to be conform to the `StarknetWindowObject` interface, defined in https://github.com/starknet-io/types-js/blob/main/src/wallet-api/StarknetWindowObject.ts
 
 > [!NOTE]
 > On Wallet side, the library get-starknet is not necessary ; only the SWO interface from the `types-js` library is needed.
@@ -42,13 +42,16 @@ These keys are :
 
 # DAPP connection to the wallet :
 Using the get-starknet v4 library, the DAPP will search all the Starknet wallets implemented in the browser, and will ask to the user to select one of them.  
-All readings of Starknet requested by the DAPP are now fully performed outside of the Wallet, but this one is of course still involved in all write operations. This sharing is handled by the `WalletAccount` class, in the Starknet.js library (documentation [here](https://www.starknetjs.com/docs/next/guides/walletaccount/)).  
+All readings of Starknet requested by the DAPP are now fully performed outside of the Wallet, but it's of course still involved in all write operations. This sharing is handled by the `WalletAccount` class, in the Starknet.js library (documentation [here](https://www.starknetjs.com/docs/next/guides/walletaccount/)).  
 ![](../Images/architecture.png)  
+
+> [!TIP]
+> The current stable version of Starknet.js is v6.11.0.
 
 # Available commands : 
 The `request` property of the SWO is now the main channel of communication. The WalletAccount class of Starknet.js will use this channel to work with the Wallet.  
-Let's see all the entrypoints that a Wallet will have to process (listed in the official Wallet API spec available [here](https://github.com/starkware-libs/starknet-specs/blob/master/wallet-api/wallet_rpc.json)).  
-All types shown hereunder are available [here](https://github.com/starknet-io/types-js/blob/main/src/wallet-api/components.ts).  
+Let's see all `request` the entrypoints that a Wallet will have to process (listed in the official Wallet API spec available [here](https://github.com/starkware-libs/starknet-specs/blob/master/wallet-api/wallet_rpc.json)).  
+All Types shown hereunder are available [here](https://github.com/starknet-io/types-js/blob/main/src/wallet-api/components.ts).  
 You can test each entrypoint of your Wallet with this test DAPP : https://starknet-wallet-account.vercel.app/
 ![](../Images/Api.png)
 
@@ -66,7 +69,7 @@ enum Permission {
 }
 ```
 ### Behavior :
-- If authorized, returns an array of strings. The first item content is  `accounts` (equal to `Permission.Accounts` enum).
+- If authorized, returns an array of strings. The first item content is the string `accounts` (equal to `Permission.Accounts` enum).
 - If not authorized, the response is an empty array.
 - This command is silent on Wallet side. No display on UI.
 ### Example :
@@ -80,7 +83,7 @@ The wallet has to answer for example :
 resp = ["accounts"]
 ```
 ### DAPP authorization :
-First time the DAPP is performing a request to the current account of the Wallet (all requests, except `wallet_getPermission`), the UI is requesting a validation to connect the current Wallet account (of the current Wallet network) to this DAPP.  
+First time the DAPP is performing a request to the current account of the Wallet (all requests, except `wallet_getPermission`), the UI is requesting a validation to connect the current Wallet account to this DAPP.  
 ![](../Images/ConnectDAPP.png)  
 Then the DAPP request is processed.
 
@@ -99,6 +102,7 @@ response : string[]
 ```
 ### Behavior :
 - Returns an array of hex string ; the first element contains the account address.
+- The address is an hex string coded on 64 characters.
 - Optional silentMode : if true, the wallet will not show the wallet-unlock UI in case of a locked wallet, nor the dApp-approve UI in case of a non-allowed dApp.
 ### Example :
 #### On DAPP side : 
@@ -236,7 +240,7 @@ interface AddStarknetChainParameters {
 response : boolean
 ```
 ### Behavior :
-- Starknet is implemented in 2 networks : Mainnet (SN_MAINNET) & Testnet (SN_SEPOLIA). Nevertheless, some Devnets, or some layer 3 networks, used by DAPPs, have to be accessed by the Wallet.
+- Starknet is implemented in 2 networks : Mainnet (SN_MAINNET) & Testnet (SN_SEPOLIA). Nevertheless, some Devnets, private networks or layer 3 networks, have to be accessed by the Wallet.
 - The wallet opens a window to ask if the user agree to add this network in the wallet. If agreed, returns `true`. 
 
 ![](../Images/addNetwork.png)
@@ -398,6 +402,11 @@ main chainIds :
 const resp = await myWalletAccount.getChainId();
 ```
 #### On Wallet side :
+A chainId can be calculated with 
+```typescript
+const chainId = shortString.encodeShortString("NEW_CHAIN")
+```
+
 The wallet has to answer for example :
 ```
 resp = "0x534e5f5345504f4c4941"
@@ -416,7 +425,7 @@ response : interface AccountDeploymentData {
   salt: string // The salt used for the computation of the account address
   calldata: string[] // An array of felts
   sigdata?: string[] // An optional array of felts to be added in the signature
-  version: 0 | 1 // Cairo version (an integer)
+  version: 0 | 1 // Cairo version of the contract of the account (an integer)
 }
 ```
 ### Behavior :
@@ -424,7 +433,7 @@ Provides the data that will be used by the wallet to deploy an existing account 
 - If the current account is already deployed, the method fails with this error : 
 ```typescript
 interface ACCOUNT_ALREADY_DEPLOYED {
-  code: TBD;
+  code: 115;
   message: 'An error occurred (ACCOUNT_ALREADY_DEPLOYED)';
 }
 ``` 
@@ -437,11 +446,11 @@ const resp = await mySWO.request(type: "wallet_deploymentData");
 - The salt is most of the time the Public Key of the account.
 - The address can be calculated this way (if you deploy the account using the Universal Deployer Contract) :  
 ```typescript
-const salt = stark.randomAddress();
-const addressDepl = hash.calculateContractAddressFromHash(ec.starkCurve.pedersen(account0.address, salt), classHash, constructor, constants.UDC.ADDRESS);
+const salt = ec.starkCurve.getStarkKey(privateKeyC20);
+const addressDepl = hash.calculateContractAddressFromHash(ec.starkCurve.pedersen(deployerAccount.address, salt), classHash, constructor, constants.UDC.ADDRESS);
 ```
 > [!IMPORTANT]
-> The way you calculate the address has to be in accordance with the way you will deploy it in Starknet.
+> Several ways to deploy an account are existing. The way you calculate the address has to be in accordance with the way you will deploy it in Starknet.
 
 The wallet has to answer for example :
 ```
@@ -476,7 +485,7 @@ response : interface AddInvokeTransactionResult {
 ```
 ### Behavior :
 - Using its UI, the wallet ask to the user to validate or reject the transaction(s).  
-- It's the responsibility of the wallet to ask to the user which token he wants to use to pay the fees (it can't be handled on the user DAPP side, as there isn't any such parameter in `wallet_addInvokeTransaction`).  
+- It's the responsibility of the wallet to ask to the user which token he wants to use to pay the fees (it can't be handled on the user DAPP side, as there isn't any such parameter in `wallet_addInvokeTransaction` entrypoint).  
 - The wallet should also display the estimated fees of the transaction(s).
  
 Example of UI:  
@@ -594,7 +603,7 @@ const txReceipt = await myProvider.waitForTransaction(resp.transaction_hash);
 >  // The node is queried each 2 seconds
 >  ```
 
-The transaction receipt will provide several results of the processing of the transaction(s), in particular if it succeed :
+The transaction receipt will provide results of the processing of the transaction(s), in particular if it succeed :
 ```typescript
 txReceipt.match({
   success: (txR: SuccessfulTransactionReceiptResponse) => {
@@ -698,6 +707,7 @@ try {
 } catch { isDeclared = false }
 ```
 - To declare the contract class with the incoming parameters :
+  To increase the estimated fees is similar to `wallet_addInvokeTransaction` ; see [here](#on-wallet-side--7)
 ```typescript
 import { json } from "starknet";
 if (myParams.contract_class.contract_class_version != "0.1.0") {
@@ -707,12 +717,13 @@ if (myParams.contract_class.contract_class_version != "0.1.0") {
         contract: compiledContract,
         compiledClassHash: myParams.compiled_class_hash
     }
-    const res = await account0.declare(payload);
-    // res type =
-    // {
-    //   transaction_hash: string,
-    //   class_hash: string
-    // }
+    const fees = await account0.estimateDeclareFee(payload, {version: 2}); 
+    // or
+    const fees = await account0.estimateDeclareFee(payload, {version: 3}); 
+    // increase fees here if necessary
+    const res = await account0.declare(payload, {version: 2, maxFee: increasedFees});
+    //or 
+    const res = await account0.declare(payload, {version: 3, resourceBounds: increasedFeesV3});
 ```
 > [!NOTE]
 > If the class is already declared, `account.declare()` will fail.
@@ -824,7 +835,7 @@ const resp = await myWalletAccount.signMessage(myTypedData);
 ```typescript
 const msgHash = typedData.getMessageHash(myTypedData, account0.address);
 // or
-const msgHash=await myAccount.hashMessage(myTypedData);
+const msgHash=await account0.hashMessage(myTypedData);
 ```
 - To hash & sign a SNIP-12 message :
 ```typescript
@@ -856,6 +867,10 @@ response : string[]
 const resp = await myWallet.request(type: "wallet_supportedSpecs");
 ```
 #### On Wallet side :
+The provider can be queried to have its rpc spec version :
+```typescript
+const version = await myProvider.getSpecVersion();
+```
 The wallet has to answer for example :
 ```
 resp = ["0.6","0.7"]
@@ -897,7 +912,7 @@ const resp = await myWallet.request(type: "wallet_requestChainId", params: myPar
 // resp = "0x534e5f5345504f4c4941"
 ```
 ## Error :<!-- omit from toc -->
-In case of version not supported by the Wallet, an Error is returned : 
+In case of version not supported by the Wallet, the Wallet has to return an Error : 
 ```typescript
 interface API_VERSION_NOT_SUPPORTED {
   code: 162;
@@ -907,11 +922,13 @@ interface API_VERSION_NOT_SUPPORTED {
 
 # Subscription to events :
 Users can subscribe to 2 events : 
-- `accountsChanged` : Triggered each time the current account in the wallet is changed.
-- `networkChanged` : Triggered each time the current network in the wallet is changed.
+- `accountsChanged` : Triggered by the wallet each time the current account in the wallet is changed.
+- `networkChanged` : Triggered by the wallet each time the current network in the wallet is changed.
 
-At each change of network, both account and network events are occurring.  
-At each change of account, only the account event is occurring.  
+At each change of network, both account and network events are triggered by the wallet.  
+At each change of account, only the account event is triggered by the wallet.  
+All Types about events are [here](https://github.com/starknet-io/types-js/blob/main/src/wallet-api/events.ts).  
+The wallet has to create a code that allow the user to perform such things : 
 
 ### Subscription :  
 #### accountsChanged :

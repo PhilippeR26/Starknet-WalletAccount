@@ -1,9 +1,16 @@
 # Migrate Get-Starknet v3->v4 <!-- omit from toc -->
 **Documentation for wallet teams**
 
-> version : v1.0.0 29/jul/2024. 
+> version : v1.1.0 19/aug/2024.  
+> version : v1.0.0 29/jul/2024.  
 
-This document is explaining how Starknet browser wallet teams have to modify their code to migrate from Get-Starknet v3 to v4.
+This document is explaining how Starknet browser wallet teams have to modify their code to migrate from Get-Starknet v3 to v4. A chapter is also explaining basic concepts for teams onboarding directly in V4.
+- [From get-starknet v3 to v4 :](#from-get-starknet-v3-to-v4-)
+- [Onboarding with get-starknet V4 :](#onboarding-with-get-starknet-v4-)
+  - [Starknet :](#starknet-)
+  - [Starknet.js :](#starknetjs-)
+  - [RpcProvider :](#rpcprovider-)
+  - [Account Contract :](#account-contract-)
 - [SWO V4 (Starknet Window Object) :](#swo-v4-starknet-window-object-)
 - [DAPP connection to the wallet :](#dapp-connection-to-the-wallet-)
 - [Available commands :](#available-commands-)
@@ -21,6 +28,32 @@ This document is explaining how Starknet browser wallet teams have to modify the
   - [wallet\_supportedWalletApi :](#wallet_supportedwalletapi-)
 - [Wallet API version :](#wallet-api-version-)
 - [Subscription to events :](#subscription-to-events-)
+
+# From get-starknet v3 to v4 :
+As you will discover hereunder, the Starknet Window Object (SWO) is still there, but it includes no more any Provider or Account. The already existing `.request()` method is still there, and nearly everything is now processed through it. The handling of events has not changed, and is still managed with the methods `.on()` & .`off()`.
+
+# Onboarding with get-starknet V4 :
+This documentation is mainly focused on migration from existing wallets using get-Starknet v3, but it can also be used by all new teams that wants to implement Starknet directly with get-Starknet v4.
+
+Nevertheless, some preliminary concepts have to be assimilated :
+## Starknet :
+As Starknet network is not EVM compatible, some new concepts have to be understood prior of coding. Read the official Starknet documentation https://docs.starknet.io/, especially the Architecture chapter.
+
+## Starknet.js :
+The SDK to use to communicate with Starknet is the npm library `starknet`. Even if `ethers` library users will recognize many known concepts in Starknet.js, it's important to read the official documentation : https://www.starknetjs.com/, particularly the [guides](https://www.starknetjs.com/docs/next/guides/intro).
+
+##  RpcProvider :
+There are 2 Starknet networks :
+- Starknet Mainnet (linked to L1 Ethereum Mainnet)
+- Starknet Testnet (linked to L1 Sepolia Testnet)
+
+All the interactions to perform with a Starknet network have to be processed through a RpcProvider.
+
+Read this [guide](https://www.starknetjs.com/docs/next/guides/connect_network) to connect a RpcProvider. 
+
+## Account Contract :
+In Starknet, everything is a contract, including the accounts. Contracts are deployed as children of a class. So, you have to select an account class (or create your own class) for your wallet.  
+Read this [guide](https://www.starknetjs.com/docs/next/guides/create_account) to create a Starknet account.
 
 # SWO V4 (Starknet Window Object) :
 The Wallet has still to create a new object called SWO (Starknet Window Object), and to implement it into the global `window` object (representing the browser's window). The SWO name has still to start with `starknet` and should not use a name already implemented by the other wallets.   

@@ -1,6 +1,7 @@
 # Migrate Get-Starknet v3->v4 <!-- omit from toc -->
 **Documentation for wallet teams**
 
+> version : v1.1.1 29/aug/2024.  
 > version : v1.1.0 19/aug/2024.  
 > version : v1.0.0 29/jul/2024.  
 
@@ -56,7 +57,7 @@ In Starknet, everything is a contract, including the accounts. Contracts are dep
 Read this [guide](https://www.starknetjs.com/docs/next/guides/create_account) to create a Starknet account.
 
 # SWO V4 (Starknet Window Object) :
-The Wallet has still to create a new object called SWO (Starknet Window Object), and to implement it into the global `window` object (representing the browser's window). The SWO name has still to start with `starknet` and should not use a name already implemented by the other wallets.   
+The Wallet has still to create a new object called SWO (Starknet Window Object), and to implement it into the global `window` object (representing the browser's). The SWO name has still to start with `starknet` and should not use a name already implemented by the other wallets.   
 Example of existing names : `starknet_bitkeep`, `starknet_okxwallet`, `starknet_braavos`, `starknet_argentx`.
 
 The content of this SWO object is deeply modified ; it contains no more any Account or Provider objects ; most of the interactions are now handled by the `request` property. The SWO has to be conform to the `StarknetWindowObject` interface, defined in https://github.com/starknet-io/types-js/blob/main/src/wallet-api/StarknetWindowObject.ts
@@ -83,10 +84,15 @@ All readings of Starknet requested by the DAPP are now fully performed outside o
 
 # Available commands : 
 The `request` property of the SWO is now the main channel of communication. The WalletAccount class of Starknet.js will use this channel to work with the Wallet.  
-Let's see all `request` the entrypoints that a Wallet will have to process (listed in the official Wallet API spec available [here](https://github.com/starkware-libs/starknet-specs/blob/master/wallet-api/wallet_rpc.json)).  
+Let's see all `request` entrypoints that a Wallet will have to process (listed in the official Wallet API spec available [here](https://github.com/starkware-libs/starknet-specs/blob/master/wallet-api/wallet_rpc.json)).  
 All Types shown hereunder are available [here](https://github.com/starknet-io/types-js/blob/main/src/wallet-api/components.ts).  
 You can test each entrypoint of your Wallet with this test DAPP : https://starknet-wallet-account.vercel.app/
 ![](../Images/Api.png)
+
+For non silent commands : 
+- If the Wallet is locked, the Wallet will first ask to unlock the UI.
+- Then, if the DAPP is not connected, the Wallet will ask the authorization to connect the DAPP.
+- Finally the command is processed.
 
 ## wallet_getPermissions :
 ### Usage :
@@ -103,7 +109,8 @@ enum Permission {
 ```
 ### Behavior :
 - If authorized, returns an array of strings. The first item content is the string `accounts` (equal to `Permission.Accounts` enum).
-- If not authorized, the response is an empty array.
+- If the DAPP is not authorized for the current Wallet account, the response is an empty array.
+- If the Wallet is locked, the response is also an empty array.
 - This command is silent on Wallet side. No display on UI.
 ### Example :
 #### On DAPP side : 
@@ -134,9 +141,9 @@ interface RequestAccountsParameters {
 response : string[]
 ```
 ### Behavior :
-- Returns an array of hex string ; the first element contains the account address.
-- The address is an hex string coded on 64 characters.
-- Optional silentMode : if true, the wallet will not show the wallet-unlock UI in case of a locked wallet, nor the dApp-approve UI in case of a non-allowed dApp.
+- Returns an array of hex strings ; just use the first element.
+- Default optional silentMode : false -> if the Wallet is locked, or if the DAPP is not connected, the Wallet will ask to the user to unlock the Wallet or/and connect the DAPP to the current account. If the user rejects these requests, the answer is an empty array.
+- Optional silentMode : if true, the wallet will not show the wallet-unlock UI in case of a locked wallet, nor the dApp-connect UI in case of a non-connected dApp. If the Wallet is unlocked and the DAPP connected, the response is the array of strings ; otherwise, the response is an empty array.
 ### Example :
 #### On DAPP side : 
 ```typescript

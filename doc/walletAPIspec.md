@@ -103,7 +103,9 @@ enum Permission {
 ```
 ### Behavior :
 - If authorized, returns an array of strings. The first item content is  `accounts` (equal to `Permission.Accounts` enum).
-- If not authorized, the response is an empty array.
+- If the DAPP is not authorized for the current Wallet account, the response is an empty array.
+- If the Wallet is locked, the response is also an empty array.
+- This command is silent on Wallet side. No display on UI.
 ### Example :
 ```typescript
 const resp = await myWallet.request({type: "wallet_getPermissions"});
@@ -124,8 +126,9 @@ interface RequestAccountsParameters {
 response : string[]
 ```
 ### Behavior :
-- Returns an array of hex string ; just use the first element.
-- Optional silentMode : if true, the wallet will not show the wallet-unlock UI in case of a locked wallet, nor the dApp-approve UI in case of a non-allowed dApp.
+- Returns an array of hex strings ; just use the first element.
+- Default optional silentMode : false -> if the Wallet is locked, or if the DAPP is not connected, the Wallet will ask to the user to unlock the Wallet or/and connect the DAPP to the current account. If the user rejects these requests, the answer is an empty array.
+- Optional silentMode : if true, the wallet will not show the wallet-unlock UI in case of a locked wallet, nor the dApp-connect UI in case of a non-connected dApp. If the Wallet is unlocked and the DAPP connected, the response is the array of strings ; otherwise, the response is an empty array.
 ### Example :
 ```typescript
 const resp = await myWallet.request({type: "wallet_requestAccounts"});

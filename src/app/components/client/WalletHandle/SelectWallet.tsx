@@ -8,6 +8,7 @@ import { useState } from "react";
 import { WalletAccount, wallet, validateAndParseAddress, constants as SNconstants } from "starknet";
 import { WALLET_API } from "@starknet-io/types-js";
 import { compatibleApiVersions, myFrontendProviders } from "@/utils/constants";
+import { wait } from "@/utils/utils";
 
 // export interface StarknetWalletProvider extends StarknetWindowObject {}
 type ValidWallet = {
@@ -84,9 +85,20 @@ export default function SelectWallet() {
     const handleSelectedWallet = async (selectedWallet: WALLET_API.StarknetWindowObject) => {
         console.log("Trying to connect wallet=", selectedWallet);
         setMyWallet(selectedWallet); // zustand
-        setMyWalletAccount(new WalletAccount(myFrontendProviders[2], selectedWallet));
+        console.log("wait before start getPermissions0");
+        await wait(5000);
+        console.log("go3");
+        const aze= await wallet.getPermissions(selectedWallet);
+        console.log("requestAccounts=",aze);
 
-        const result = await wallet.requestAccounts(selectedWallet);
+        console.log("wait before start handleSelectedWallet");
+        await wait(5000);
+        console.log("go0");
+        setMyWalletAccount(new WalletAccount(myFrontendProviders[2], selectedWallet));
+        console.log("wait before .requestAccounts");
+        await wait(5000);
+        console.log("go1");
+        const result = await wallet.requestAccounts(selectedWallet,false);
         if (typeof (result) == "string") {
             console.log("This Wallet is not compatible.");
             setSelectWalletUI(false);
@@ -97,8 +109,13 @@ export default function SelectWallet() {
             const addr = validateAndParseAddress(result[0]);
             setAddressAccount(addr); // zustand
         }
+        console.log("wait before .getPermissions");
+        await wait(5000);
         const isConnectedWallet: boolean = await wallet.getPermissions(selectedWallet).then((res: any) => (res as WALLET_API.Permission[]).includes( WALLET_API.Permission.ACCOUNTS));
         setConnected(isConnectedWallet); // zustand
+        console.log("wait before .requestChainId");
+        await wait(5000);
+        console.log("go2");
         if (isConnectedWallet) {
             const chainId = (await wallet.requestChainId(selectedWallet)) as string;
             setChain(chainId);

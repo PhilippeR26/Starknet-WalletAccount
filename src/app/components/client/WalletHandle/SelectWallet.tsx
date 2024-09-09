@@ -9,6 +9,16 @@ import { WalletAccount, wallet, validateAndParseAddress, constants as SNconstant
 import { WALLET_API } from "@starknet-io/types-js";
 import { compatibleApiVersions, myFrontendProviders } from "@/utils/constants";
 import { wait } from "@/utils/utils";
+import sn, {
+    type BrowserStoreVersion,
+    type DisconnectOptions,
+    type GetWalletOptions,
+    type OperatingSystemStoreVersion,
+    type RequestAccountsParameters,
+    type StarknetWindowObject,
+    type WalletProvider,
+  } from "@starknet-io/get-starknet-core"
+  import Bowser from "bowser"
 
 // export interface StarknetWalletProvider extends StarknetWindowObject {}
 type ValidWallet = {
@@ -16,25 +26,72 @@ type ValidWallet = {
     isValid: boolean;
 }
 
+interface WalletProviderWithStoreVersion
+  extends Omit<WalletProvider, "downloads"> {
+  download: string
+}
+
+const ssrSafeWindow = typeof window !== "undefined" ? window : null
+
 export async function scanObjectForWalletsCustom(
     obj: Record<string, any>, // Browser window object
     isWalletObject: (wallet: any) => boolean,
 ): Promise<ValidWallet[]> {
-    const AllObjectsNames: string[] = Object.getOwnPropertyNames(obj); // names of objects of level -1 of window
-    const listNames: string[] = AllObjectsNames.filter((name: string) =>
-        name.startsWith("starknet")
-    );
-    console.log({listNames});
-    const wallets: WALLET_API.StarknetWindowObject[] = Object.values(
-        [...new Set(listNames)].reduce<Record<string, WALLET_API.StarknetWindowObject>>(
-            (wallets, name: string) => {
-                const wallet = obj[name] as WALLET_API.StarknetWindowObject;
-                if (!wallets[wallet.id]) { wallets[wallet.id] = wallet }
-                return wallets;
-            },
-            {}
-        )
-    );
+    // const AllObjectsNames: string[] = Object.getOwnPropertyNames(obj); // names of objects of level -1 of window
+    // const listNames: string[] = AllObjectsNames.filter((name: string) =>
+    //     name.startsWith("starknet")
+    // );
+    // console.log({listNames});
+    // const wallets: WALLET_API.StarknetWindowObject[] = Object.values(
+    //     [...new Set(listNames)].reduce<Record<string, WALLET_API.StarknetWindowObject>>(
+    //         (wallets, name: string) => {
+    //             const wallet = obj[name] as WALLET_API.StarknetWindowObject;
+    //             if (!wallets[wallet.id]) { wallets[wallet.id] = wallet }
+    //             return wallets;
+    //         },
+    //         {}
+    //     )
+    // );
+
+    function getOperatingSystemStoreVersionFromBrowser(): OperatingSystemStoreVersion | null {
+        if (!ssrSafeWindow?.navigator.userAgent) return null;
+        const os =
+          Bowser.getParser(ssrSafeWindow?.navigator.userAgent)
+            .getOS()
+            ?.name?.toLowerCase() ?? null
+        switch (os) {
+          case "ios":
+          case "android":
+            return os
+          default:
+            return null
+        }
+      }
+
+    const osVersion = getOperatingSystemStoreVersionFromBrowser();
+    const wallets = await sn.getAvailableWallets({});
+
+    // const discoveryWalletsByStoreVersion = discoveryWallets.reduce<
+    //   WalletProviderWithStoreVersion[]
+    // >((results, w) => {
+    //   const download =
+    //     // prioritize OS url
+    //     ( osVersion? w.downloads[osVersion] :null) ||
+    //     // fallback to browser url
+    //     w.downloads[storeVersion]
+    //   if (download) {
+    //     const store = Object.keys(w.downloads).find(
+    //       (key) => w.downloads[key] === download,
+    //     ) as keyof WalletProvider["downloads"]
+  
+    //     const isMobileStore = store === "android" || store === "ios"
+    //     const name = isMobileStore ? `${w.name} Mobile` : `Install ${w.name}`
+  
+    //     results.push({ ...w, name, download })
+    //   }
+    //   return results
+    // }, [])
+
     console.log({wallets});
     const validWallets: ValidWallet[] = await Promise.all(wallets.map(
         async (wallet: WALLET_API.StarknetWindowObject) => {

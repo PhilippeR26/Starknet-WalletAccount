@@ -13,7 +13,7 @@ import SelectWallet from './components/client/WalletHandle/SelectWallet';
 import WalletAccountTag from './components/client/WalletHandle/WalletAccountTag';
 import { useFrontendProvider } from './components/client/provider/providerContext';
 import LowerBanner from "./components/client/LowerBanner";
-import { connect } from "get-starknet";
+//import { connect } from "get-starknet";
 
 export default function Page() {
 
@@ -55,12 +55,12 @@ export default function Page() {
     console.log("selected value=", selectedValue, correspondingString);
   };
 
-  const handleConnect330Click = async () => {
-    console.log("open get-starknet. Do not work with v4.0.0!!!");
-    const getWalletSWO = await connect({ modalMode: "alwaysAsk", modalTheme: "light" });
-    console.log(getWalletSWO);
+//   const handleConnect330Click = async () => {
+//     console.log("open get-starknet. Do not work with v4.0.0!!!");
+//     const getWalletSWO = await connect({ modalMode: "alwaysAsk", modalTheme: "light" });
+//     console.log(getWalletSWO);
     
-}
+// }
 
 
 
@@ -69,7 +69,7 @@ export default function Page() {
       <div>
         <p className={styles.bgText}>
           Test WalletAccount of Starknet.js v6.11.0 <br></br>
-          with get-starknet-core v4.0.0
+          with get-starknet-core v4.0.1
         </p>
         <Center>
           <Image src={starknetJsImg} alt='starknet.js' width={150} />

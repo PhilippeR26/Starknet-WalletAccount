@@ -8,6 +8,7 @@ import { useState } from "react";
 import { WalletAccount, wallet, validateAndParseAddress, constants as SNconstants } from "starknet";
 import { WALLET_API } from "@starknet-io/types-js";
 import { compatibleApiVersions, myFrontendProviders } from "@/utils/constants";
+import sn from "@starknet-io/get-starknet-core"
 
 // export interface StarknetWalletProvider extends StarknetWindowObject {}
 type ValidWallet = {
@@ -19,21 +20,24 @@ export async function scanObjectForWalletsCustom(
     obj: Record<string, any>, // Browser window object
     isWalletObject: (wallet: any) => boolean,
 ): Promise<ValidWallet[]> {
-    const AllObjectsNames: string[] = Object.getOwnPropertyNames(obj); // names of objects of level -1 of window
-    const listNames: string[] = AllObjectsNames.filter((name: string) =>
-        name.startsWith("starknet")
-    );
-    const Wallets: WALLET_API.StarknetWindowObject[] = Object.values(
-        [...new Set(listNames)].reduce<Record<string, WALLET_API.StarknetWindowObject>>(
-            (wallets, name: string) => {
-                const wallet = obj[name] as WALLET_API.StarknetWindowObject;
-                if (!wallets[wallet.id]) { wallets[wallet.id] = wallet }
-                return wallets;
-            },
-            {}
-        )
-    );
-    const validWallets: ValidWallet[] = await Promise.all(Wallets.map(
+    // const AllObjectsNames: string[] = Object.getOwnPropertyNames(obj); // names of objects of level -1 of window
+    // const listNames: string[] = AllObjectsNames.filter((name: string) =>
+    //     name.startsWith("starknet")
+    // );
+    // const Wallets: WALLET_API.StarknetWindowObject[] = Object.values(
+    //     [...new Set(listNames)].reduce<Record<string, WALLET_API.StarknetWindowObject>>(
+    //         (wallets, name: string) => {
+    //             const wallet = obj[name] as WALLET_API.StarknetWindowObject;
+    //             if (!wallets[wallet.id]) { wallets[wallet.id] = wallet }
+    //             return wallets;
+    //         },
+    //         {}
+    //     )
+    // );
+
+    const wallets = await sn.getAvailableWallets({});
+
+    const validWallets: ValidWallet[] = await Promise.all(wallets.map(
         async (wallet: WALLET_API.StarknetWindowObject) => {
             const isValid = await checkCompatibility(wallet);
             return { wallet: wallet, isValid: isValid } as ValidWallet;

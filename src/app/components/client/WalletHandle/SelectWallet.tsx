@@ -8,7 +8,7 @@ import { useState } from "react";
 import { WalletAccount, wallet, validateAndParseAddress, constants as SNconstants } from "starknet";
 import { WALLET_API } from "@starknet-io/types-js";
 import { compatibleApiVersions, myFrontendProviders } from "@/utils/constants";
-import sn from "@starknet-io/get-starknet-core"
+import sn, { type WalletProvider } from "@starknet-io/get-starknet-core"
 
 // export interface StarknetWalletProvider extends StarknetWindowObject {}
 type ValidWallet = {
@@ -19,32 +19,21 @@ type ValidWallet = {
 export async function scanObjectForWalletsCustom(
     obj: Record<string, any>, // Browser window object
     isWalletObject: (wallet: any) => boolean,
-): Promise<ValidWallet[]> {
-    // const AllObjectsNames: string[] = Object.getOwnPropertyNames(obj); // names of objects of level -1 of window
-    // const listNames: string[] = AllObjectsNames.filter((name: string) =>
-    //     name.startsWith("starknet")
-    // );
-    // const Wallets: WALLET_API.StarknetWindowObject[] = Object.values(
-    //     [...new Set(listNames)].reduce<Record<string, WALLET_API.StarknetWindowObject>>(
-    //         (wallets, name: string) => {
-    //             const wallet = obj[name] as WALLET_API.StarknetWindowObject;
-    //             if (!wallets[wallet.id]) { wallets[wallet.id] = wallet }
-    //             return wallets;
-    //         },
-    //         {}
-    //     )
-    // );
+): Promise<WalletProvider[]> {
+    
+    
+    //const wallets = await sn.getAvailableWallets({});
+    const wallets = await sn.getDiscoveryWallets({});
 
-    const wallets = await sn.getAvailableWallets({});
-
-    const validWallets: ValidWallet[] = await Promise.all(wallets.map(
-        async (wallet: WALLET_API.StarknetWindowObject) => {
-            const isValid = await checkCompatibility(wallet);
-            return { wallet: wallet, isValid: isValid } as ValidWallet;
-        }
-    ))
-    console.log(validWallets);
-    return validWallets;
+    // const validWallets: ValidWallet[] = await Promise.all(wallets.map(
+    //     async (wallet: WALLET_API.StarknetWindowObject) => {
+    //         const isValid = await checkCompatibility(wallet);
+    //         return { wallet: wallet, isValid: isValid } as ValidWallet;
+    //     }
+    // ))
+    // console.log(validWallets);
+    // return validWallets;
+    return wallets;
 }
 
 const checkCompatibility = async (myWalletSWO: WALLET_API.StarknetWindowObject) => {
@@ -81,7 +70,7 @@ export default function SelectWallet() {
     const setChain = useStoreWallet(state => state.setChain);
     const setAddressAccount = useStoreWallet(state => state.setAddressAccount);
 
-    const [walletList, setWalletList] = useState<ValidWallet[]>([]);
+    const [walletList, setWalletList] = useState<WalletProvider[]>([]);
 
     const handleSelectedWallet = async (selectedWallet: WALLET_API.StarknetWindowObject) => {
         console.log("Trying to connect wallet=", selectedWallet);
@@ -117,7 +106,7 @@ export default function SelectWallet() {
     useEffect(
         () => {
             const fetchData = async () => {
-                const res = await scanObjectForWalletsCustom(window, isWalletObj);
+                const res: WalletProvider[] = await scanObjectForWalletsCustom(window, isWalletObj);
                 return res
             }
             console.log("Launch select wallet window.");
@@ -150,27 +139,27 @@ export default function SelectWallet() {
                         align='stretch'
                     >
                         {
-                            walletList.map((wallet: ValidWallet, index: number) => {
-                                const iconW: string = typeof (wallet.wallet.icon) == "string" ? wallet.wallet.icon : wallet.wallet.icon.light;
+                            walletList.map((wallet: WalletProvider, index: number) => {
+                                const iconW: string = typeof (wallet.icon) == "string" ? wallet.icon : wallet.icon;
                                 return <>
-                                    {wallet.isValid ? <>
+                                    {/* {wallet.isValid ? <> */}
                                         <Button id={"wId" + index.toString()}
                                             leftIcon={<Image src={iconW} width={30} />}
                                             onClick={() => {
-                                                setMyWallet(wallet.wallet); // zustand
+                                                //setMyWallet(wallet.wallet); // zustand
                                                 setSelectWalletUI(false);
-                                                handleSelectedWallet(wallet.wallet);
+                                                //handleSelectedWallet(wallet.wallet);
                                                 onClose();
-                                            }} >{wallet.wallet.name + ' ' + wallet.wallet.version}
+                                            }} >{wallet.name + ' ' + wallet.id}
                                         </Button>
-                                    </> : <>
+                                    {/* </> : <>
                                         <Button id={"wId" + index.toString()}
                                             backgroundColor="orange"
                                             isDisabled={true}
                                             leftIcon={<Image src={iconW} width={30} />}
                                         >{wallet.wallet.name + ' ' + wallet.wallet.version + " not compatible!"}
                                         </Button>
-                                    </>}
+                                    </>} */}
                                 </>
                             })
 

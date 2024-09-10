@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from 'next/image'
 import styles from './page.module.css'
 import { Center, Button, Box, Tabs, TabList, Tab, TabPanels, TabPanel, ChakraProvider, Select } from '@chakra-ui/react';
-import { constants as SNconstants, shortString} from 'starknet';
+import { constants as SNconstants, WalletAccount, shortString, validateAndParseAddress, wallet } from 'starknet';
 import InteractContract from './components/client/Contract/InteractContract';
 import { useStoreWallet } from './components/Wallet/walletContext';
 import starknetJsImg from '../../public/Images/StarkNet-JS_logo.png';
@@ -13,9 +13,13 @@ import SelectWallet from './components/client/WalletHandle/SelectWallet';
 import WalletAccountTag from './components/client/WalletHandle/WalletAccountTag';
 import { useFrontendProvider } from './components/client/provider/providerContext';
 import LowerBanner from "./components/client/LowerBanner";
+import { connect } from "@starknet-io/get-starknet";
+import { WALLET_API } from "@starknet-io/types-js";
+import { myFrontendProviders } from "@/utils/constants";
 // import { connect } from "get-starknet";
 
 export default function Page() {
+  const [isError, setError] = useState<boolean>(false);
 
   const displaySelectWalletUI = useStoreWallet(state => state.displaySelectWalletUI);
   const setSelectWalletUI = useStoreWallet(state => state.setSelectWalletUI);
@@ -46,22 +50,75 @@ export default function Page() {
   const setSelectedApiVersion = useStoreWallet(state => state.setSelectedApiVersion);
   const [selectedOption, setSelectedOption] = useState<number>(0);
 
+  const myWalletAccount = useStoreWallet(state => state.myWalletAccount);
+  const setMyWalletAccount = useStoreWallet(state => state.setMyWalletAccount);
+  const setWalletApi = useStoreWallet(state => state.setWalletApiList);
+
+
+  async function selectW() {
+    setError(false);
+    const myWalletSWO = await connect({ modalMode: "alwaysAsk" });
+    if (myWalletSWO) {
+      const isValid = await checkCompatibility(myWalletSWO);
+      setError(!isValid);
+      if (isValid) {
+        setMyWallet(myWalletSWO); // zustand
+        await handleSelectedWallet(myWalletSWO);
+      }
+    }
+  }
+
+  const checkCompatibility = async (myWalletSWO: WALLET_API.StarknetWindowObject) => {
+    // verify compatibility of wallet with the new API of get-starknet v4
+    let isCompatible: boolean = false;
+    try {
+      await myWalletSWO.request({ type: "wallet_supportedSpecs" });
+      isCompatible = true;
+    } catch {
+      (err: any) => { console.log("Wallet compatibility failed.") };
+    }
+    return isCompatible;
+  }
+
+  const handleSelectedWallet = async (selectedWallet: WALLET_API.StarknetWindowObject) => {
+    console.log("Trying to connect wallet=", selectedWallet);
+    setMyWallet(selectedWallet); // zustand
+    setMyWalletAccount(new WalletAccount(myFrontendProviders[2], selectedWallet));
+
+    const result = await wallet.requestAccounts(selectedWallet);
+    if (typeof (result) == "string") {
+      console.log("This Wallet is not compatible.");
+      setSelectWalletUI(false);
+      return;
+    }
+    console.log("Current account addr =", result);
+    if (Array.isArray(result)) {
+      const addr = validateAndParseAddress(result[0]);
+      setAddressAccount(addr); // zustand
+    }
+    const isConnectedWallet: boolean = await wallet.getPermissions(selectedWallet).then((res: any) => (res as WALLET_API.Permission[]).includes(WALLET_API.Permission.ACCOUNTS));
+    setConnected(isConnectedWallet); // zustand
+    if (isConnectedWallet) {
+      const chainId = (await wallet.requestChainId(selectedWallet)) as string;
+      setChain(chainId);
+      setCurrentFrontendProviderIndex(chainId === SNconstants.StarknetChainId.SN_MAIN ? 0 : 2);
+
+      console.log("change Provider index to :", myFrontendProviderIndex);
+    }
+    // ********** TODO : replace supportedSpecs by api versions when available in SNJS
+    setWalletApi(await wallet.supportedSpecs(selectedWallet));
+
+    setSelectWalletUI(false);
+  }
+
 
   const handleSelectChange = (event: any) => {
     const selectedValue = Number(event.target.value);
     setSelectedOption(selectedValue);
-    const correspondingString=selectedValue == 0 ? "default" : walletApiList[selectedValue - 1];
+    const correspondingString = selectedValue == 0 ? "default" : walletApiList[selectedValue - 1];
     setSelectedApiVersion(correspondingString);
     console.log("selected value=", selectedValue, correspondingString);
   };
-
-//   const handleConnect330Click = async () => {
-//     console.log("open get-starknet. Do not work with v4.0.0!!!");
-//     const getWalletSWO = await connect({ modalMode: "alwaysAsk", modalTheme: "light" });
-//     console.log(getWalletSWO);
-    
-// }
-
 
 
   return (
@@ -84,13 +141,13 @@ export default function Page() {
                   outline="none !important"
                   boxShadow="none !important"
                   marginTop={3}
-                  onClick={() => setSelectWalletUI(true)}
-                  // onClick={() => handleConnect330Click()}
+                  onClick={() => selectW()}
+                // onClick={() => handleConnect330Click()}
                 >
                   Connect a Wallet
                 </Button>
-                {displaySelectWalletUI && <SelectWallet></SelectWallet> } 
-                
+
+
 
               </Center>
             </>
@@ -105,7 +162,7 @@ export default function Page() {
                   marginTop={3}
                   onClick={() => {
                     setConnected(false);
-                    setSelectWalletUI(false)
+                    //setSelectWalletUI(false)
                   }}
                 >
                   {addressAccountFromContext

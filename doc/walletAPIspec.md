@@ -627,7 +627,7 @@ Returns a list of rpc spec versions compatible with the wallet.
 No parameters.
 ### Output :
 ```typescript
-response : ApiVersion[]
+response : string[]
 ```
 ### Behavior :
 - The response is an array of strings. Each string is the version of a supported starknet API version. Includes only the 2 main digits, with the`.` as separator ; example : `0.7`.
@@ -644,7 +644,7 @@ Returns a list of Wallet API versions compatible with the wallet.
 No parameters.
 ### Output :
 ```typescript
-response : string[]
+response : ApiVersion[]
 ```
 ### Behavior :
 - The response is an array of strings. Each string is the version of a supported Wallet API version. Includes only the 2 main digits, with the `.` as separator ; example : `0.7`.

@@ -924,7 +924,7 @@ Returns a list of Wallet API versions compatible with the wallet.
 No parameters.
 ### Output :
 ```typescript
-response : string[]
+response : ApiVersion[]
 ```
 ### Behavior :
 - The response has to be an array of strings. Each string is the version of a supported Wallet API version. Includes only the 2 main digits, with the `.` as separator ; example : `0.7`.

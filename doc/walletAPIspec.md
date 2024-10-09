@@ -1,5 +1,6 @@
 # Starknet Wallet API
 
+> version : v1.2.2 09/oct/2024, correction of response type of wallet_supportedWalletApi
 > version : v1.2.1 14/june/2024, details for invoke params with Starknet.js v6
 > version : v1.2.0 27/may/2024, in accordance with official spec https://github.com/starkware-libs/starknet-specs/blob/master/wallet-api/wallet_rpc.json  
 > version : v1.1.0 02/may/2024 
@@ -626,7 +627,7 @@ Returns a list of rpc spec versions compatible with the wallet.
 No parameters.
 ### Output :
 ```typescript
-response : string[]
+response : ApiVersion[]
 ```
 ### Behavior :
 - The response is an array of strings. Each string is the version of a supported starknet API version. Includes only the 2 main digits, with the`.` as separator ; example : `0.7`.
@@ -649,8 +650,11 @@ response : string[]
 - The response is an array of strings. Each string is the version of a supported Wallet API version. Includes only the 2 main digits, with the `.` as separator ; example : `0.7`.
 ### Example :
 ```typescript
-const resp = await myWallet.request({type: "wallet_supportedWalletApi}");
-// resp = ["0.7","0.8"]
+interface ApiVersion {
+  api_version?: string;
+};
+const resp: ApiVersion[] = await myWallet.request({type: "wallet_supportedSpecs"});
+// resp = [{ api_version: "0.7" }]
 ```
 
 

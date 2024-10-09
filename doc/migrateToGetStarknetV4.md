@@ -1,6 +1,7 @@
 # Migrate Get-Starknet v3->v4 <!-- omit from toc -->
 **Documentation for wallet teams**
 
+> > version : v1.1.2 09/oct/2024, correction of response type of wallet_supportedWalletApi.
 > version : v1.1.1 29/aug/2024.  
 > version : v1.1.0 19/aug/2024.  
 > version : v1.0.0 29/jul/2024.  
@@ -931,12 +932,15 @@ response : string[]
 ### Example :
 #### On DAPP side :
 ```typescript
-const resp = await myWallet.request(type: "wallet_supportedWalletApi");
+interface ApiVersion {
+  api_version?: string;
+};
+const resp: ApiVersion[] = await myWallet.request({type: "wallet_supportedSpecs"});
 ```
 #### On Wallet side :
 The wallet has to answer for example :
 ```
-resp = ["0.7","0.8"]
+resp = [{ api_version: "0.7" }]
 ```
 
 # Wallet API version :

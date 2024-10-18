@@ -436,6 +436,9 @@ const myCallAPI = {
 const resp = await myWallet.request({type: "wallet_addInvokeTransaction", params: [myCallAPI]});
 // resp = {transaction_hash: "0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929"}
 ```
+> [!WARNING]
+> The Calldata requested by this API is different from the one provided by Starknet.js.  
+> So a conversion is needed when using this endpoint.
 
 ## wallet_addDeclareTransaction :
 ### Usage :

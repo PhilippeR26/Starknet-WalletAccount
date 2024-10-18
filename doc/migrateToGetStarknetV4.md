@@ -5,7 +5,7 @@
 > version : v1.1.0 19/aug/2024.  
 > version : v1.0.0 29/jul/2024.  
 
-This document is explaining how Starknet browser wallet teams have to modify their code to migrate from Get-Starknet v3 to v4. A chapter is also explaining basic concepts for teams onboarding directly in V4.
+This document is explaining how Starknet browser wallet teams have to modify their code to migrate from Get-Starknet v3 to v4. A chapter is also explaining basic concepts for teams onboarding directly in V4.  
 - [From get-starknet v3 to v4 :](#from-get-starknet-v3-to-v4-)
 - [Onboarding with get-starknet V4 :](#onboarding-with-get-starknet-v4-)
   - [Starknet :](#starknet-)

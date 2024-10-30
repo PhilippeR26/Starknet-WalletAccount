@@ -1,11 +1,24 @@
-import { Box, Button, Center, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure, forwardRef, Tooltip } from "@chakra-ui/react";
+import { Box, Center, useDisclosure } from "@chakra-ui/react";
+import {
+  DialogActionTrigger,
+  DialogBody,
+  DialogCloseTrigger,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogRoot,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
 import { CallData, GetBlockResponse, constants as SNconstants, TypedData, cairo, ec, encode, hash, json, shortString, stark, addAddressPadding, wallet, Contract, type Call, type Calldata } from "starknet";
 import React, { useEffect, useState } from "react";
 
 import * as constants from "@/utils/constants";
 import { RejectContractAddress } from "@/utils/constants";
 import { useStoreWallet } from "../../Wallet/walletContext";
-import {WALLET_API } from "@starknet-io/types-js";
+import { WALLET_API } from "@starknet-io/types-js";
 
 import { rejectAbi } from "../../../contracts/abis/rejectAbi";
 import { getHelloTestSierra } from "@/app/contracts/declareHelloTestSierra";
@@ -33,7 +46,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
   const myWallet = useStoreWallet(state => state.StarknetWalletObject);
   const myWalletAccount = useStoreWallet(state => state.myWalletAccount);
   const myFrontendProviderIndex = useFrontendProvider(state => state.currentFrontendProviderIndex);
-  const { isOpen, onOpen, onClose } = useDisclosure()
+  const { open, onOpen, onClose } = useDisclosure()
   const [response, setResponse] = useState<string>("N/A");
   const walletFromContext = useStoreWallet(state => state.StarknetWalletObject);
   const getChainId = useStoreWallet(state => state.chain);
@@ -249,7 +262,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
       case constants.CommandWallet.starknet_signTypedData: {
         const myTypedData: TypedData = {
           domain: {
-            name: "Example DApp", 
+            name: "Example DApp",
             chainId: SNconstants.StarknetChainId.SN_SEPOLIA,
             // chainId: '0x534e5f5345504f4c4941',
             version: "0.0.3",
@@ -361,38 +374,72 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
     <>
       <Box color='black' borderWidth='px' borderRadius='lg'>
         <Center>
-          <Tooltip hasArrow label={tip} bg='yellow.100' color='black'>
-            <Button bg='blue.100' onClick={() => { callCommand(command, param) }
-            } >{command} {symbol}</Button>
-          </Tooltip>
-        </Center>
-        <Modal
-          isOpen={isOpen}
-          onClose={onClose}
-        >
-          <ModalOverlay />
+          {typeof tip === "undefined" ?
+            (
+              <>
+                <Button
+                  colorPalette={"blue"}
+                  variant={"surface"}
+                  color={"black"}
+                  onClick={() => { callCommand(command, param) }
+                  }
+                >{command} {symbol}</Button>
+              </>
+            )
+            :
+            (
+              <>
+                <Tooltip openDelay={400} showArrow content={tip} >
+                  <Button
+                    colorPalette={"blue"}
+                    variant={"surface"}
+                    color={"black"}
+                    onClick={() => { callCommand(command, param) }
+                    }
+                  >{command} {symbol}</Button>
+                </Tooltip>
+              </>
+            )
+          }
 
-          <ModalContent>
-            <ModalHeader fontSize='lg' fontWeight='bold'>
-              Command sent to Wallet.
-            </ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
+        </Center>
+        <DialogRoot
+          open={open}
+          onOpenChange={onClose}
+        >
+
+
+          <DialogContent
+            margin={"20px"}
+            padding={"10px"}>
+            <DialogHeader>
+              <DialogTitle fontSize='lg' fontWeight='bold'>
+                Command sent to Wallet.
+              </DialogTitle>
+            </DialogHeader>
+            <DialogBody>
               Command : {command} <br />
               Param : {param} <br />
               Response : {response}
-            </ModalBody>
+            </DialogBody>
 
-            <ModalFooter>
-              {/* <Button ref={cancelRef} onClick={onClose}>
+            <DialogFooter>
+              <DialogActionTrigger asChild>
+                {/* <Button ref={cancelRef} onClick={onClose}>
                                 Cancel
                             </Button> */}
-              <Button colorScheme='red' onClick={onClose} ml={3}>
-                OK
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
+                <Button
+                  colorScheme='red'
+                  onClick={onClose}
+                  ml={3}
+                  variant="surface"
+                >
+                  OK
+                </Button>
+              </DialogActionTrigger>
+            </DialogFooter>
+          </DialogContent>
+        </DialogRoot>
       </Box>
     </>
   );

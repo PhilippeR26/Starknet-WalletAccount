@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
-import { Text, Spinner, Center, Divider, Box, SimpleGrid, Button, useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Tooltip } from "@chakra-ui/react";
+import { Center,  Box, SimpleGrid, useDisclosure } from "@chakra-ui/react";
 import { GetBlockResponse, constants as SNconstants, shortString, validateAndParseAddress, wallet } from "starknet";
 import {WALLET_API } from "@starknet-io/types-js";
 
@@ -26,7 +26,7 @@ export default function WalletApiTag() {
     const addressAccountFromContext = useStoreWallet(state => state.address);
     const setAddressAccount = useStoreWallet(state => state.setAddressAccount);
 
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const { open, onOpen, onClose } = useDisclosure();
     const [respChangedAccount, setRespChangedAccount] = useState<string>("N/A");
     const [respChangedNetwork, setRespChangedNetwork] = useState<string>("N/A");
 
@@ -90,7 +90,7 @@ export default function WalletApiTag() {
     return (
         <>
             <Center></Center>
-            <SimpleGrid minChildWidth="250px" spacing="20px" paddingBottom="20px">
+            <SimpleGrid minChildWidth="250px" gap="20px" paddingBottom="20px">
                 <Box bg="pink.200" color='black' borderWidth='1px' borderRadius='lg'>
                     <Center> Last accountsChanged event : </Center>
                     <Center>Time: {time1} </Center>
@@ -103,7 +103,7 @@ export default function WalletApiTag() {
                 </Box>
             </SimpleGrid>
 
-            <SimpleGrid minChildWidth="305px" spacing="20px" paddingBottom="20px">
+            <SimpleGrid minChildWidth="305px" gap="20px" paddingBottom="20px">
                 <RpcWalletCommand
                     command={constants.CommandWallet.wallet_requestAccounts}
                     param=""
@@ -162,7 +162,7 @@ export default function WalletApiTag() {
                 />
             </SimpleGrid>
 
-            <SimpleGrid minChildWidth="320px" spacing="20px" paddingBottom="20px">
+            <SimpleGrid minChildWidth="320px" gap="20px" paddingBottom="40px">
                 <Box bg="green.200" color='black' borderWidth='1px' borderRadius='lg'>
                     <Center>.id : {selectedWallet?.id}</Center>
                     <Center>.name : {selectedWallet?.name} </Center>

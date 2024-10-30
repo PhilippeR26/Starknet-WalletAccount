@@ -8,7 +8,7 @@ import GetBalance from "./GetBalance";
 import PlayWithCairo1 from "./PlayWithCairo1";
 import * as constants from "../../../../utils/constants";
 
-import { Text, Spinner, Center, Divider, Box } from "@chakra-ui/react";
+import { Text, Spinner, Center, Separator, Box } from "@chakra-ui/react";
 import styles from '../../../page.module.css'
 
 // Test a Cairo 1 contrat already deployed in testnet:
@@ -73,7 +73,7 @@ export default function InteractContract() {
                             <Text className={styles.text1}>BlockHash = {blockFromContext.blockHash}  </Text>
                             <Text className={styles.text1}>BlockTimeStamp = {blockFromContext.timeStamp}  </Text>
                             <Text className={styles.text1}>BlockGasprice = {blockFromContext.gasPrice}  </Text>
-                            <Divider></Divider>
+                            <Separator />
                         </>
                     )
                 }
@@ -82,7 +82,7 @@ export default function InteractContract() {
                 <Box bg='yellow.300' color='black' borderWidth='1px' borderRadius='lg'>
                     <Center> Updated each new block :</Center>
                     <GetBalance tokenAddress={constants.addrETH} ></GetBalance>
-                    <Divider borderColor='gray.600'></Divider>
+                    <Separator borderColor='gray.600' />
                     <GetBalance tokenAddress={constants.addrTEST} ></GetBalance>
 
                 </Box>

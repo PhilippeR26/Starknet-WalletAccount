@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Image from 'next/image'
 import styles from './page.module.css'
-import { Center, Button, Box, Tabs, TabList, Tab, TabPanels, TabPanel, ChakraProvider, Select } from '@chakra-ui/react';
-import { constants as SNconstants, shortString} from 'starknet';
+import { Center, Box, Tabs } from '@chakra-ui/react';
+import { Button } from "@/components/ui/button";
+import { Provider } from "@/components/ui/provider";
+import { constants as SNconstants, shortString } from 'starknet';
 import InteractContract from './components/client/Contract/InteractContract';
 import { useStoreWallet } from './components/Wallet/walletContext';
 import starknetJsImg from '../../public/Images/StarkNet-JS_logo.png';
@@ -50,26 +52,26 @@ export default function Page() {
   const handleSelectChange = (event: any) => {
     const selectedValue = Number(event.target.value);
     setSelectedOption(selectedValue);
-    const correspondingString=selectedValue == 0 ? "default" : walletApiList[selectedValue - 1];
+    const correspondingString = selectedValue == 0 ? "default" : walletApiList[selectedValue - 1];
     setSelectedApiVersion(correspondingString);
     console.log("selected value=", selectedValue, correspondingString);
   };
 
-//   const handleConnect330Click = async () => {
-//     console.log("open get-starknet. Do not work with v4.0.0!!!");
-//     const getWalletSWO = await connect({ modalMode: "alwaysAsk", modalTheme: "light" });
-//     console.log(getWalletSWO);
-    
-// }
+  //   const handleConnect330Click = async () => {
+  //     console.log("open get-starknet. Do not work with v4.0.0!!!");
+  //     const getWalletSWO = await connect({ modalMode: "alwaysAsk", modalTheme: "light" });
+  //     console.log(getWalletSWO);
+
+  // }
 
 
 
   return (
-    <ChakraProvider>
+    <Provider>
       <div>
         <p className={styles.bgText}>
-          Test WalletAccount of Starknet.js v6.11.0 <br></br>
-          with get-starknet-core v4.0.0
+          Test WalletAccount of Starknet.js v6.17.0 <br></br>
+          with get-starknet-core v4.0.1
         </p>
         <Center>
           <Image src={starknetJsImg} alt='starknet.js' width={150} />
@@ -79,18 +81,20 @@ export default function Page() {
             <>
               <Center>
                 <Button
-                  ml="4"
+                  variant="surface"
                   textDecoration="none !important"
+                  fontWeight='bold'
                   outline="none !important"
                   boxShadow="none !important"
-                  marginTop={3}
+                  mt={3}
+                  px={5}
                   onClick={() => setSelectWalletUI(true)}
-                  // onClick={() => handleConnect330Click()}
+                // onClick={() => handleConnect330Click()}
                 >
                   Connect a Wallet
                 </Button>
-                {displaySelectWalletUI && <SelectWallet></SelectWallet> } 
-                
+                {displaySelectWalletUI && <SelectWallet></SelectWallet>}
+
 
               </Center>
             </>
@@ -98,11 +102,13 @@ export default function Page() {
             <>
               <Center>
                 <Button
-                  ml="4"
+                  variant="surface"
                   textDecoration="none !important"
+                  fontWeight='bold'
                   outline="none !important"
                   boxShadow="none !important"
-                  marginTop={3}
+                  mt={3}
+                  px={5}
                   onClick={() => {
                     setConnected(false);
                     setSelectWalletUI(false)
@@ -113,7 +119,7 @@ export default function Page() {
                     : "No Account"}
                 </Button>
               </Center>
-              <Center mt={1}>
+              {/* <Center mt={1}>
                 Wallet API version :
                 <Select
                   w={100}
@@ -124,48 +130,51 @@ export default function Page() {
                   <option key={"idxApi0"} value={0}>default</option>
                   {walletApiList.map((apiVersion, idx) => <option key={"idxApi" + (idx + 1).toString()} value={idx + 1}>{apiVersion}</option>)}
                 </Select>
-              </Center>
+              </Center> */}
               <br />
-              <Tabs variant="enclosed" colorScheme='facebook' size="lg" isFitted >
-                <TabList >
-                  <Tab> BlockChain</Tab>
-                  <Tab>Wallet API</Tab>
-                  <Tab>WalletAccount</Tab>
-                </TabList>
-                <TabPanels>
-                  <TabPanel>
-                    <Box bg='pink.200' color='black' borderWidth='1px' borderRadius='md'>
-                      <p className={styles.text1}>
-                        address = {addressAccountFromContext}<br />
-                        chain = {chainFromContext != "" ? shortString.decodeShortString(chainFromContext) : ""}
-                        <br />
-                        provider = the frontend provider uses {Object.keys(SNconstants.StarknetChainId)[myFrontendProviderIndex]
-                        }
-                        <br />
-                        isConnected={isConnected ? "Yes" : "No"}
+              <Tabs.Root 
+              variant="enclosed" 
+              colorScheme='facebook' 
+              size="lg" 
+              defaultValue="blockChain"
+              fitted >
+                <Tabs.List bg="bg.muted" rounded="l3" p="1" >
+              
+                  <Tabs.Trigger  fontWeight={"bold"} value="blockChain"> BlockChain</Tabs.Trigger>
+                  <Tabs.Trigger fontWeight={"bold"} value="walletAPI"> Wallet API</Tabs.Trigger>
+                  <Tabs.Trigger  fontWeight={"bold"} value="walletAccount"> WalletAccount</Tabs.Trigger>
+                </Tabs.List>
+                <Tabs.Content value="blockChain">
+                  <Box bg='pink.200' color='black' borderWidth='1px' borderRadius='md'>
+                    <p className={styles.text1}>
+                      address = {addressAccountFromContext}<br />
+                      chain = {chainFromContext != "" ? shortString.decodeShortString(chainFromContext) : ""}
+                      <br />
+                      provider = the frontend provider uses {Object.keys(SNconstants.StarknetChainId)[myFrontendProviderIndex]
+                      }
+                      <br />
+                      isConnected={isConnected ? "Yes" : "No"}
 
-                      </p>
-                    </Box>
-                    {!!providerFromContext &&
-                      <InteractContract ></InteractContract>}
-                  </TabPanel>
-                  <TabPanel>
-                    <p></p>
-                    <WalletApiTag></WalletApiTag>
-                  </TabPanel>
-                  <TabPanel>
-                    <WalletAccountTag></WalletAccountTag>
-                  </TabPanel>
-                </TabPanels>
-              </Tabs>
-
+                    </p>
+                  </Box>
+                  {!!providerFromContext &&
+                    <InteractContract ></InteractContract>}
+                </Tabs.Content>
+                <Tabs.Content value="walletAPI">
+                  <p></p>
+                  <WalletApiTag></WalletApiTag>
+                </Tabs.Content>
+                <Tabs.Content value="walletAccount">
+                  <WalletAccountTag></WalletAccountTag>
+                </Tabs.Content>
+              </Tabs.Root>
             </>
           )
           }
         </div>
         <LowerBanner></LowerBanner>
       </div >
-    </ChakraProvider>
+    </Provider >
   )
 }
 

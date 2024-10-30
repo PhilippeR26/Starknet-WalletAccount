@@ -4,7 +4,8 @@ import { Contract, InvokeFunctionResponse } from "starknet";
 import { useStoreBlock } from "../Block/blockContext";
 import { useStoreWallet } from '../../Wallet/walletContext';
 
-import { Text, Button, Center, Spinner, Box } from "@chakra-ui/react";
+import { Text, Center, Spinner, Box } from "@chakra-ui/react";
+import { Button } from "@/components/ui/button";
 import styles from '../../../page.module.css'
 
 import { rejectAbi } from "../../../contracts/abis/rejectAbi";
@@ -61,6 +62,7 @@ export default function PlayWithCairo1() {
                             <Text className={styles.text1}>Balance = {balance} tokens</Text>
                             <Center>
                                 <Button
+                      variant="surface"
                                     ml="4"
                                     textDecoration="none !important"
                                     outline="none !important"

@@ -1,5 +1,6 @@
 import { wait } from "@/utils/utils";
-import { Box, Button, StackDivider, VStack, Text, Center, Tooltip } from "@chakra-ui/react";
+import { Box, StackSeparator, VStack, Text, Center } from "@chakra-ui/react";
+import { Tooltip } from "@/components/ui/tooltip"
 import { useEffect } from "react";
 import { useState } from "react";
 import styles from '../../../page.module.css'
@@ -8,6 +9,7 @@ import { rejectContract } from "@/app/contracts/reject.sierra.json";
 import { RejectContractAddress, accountClass, myFrontendProviders } from "@/utils/constants";
 import { useFrontendProvider } from "../provider/providerContext";
 import { useStoreWallet } from "../../Wallet/walletContext";
+import { Button } from "@/components/ui/button";
 
 export default function WalletAccountTag() {
     const DISPLAY_DURATION = 15 * 1000 // ms
@@ -110,7 +112,7 @@ export default function WalletAccountTag() {
         let response: string = "N/A";
         const privK = stark.randomAddress();
         const pubK = ec.starkCurve.getStarkKey(privK);
-        console.log("deploy account : pubK=",pubK);
+        console.log("deploy account : pubK=", pubK);
         myWalletAccount?.deployAccount({ classHash: accountClass, constructorCalldata: [pubK] })
             .then(
                 async (result: any) => {
@@ -230,13 +232,12 @@ export default function WalletAccountTag() {
 
     return (
         <>
-            <VStack
-                divider={<StackDivider borderColor='gray.300' />}
-                spacing={3}
+            <VStack paddingY={3}
+                separator={<StackSeparator borderColor='gray.300' />}
             >
                 <>
                     <Center fontSize={16} fontWeight={700} color={"firebrick"}> Use of {Object.keys(SNconstants.StarknetChainId)[myFrontendProviderIndex]} network </Center>
-                    
+
                     <Center fontSize={14} color={"darkred"}> my frontend provider Id : {myFrontendProviderIndex}  </Center>
                     <Center fontSize={13} color={"darkred"}> contractAddress : {validateAndParseAddress(testContract.address)}  </Center>
                     <Center fontSize={13} color={"darkred"}> WalletAccountAddress : {!!myWalletAccount ? validateAndParseAddress(myWalletAccount.address) : ""}  </Center>
@@ -245,6 +246,7 @@ export default function WalletAccountTag() {
                 <>
                     <p>Read with my own frontend provider :</p>
                     <Button
+                        variant="surface"
                         onClick={() => {
                             handleReadMyProvider()
                         }} >Read Contract
@@ -259,6 +261,7 @@ export default function WalletAccountTag() {
                 <>
                     <p>Read with a WalletAccount (that uses my own frontend provider) :</p>
                     <Button
+                        variant="surface"
                         onClick={() => {
                             handleReadWalletAccount()
                         }} >Read Contract
@@ -273,6 +276,7 @@ export default function WalletAccountTag() {
                 <>
                     <p>Invoke with a WalletAccount :</p>
                     <Button
+                        variant="surface"
                         onClick={() => {
                             setDisplayWriteWA(false);
                             handleInvokeWalletAccount()
@@ -287,19 +291,26 @@ export default function WalletAccountTag() {
                 </>
                 <>
                     <p>Declare with a WalletAccount :</p>
-                    <Tooltip hasArrow label="Accept the 2 transactions, with a delay of 10s between each one." bg='yellow.100' color='black'>
+                    <Tooltip
+                        openDelay={400}
+                        showArrow
+                        content="Accept the 2 transactions, with a delay of 10s between each one."
+                    >
                         <Button
+                            variant="surface"
                             backgroundColor="orange"
-                            isDisabled={false}
+                            disabled={false}
                             onClick={() => {
                                 handleInvokeWalletAccount()
                             }} >Declare Class
-                        </Button></Tooltip>
+                        </Button>
+                    </Tooltip>
 
                 </>
                 <>
                     <p>Deploy contract with a WalletAccount :</p>
                     <Button
+                        variant="surface"
                         onClick={() => {
                             setDisplayDeployContractWA(false);
                             handleDeployContractWalletAccount()
@@ -314,6 +325,7 @@ export default function WalletAccountTag() {
                 <>
                     <p>Deploy account with a WalletAccount :</p>
                     <Button
+                        variant="surface"
                         onClick={() => {
                             setDisplayDeployAccountWA(false);
                             handleDeployAccountWalletAccount()
@@ -328,6 +340,7 @@ export default function WalletAccountTag() {
                 <>
                     <p>Sign message with a WalletAccount :</p>
                     <Button
+                        variant="surface"
                         onClick={() => {
                             setDisplaySignMessageWA(false);
                             handleSignMessageWalletAccount()

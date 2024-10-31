@@ -71,7 +71,7 @@ export default function Page() {
       <div>
         <p className={styles.bgText}>
           Test WalletAccount of Starknet.js v6.17.0 <br></br>
-          with get-starknet-core v4.0.1
+          with get-starknet-core v4.0.3
         </p>
         <Center>
           <Image src={starknetJsImg} alt='starknet.js' width={150} />

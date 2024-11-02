@@ -1,5 +1,6 @@
 # Starknet Wallet API
 
+> version : v1.2.2 02/nov/2024, behavior table added and clarify no need of first usage prerequires.
 > version : v1.2.1 14/june/2024, details for invoke params with Starknet.js v6
 > version : v1.2.0 27/may/2024, in accordance with official spec https://github.com/starkware-libs/starknet-specs/blob/master/wallet-api/wallet_rpc.json  
 > version : v1.1.0 02/may/2024 
@@ -11,19 +12,84 @@ This document is a documentation of the new interface between DAPPS and Starknet
 - [Starknet Wallet API](#starknet-wallet-api)
 - [Connect the wallet :](#connect-the-wallet-)
 - [Subscription to events :](#subscription-to-events-)
+    - [Subscription :](#subscription-)
+      - [accountsChanged :](#accountschanged-)
+      - [networkChanged :](#networkchanged-)
+    - [Un-subscription :](#un-subscription-)
 - [Available commands :](#available-commands-)
   - [wallet\_getPermissions :](#wallet_getpermissions-)
+    - [Usage :](#usage-)
+    - [Input :](#input-)
+    - [Output :](#output-)
+    - [Behavior :](#behavior-)
+    - [Example :](#example-)
   - [wallet\_requestAccounts :](#wallet_requestaccounts-)
+    - [Usage :](#usage--1)
+    - [Input :](#input--1)
+    - [Output :](#output--1)
+    - [Behavior :](#behavior--1)
+    - [Example :](#example--1)
   - [wallet\_watchAsset :](#wallet_watchasset-)
+    - [Usage :](#usage--2)
+    - [Input :](#input--2)
+    - [Output :](#output--2)
+    - [Behavior :](#behavior--2)
+    - [Example :](#example--2)
   - [wallet\_addStarknetChain :](#wallet_addstarknetchain-)
+    - [Usage :](#usage--3)
+    - [Input :](#input--3)
+    - [Output :](#output--3)
+    - [Behavior :](#behavior--3)
+    - [Example :](#example--3)
   - [wallet\_switchStarknetChain :](#wallet_switchstarknetchain-)
+    - [Usage :](#usage--4)
+    - [Input :](#input--4)
+    - [Output :](#output--4)
+    - [Behavior :](#behavior--4)
+    - [Example :](#example--4)
   - [wallet\_requestChainId :](#wallet_requestchainid-)
+    - [Usage :](#usage--5)
+    - [Input :](#input--5)
+    - [Output :](#output--5)
+    - [Behavior :](#behavior--5)
+    - [Example :](#example--5)
   - [wallet\_deploymentData :](#wallet_deploymentdata-)
+    - [Usage :](#usage--6)
+    - [Input :](#input--6)
+    - [Output :](#output--6)
+    - [Behavior :](#behavior--6)
+    - [Example :](#example--6)
   - [wallet\_addInvokeTransaction :](#wallet_addinvoketransaction-)
+    - [Usage :](#usage--7)
+    - [Input :](#input--7)
+    - [Output :](#output--7)
+    - [Behavior :](#behavior--7)
+    - [Example :](#example--7)
   - [wallet\_addDeclareTransaction :](#wallet_adddeclaretransaction-)
+    - [Usage :](#usage--8)
+    - [Input :](#input--8)
+    - [Output :](#output--8)
+    - [Behavior :](#behavior--8)
+    - [Example :](#example--8)
   - [wallet\_signTypedData :](#wallet_signtypeddata-)
+    - [Usage :](#usage--9)
+    - [Input :](#input--9)
+    - [Output :](#output--9)
+    - [Behavior :](#behavior--9)
+    - [Example :](#example--9)
   - [wallet\_supportedSpecs :](#wallet_supportedspecs-)
+    - [Usage :](#usage--10)
+    - [Input :](#input--10)
+    - [Output :](#output--10)
+    - [Behavior :](#behavior--10)
+    - [Example :](#example--10)
   - [wallet\_supportedWalletApi :](#wallet_supportedwalletapi-)
+    - [Usage :](#usage--11)
+    - [Input :](#input--11)
+    - [Output :](#output--11)
+    - [Behavior :](#behavior--11)
+    - [Example :](#example--11)
+- [Behavior summary table :](#behavior-summary-table-)
 - [Wallet API version :](#wallet-api-version-)
   - [Error :s](#error-s)
 
@@ -31,12 +97,16 @@ This document is a documentation of the new interface between DAPPS and Starknet
 # Connect the wallet :
 You have first to select which wallet to use.
 ```typescript
-import { StarknetWindowObject, connect } from "get-starknet"; // v4.0.0 mini
+import { StarknetWindowObject, connect } from "@starknet-io/get-starknet"; // v4.0.0 mini
 
 const myWallet: StarknetWindowObject = await connect({ modalMode: "alwaysAsk", modalTheme: "light" });
 ```
 
-You can now use the commands proposed by the wallet (here with Starknet.js v6.8.0 mini) :
+You can now use the commands proposed by the wallet.
+> [!IMPORTANT]
+> In opposition to get-starknet V3, once selected by the user, the V4 SWO do not need any command to connect it ; it's immediately ready to use.
+
+Here with Starknet.js v6.8.0 mini :
 ```typescript
 const myCall: Call = myContract.populate(
   "increase_balance", 
@@ -48,6 +118,8 @@ const myRequest = {
 }
 const response = await myWallet.request(myRequest);
 ```
+> [!TIP]
+> Starknet.js proposes also the `WalletAccount` class to code at a higher and more confortable level.
 
 # Subscription to events :
 You can subscribe to 2 events : 
@@ -656,6 +728,23 @@ const resp = await myWallet.request({type: "wallet_supportedWalletApi}");
 // resp = ["0.7","0.8"]
 ```
 
+# Behavior summary table :
+Expected behavior:
+|                    Function                    |       wallet locked       | Once unlocked + not connected |     once unlocked and connected     |
+| :--------------------------------------------: | :-----------------------: | :---------------------------: | :---------------------------------: |
+|             wallet_getPermissions              |     silent return []      |       silent return []        |     silent return ["accounts"]      |
+| wallet_requestAccounts <br> silentMode : true  |     silent return []      |       silent return []        |       silent return [address]       |
+| wallet_requestAccounts <br> silentMode : false |         Unlock UI         |        DAPP connect UI        |       silent return [address]       |
+|               wallet_watchAsset                |         Unlock UI         |        DAPP connect UI        |      UI proposing a new token       |
+|            wallet_addStarknetChain             |         Unlock UI         |        DAPP connect UI        |      UI proposing a new chain       |
+|           wallet_switchStarknetChain           |         Unlock UI         |        DAPP connect UI        |    UI proposing to change chain     |
+|             wallet_requestChainId              |  silent return a string   |    silent return a string     |       silent return a string        |
+|             wallet_deploymentData              | silent return of an error |   silent return of an error   | silent return an object or an error |
+|          wallet_addInvokeTransaction           |         Unlock UI         |        DAPP connect UI        |         UI for transaction          |
+|          wallet_addDeclareTransaction          |         Unlock UI         |        DAPP connect UI        |      UI for class declaration       |
+|              wallet_signTypedData              |         Unlock UI         |        DAPP connect UI        |      UI for message signature       |
+|             wallet_supportedSpecs              |  silent return [string]   |    silent return [string]     |       silent return [string]        |
+|           wallet_supportedWalletApi            |  silent return [string]   |    silent return [string]     |       silent return [string]        |
 
 # Wallet API version :
 

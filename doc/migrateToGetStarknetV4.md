@@ -1,7 +1,7 @@
 # Migrate Get-Starknet v3->v4 <!-- omit from toc -->
 **Documentation for wallet teams**
 
-> version : v1.1.2 02/nov/2024.
+> version : v1.1.2 02/nov/2024, added behavior table and clarify no need of first usage prerequires.
 > version : v1.1.1 29/aug/2024.  
 > version : v1.1.0 19/aug/2024.  
 > version : v1.0.0 29/jul/2024.  
@@ -17,19 +17,109 @@ This document is explaining how Starknet browser wallet teams have to modify the
 - [DAPP connection to the wallet :](#dapp-connection-to-the-wallet-)
 - [Available commands :](#available-commands-)
   - [wallet\_getPermissions :](#wallet_getpermissions-)
+    - [Usage :](#usage-)
+    - [Input :](#input-)
+    - [Output :](#output-)
+    - [Behavior :](#behavior-)
+    - [Example :](#example-)
+      - [On DAPP side :](#on-dapp-side-)
+      - [On Wallet side :](#on-wallet-side-)
+    - [DAPP connection :](#dapp-connection-)
   - [wallet\_requestAccounts :](#wallet_requestaccounts-)
+    - [Usage :](#usage--1)
+    - [Input :](#input--1)
+    - [Output :](#output--1)
+    - [Behavior :](#behavior--1)
+    - [Example :](#example--1)
+      - [On DAPP side :](#on-dapp-side--1)
+      - [On Wallet side :](#on-wallet-side--1)
   - [wallet\_watchAsset :](#wallet_watchasset-)
+    - [Usage :](#usage--2)
+    - [Input :](#input--2)
+    - [Output :](#output--2)
+    - [Behavior :](#behavior--2)
+    - [Example :](#example--2)
+      - [On DAPP side :](#on-dapp-side--2)
+      - [On Wallet side :](#on-wallet-side--2)
   - [wallet\_addStarknetChain :](#wallet_addstarknetchain-)
+    - [Usage :](#usage--3)
+    - [Input :](#input--3)
+    - [Output :](#output--3)
+    - [Behavior :](#behavior--3)
+    - [Example :](#example--3)
+      - [On DAPP side :](#on-dapp-side--3)
+      - [On Wallet side :](#on-wallet-side--3)
   - [wallet\_switchStarknetChain :](#wallet_switchstarknetchain-)
+    - [Usage :](#usage--4)
+    - [Input :](#input--4)
+    - [Output :](#output--4)
+    - [Behavior :](#behavior--4)
+    - [Example :](#example--4)
+      - [On DAPP side :](#on-dapp-side--4)
+      - [On Wallet side :](#on-wallet-side--4)
   - [wallet\_requestChainId :](#wallet_requestchainid-)
+    - [Usage :](#usage--5)
+    - [Input :](#input--5)
+    - [Output :](#output--5)
+    - [Behavior :](#behavior--5)
+    - [Example :](#example--5)
+      - [On DAPP side :](#on-dapp-side--5)
+      - [On Wallet side :](#on-wallet-side--5)
   - [wallet\_deploymentData :](#wallet_deploymentdata-)
+    - [Usage :](#usage--6)
+    - [Input :](#input--6)
+    - [Output :](#output--6)
+    - [Behavior :](#behavior--6)
+    - [Example :](#example--6)
+      - [On DAPP side :](#on-dapp-side--6)
+      - [On Wallet side :](#on-wallet-side--6)
   - [wallet\_addInvokeTransaction :](#wallet_addinvoketransaction-)
+    - [Usage :](#usage--7)
+    - [Input :](#input--7)
+    - [Output :](#output--7)
+    - [Behavior :](#behavior--7)
+    - [Example :](#example--7)
+      - [On DAPP side :](#on-dapp-side--7)
+      - [On Wallet side :](#on-wallet-side--7)
   - [wallet\_addDeclareTransaction :](#wallet_adddeclaretransaction-)
+    - [Usage :](#usage--8)
+    - [Input :](#input--8)
+    - [Output :](#output--8)
+    - [Behavior :](#behavior--8)
+    - [Example :](#example--8)
+      - [On DAPP side :](#on-dapp-side--8)
+      - [On Wallet side :](#on-wallet-side--8)
   - [wallet\_signTypedData :](#wallet_signtypeddata-)
+    - [Usage :](#usage--9)
+    - [Input :](#input--9)
+    - [Output :](#output--9)
+    - [Behavior :](#behavior--9)
+    - [Example :](#example--9)
+      - [On DAPP side :](#on-dapp-side--9)
+      - [On Wallet side :](#on-wallet-side--9)
   - [wallet\_supportedSpecs :](#wallet_supportedspecs-)
+    - [Usage :](#usage--10)
+    - [Input :](#input--10)
+    - [Output :](#output--10)
+    - [Behavior :](#behavior--10)
+    - [Example :](#example--10)
+      - [On DAPP side :](#on-dapp-side--10)
+      - [On Wallet side :](#on-wallet-side--10)
   - [wallet\_supportedWalletApi :](#wallet_supportedwalletapi-)
+    - [Usage :](#usage--11)
+    - [Input :](#input--11)
+    - [Output :](#output--11)
+    - [Behavior :](#behavior--11)
+    - [Example :](#example--11)
+      - [On DAPP side :](#on-dapp-side--11)
+      - [On Wallet side :](#on-wallet-side--11)
+- [Behavior summary table :](#behavior-summary-table-)
 - [Wallet API version :](#wallet-api-version-)
 - [Subscription to events :](#subscription-to-events-)
+    - [Subscription :](#subscription-)
+      - [accountsChanged :](#accountschanged-)
+      - [networkChanged :](#networkchanged-)
+    - [Un-subscription :](#un-subscription-)
 
 # From get-starknet v3 to v4 :
 As you will discover hereunder, the Starknet Window Object (SWO) is still there, but it includes no more any Provider or Account. The already existing `.request()` method is still there, and nearly everything is now processed through it. The handling of events has not changed, and is still managed with the methods `.on()` & .`off()`.
@@ -78,7 +168,8 @@ These keys are :
 # DAPP connection to the wallet :
 Using the get-starknet v4 library, the DAPP will search all the Starknet wallets implemented in the browser, and will ask to the user to select one of them. 
 
-In opposition to get-starknet V3, once selected by the user, the V4 SWO do not need any command to load/unlock/activate/initiate/connect it ; it's immediately ready to use.
+> [!IMPORTANT]
+> In opposition to get-starknet V3, once selected by the user, the V4 SWO do not need any command to load/unlock/activate/initiate/connect it ; it's immediately ready to use.
 
 All readings of Starknet requested by the DAPP are now fully performed outside of the Wallet, but it's of course still involved in all write operations. This sharing is handled by the `WalletAccount` class, in the Starknet.js library (documentation [here](https://www.starknetjs.com/docs/next/guides/walletaccount/)).  
 ![](../Images/architecture.png)  
@@ -126,8 +217,8 @@ The wallet has to answer for example :
 ```
 resp = ["accounts"]
 ```
-### DAPP authorization :
-First time the DAPP is performing a request to the current account of the Wallet (all requests, except `wallet_getPermission`), the UI is requesting a validation to connect the current Wallet account to this DAPP.  
+### DAPP connection :
+First time the DAPP is performing a request to the current account of the Wallet (except some cases listed in the [behavior table](#behavior-summary-table-)), the UI is requesting a validation to connect the current Wallet account to this DAPP.  
 ![](../Images/ConnectDAPP.png)  
 Then the DAPP request is processed.
 
@@ -180,7 +271,7 @@ interface WatchAssetParameters {
 response : boolean
 ```
 ### Behavior :
-- The wallet opens a window to ask the user to  agree to add this token in the display list. If agreed, returns `true`. 
+- The wallet opens a window to ask the user to agree to add this token in the display list. If agreed, returns `true`. 
 
 ![](../Images/addToken.png)
 > [!CAUTION]
@@ -946,6 +1037,23 @@ The wallet has to answer for example :
 ```
 resp = ["0.7","0.8"]
 ```
+# Behavior summary table :
+Expected behavior:
+|                    Function                    |       wallet locked       | Once unlocked + not connected |     once unlocked and connected     |
+| :--------------------------------------------: | :-----------------------: | :---------------------------: | :---------------------------------: |
+|             wallet_getPermissions              |     silent return []      |       silent return []        |     silent return ["accounts"]      |
+| wallet_requestAccounts <br> silentMode : true  |     silent return []      |       silent return []        |       silent return [address]       |
+| wallet_requestAccounts <br> silentMode : false |         Unlock UI         |        DAPP connect UI        |       silent return [address]       |
+|               wallet_watchAsset                |         Unlock UI         |        DAPP connect UI        |      UI proposing a new token       |
+|            wallet_addStarknetChain             |         Unlock UI         |        DAPP connect UI        |      UI proposing a new chain       |
+|           wallet_switchStarknetChain           |         Unlock UI         |        DAPP connect UI        |    UI proposing to change chain     |
+|             wallet_requestChainId              |  silent return a string   |    silent return a string     |       silent return a string        |
+|             wallet_deploymentData              | silent return of an error |   silent return of an error   | silent return an object or an error |
+|          wallet_addInvokeTransaction           |         Unlock UI         |        DAPP connect UI        |         UI for transaction          |
+|          wallet_addDeclareTransaction          |         Unlock UI         |        DAPP connect UI        |      UI for class declaration       |
+|              wallet_signTypedData              |         Unlock UI         |        DAPP connect UI        |      UI for message signature       |
+|             wallet_supportedSpecs              |  silent return [string]   |    silent return [string]     |       silent return [string]        |
+|           wallet_supportedWalletApi            |  silent return [string]   |    silent return [string]     |       silent return [string]        |
 
 # Wallet API version :
 All entries of this Wallet API have an optional parameter to define the version of API used to create the request. 

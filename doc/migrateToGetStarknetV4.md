@@ -1,6 +1,7 @@
 # Migrate Get-Starknet v3->v4 <!-- omit from toc -->
 **Documentation for wallet teams**
 
+> version : v1.1.2 02/nov/2024.
 > version : v1.1.1 29/aug/2024.  
 > version : v1.1.0 19/aug/2024.  
 > version : v1.0.0 29/jul/2024.  
@@ -75,7 +76,10 @@ These keys are :
 - .icon (ex: `"data:image/svg+xml;base64,Cjxzdmcgd2lkdGg9..."`). A string defining the logo of the wallet. It will be used by the DAPP.
 
 # DAPP connection to the wallet :
-Using the get-starknet v4 library, the DAPP will search all the Starknet wallets implemented in the browser, and will ask to the user to select one of them.  
+Using the get-starknet v4 library, the DAPP will search all the Starknet wallets implemented in the browser, and will ask to the user to select one of them. 
+
+In opposition to get-starknet V3, once selected by the user, the V4 SWO do not need any command to load/unlock/activate/initiate/connect it ; it's immediately ready to use.
+
 All readings of Starknet requested by the DAPP are now fully performed outside of the Wallet, but it's of course still involved in all write operations. This sharing is handled by the `WalletAccount` class, in the Starknet.js library (documentation [here](https://www.starknetjs.com/docs/next/guides/walletaccount/)).  
 ![](../Images/architecture.png)  
 

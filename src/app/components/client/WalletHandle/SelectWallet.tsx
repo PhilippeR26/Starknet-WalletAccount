@@ -1,4 +1,4 @@
-import { isWalletObj } from "get-starknet-core";
+import { isWalletObject } from "@starknet-io/get-starknet-core";
 
 import { Box, Button, Center, Image, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, StackDivider, VStack, useDisclosure } from "@chakra-ui/react";
 import { useStoreWallet } from "../../Wallet/walletContext";
@@ -113,7 +113,7 @@ export default function SelectWallet() {
     useEffect(
         () => {
             const fetchData = async () => {
-                const res = await scanObjectForWalletsCustom(window, isWalletObj);
+                const res = await scanObjectForWalletsCustom(window, isWalletObject);
                 return res
             }
             console.log("Launch select wallet window.");

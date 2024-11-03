@@ -1,6 +1,7 @@
 # Test report for KEPLR wallet 0.12.149 (windows 10/Chrome, testnet)
 
 Use of test DAPP https://starknet-wallet-account.vercel.app/ 
+Tests of conformity to get-starknet v4.
 
 - Event networkChanged : ✅
 - Event accountsChanged: 🔶 (not applicable as the wallet can handle only one account).

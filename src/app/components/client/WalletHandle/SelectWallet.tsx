@@ -20,7 +20,7 @@ import { useState } from "react";
 import { WalletAccount, wallet, validateAndParseAddress, constants as SNconstants } from "starknet";
 import { WALLET_API } from "@starknet-io/types-js";
 import { compatibleApiVersions, myFrontendProviders } from "@/utils/constants";
-import sn from "@starknet-io/get-starknet-core"
+import getStarknet from "@starknet-io/get-starknet-core"
 
 // export interface StarknetWalletProvider extends StarknetWindowObject {}
 type ValidWallet = {
@@ -47,7 +47,7 @@ export async function scanObjectForWalletsCustom(
   //     )
   // );
 
-  const wallets = await sn.getAvailableWallets({});
+  const wallets = await getStarknet.getAvailableWallets({});
 
   const validWallets: ValidWallet[] = await Promise.all(wallets.map(
     async (wallet: WALLET_API.StarknetWindowObject) => {
@@ -62,8 +62,7 @@ export async function scanObjectForWalletsCustom(
 const checkCompatibility = async (myWalletSWO: WALLET_API.StarknetWindowObject) => {
   let isCompatible: boolean = false;
   try {
-    const apiVersions = (await myWalletSWO.request({ type: "wallet_supportedSpecs" })) as string[];
-    //if (compatibleApiVersions.some(r => apiVersions.includes(r))) { isCompatible = true };
+    const permissions = (await myWalletSWO.request({ type: "wallet_getPermissions" })) as string[];
     isCompatible = true;
   } catch {
     (err: any) => { console.log("Wallet compatibility failed.\n", err) };

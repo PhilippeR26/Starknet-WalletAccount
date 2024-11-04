@@ -1039,7 +1039,7 @@ resp = ["0.7","0.8"]
 ```
 # Behavior summary table :
 Expected behavior:
-|                    Function                    |       wallet locked       | Once unlocked + not connected |     once unlocked and connected     |
+|                    Function                    |       wallet locked + not connected       | Once unlocked + not connected |     once unlocked and connected     |
 | :--------------------------------------------: | :-----------------------: | :---------------------------: | :---------------------------------: |
 |             wallet_getPermissions              |     silent return []      |       silent return []        |     silent return ["accounts"]      |
 | wallet_requestAccounts <br> silentMode : true  |     silent return []      |       silent return []        |       silent return [address]       |

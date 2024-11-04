@@ -6,7 +6,7 @@ Tests of conformity to get-starknet v4.
 - Event networkChanged : ✅
 - Event accountsChanged: 🔶 (not applicable as the wallet can handle only one account).
 
-|                    Function                    |                   wallet locked                    |           Once unlocked + not connected            |                                           once unlocked and connected                                           |
+|                    Function                    |           wallet locked + not connected            |           Once unlocked + not connected            |                                           once unlocked and connected                                           |
 | :--------------------------------------------: | :------------------------------------------------: | :------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------: |
 |             wallet_getPermissions              |     expected: silent return []<br>KEPLR: ❌(1)      |     expected: silent return []<br>KEPLR: ❌(1)      |                                expected: silent return ["accounts"] <br>KEPLR: ✅                                |
 | wallet_requestAccounts <br> silentMode : true  |     expected: silent return []<br>KEPLR: ❌(1)      |     expected: silent return []<br>KEPLR: ❌(1)      |                                  expected: silent return [address]<br>KEPLR: ✅                                  |

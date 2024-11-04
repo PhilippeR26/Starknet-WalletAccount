@@ -82,7 +82,12 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         if (myWallet) {
           let txtResponse: string = "";
           try {
-            const response: string[] = await wallet.requestAccounts(myWallet, undefined);
+            let response: string[] = [""];
+            if (symbol === "silentMode") {
+              response = await wallet.requestAccounts(myWallet, true);
+            } else {
+              response = await wallet.requestAccounts(myWallet, false);
+            }
             txtResponse = addAddressPadding(response[0]);
           } catch (err: any) {
             txtResponse = "Error " + err.code + " = " + err.message
@@ -97,9 +102,9 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
       }
       case constants.CommandWallet.wallet_requestChainId: {
         if (myWallet) {
-          const param: WALLET_API.RequestAccountsParameters = {};
           const response = await wallet.requestChainId(myWallet);
-          setResponse(response + " (" + shortString.decodeShortString(response) + ")");
+          const respText: string = response === null ? "null" : shortString.decodeShortString(response);
+          setResponse(response + " (" + respText + ")");
           onOpen();
         }
         break;

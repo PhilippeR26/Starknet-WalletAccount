@@ -107,6 +107,12 @@ export default function WalletApiTag() {
                 <RpcWalletCommand
                     command={constants.CommandWallet.wallet_requestAccounts}
                     param=""
+                    symbol="silentMode"
+                />
+                <RpcWalletCommand
+                    command={constants.CommandWallet.wallet_requestAccounts}
+                    param=""
+                    symbol="noSilentMode"
                 />
                 <RpcWalletCommand
                     command={constants.CommandWallet.wallet_requestChainId}

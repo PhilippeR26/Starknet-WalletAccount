@@ -1,9 +1,10 @@
 # Starknet Wallet API
 
-> version : v1.2.2 02/nov/2024, behavior table added and clarify no need of first usage prerequires.
-> version : v1.2.1 14/june/2024, details for invoke params with Starknet.js v6
+> version :v1.2.3 06/nov/2024, precision about message signature of non deployed account.  
+> version : v1.2.2 02/nov/2024, behavior table added and clarify no need of first usage pre-requires.  
+> version : v1.2.1 14/june/2024, details for invoke params with Starknet.js v6.  
 > version : v1.2.0 27/may/2024, in accordance with official spec https://github.com/starkware-libs/starknet-specs/blob/master/wallet-api/wallet_rpc.json  
-> version : v1.1.0 02/may/2024 
+> version : v1.1.0 02/may/2024  
 > version : v1.0.2 08/feb/2024  
 > version : v1.0.1 07/feb/2024  
 
@@ -580,6 +581,7 @@ interface UNKNOWN_ERROR {
   message: 'An error occurred (UNKNOWN_ERROR)';
 }
 ```
+- The wallet send back the signature, whatever the account is deployed or not. It's a Wallet choice to alert or not that the account is not yet deployed, but in all cases it sign and send the response.
 ### Example :
 ```typescript
 const myTypedData: TypedData = {

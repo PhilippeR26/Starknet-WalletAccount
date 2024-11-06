@@ -21,6 +21,7 @@ import { WalletAccount, wallet, validateAndParseAddress, constants as SNconstant
 import { WALLET_API } from "@starknet-io/types-js";
 import { compatibleApiVersions, myFrontendProviders } from "@/utils/constants";
 import getStarknet from "@starknet-io/get-starknet-core"
+import { resolveVirtualWallet } from "./virtualWallets";
 
 // export interface StarknetWalletProvider extends StarknetWindowObject {}
 type ValidWallet = {
@@ -32,33 +33,28 @@ export async function scanObjectForWalletsCustom(
   obj: Record<string, any>, // Browser window object
   isWalletObject: (wallet: any) => boolean,
 ): Promise<ValidWallet[]> {
-  // const AllObjectsNames: string[] = Object.getOwnPropertyNames(obj); // names of objects of level -1 of window
-  // const listNames: string[] = AllObjectsNames.filter((name: string) =>
-  //     name.startsWith("starknet")
-  // );
-  // const Wallets: WALLET_API.StarknetWindowObject[] = Object.values(
-  //     [...new Set(listNames)].reduce<Record<string, WALLET_API.StarknetWindowObject>>(
-  //         (wallets, name: string) => {
-  //             const wallet = obj[name] as WALLET_API.StarknetWindowObject;
-  //             if (!wallets[wallet.id]) { wallets[wallet.id] = wallet }
-  //             return wallets;
-  //         },
-  //         {}
-  //     )
-  // );
-
   const wallets = await getStarknet.getAvailableWallets({});
 
   const validWallets: ValidWallet[] = await Promise.all(wallets.map(
     async (wallet: WALLET_API.StarknetWindowObject) => {
-      const isValid = await checkCompatibility(wallet);
+      let isValid = await checkCompatibility(wallet);
+      // If not valid still check maybe its a virtual wallet ? 
+      if(!isValid){
+        try{
+          resolveVirtualWallet
+          wallet = await (wallet as any).loadWallet(window)
+        }
+        catch(e){
+          console.log(e)
+        }
+        isValid = await checkCompatibility(wallet);
+      }
       return { wallet: wallet, isValid: isValid } as ValidWallet;
     }
   ))
   console.log(validWallets);
   return validWallets;
 }
-
 const checkCompatibility = async (myWalletSWO: WALLET_API.StarknetWindowObject) => {
   let isCompatible: boolean = false;
   try {

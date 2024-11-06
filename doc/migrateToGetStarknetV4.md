@@ -1,7 +1,7 @@
 # Migrate Get-Starknet v3->v4 <!-- omit from toc -->
 **Documentation for wallet teams**
 
-> > version :v1.1.3 06/nov/2024, precision about message signature of non deployed account.  
+> version : v1.1.3 06/nov/2024, precision about message signature of non deployed account.  
 > version : v1.1.2 02/nov/2024, added behavior table and clarify no need of first usage pre-requires.  
 > version : v1.1.1 29/aug/2024.  
 > version : v1.1.0 19/aug/2024.  

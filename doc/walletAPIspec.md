@@ -1,6 +1,6 @@
 # Starknet Wallet API
 
-> version :v1.2.3 06/nov/2024, precision about message signature of non deployed account.  
+> version : v1.2.3 06/nov/2024, precision about message signature of non deployed account.  
 > version : v1.2.2 02/nov/2024, behavior table added and clarify no need of first usage pre-requires.  
 > version : v1.2.1 14/june/2024, details for invoke params with Starknet.js v6.  
 > version : v1.2.0 27/may/2024, in accordance with official spec https://github.com/starkware-libs/starknet-specs/blob/master/wallet-api/wallet_rpc.json  

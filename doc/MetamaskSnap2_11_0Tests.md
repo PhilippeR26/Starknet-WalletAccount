@@ -1,6 +1,6 @@
 # Test report for Metamask v12.5.1 + Snap v2.11.0 wallet (Linux/Chrome, testnet)
 
-Use of test DAPP https://starknet-wallet-account.vercel.app/ (commit 0x47145... of 06/nov/2024)
+Use of test DAPP https://starknet-wallet-account.vercel.app/ (commit 0x47145... of 06/nov/2024)  
 Tests of conformity to get-starknet v4.0.3 (wallet spec 0.7).
 
 Once MetaMask unlocked, the Snap account is automatically connect to the DAPP (MM connection to DAPP management is not effective with Starknet Snap).

@@ -240,7 +240,7 @@ export default function WalletAccountTag() {
 
                     <Center fontSize={14} color={"darkred"}> my frontend provider Id : {myFrontendProviderIndex}  </Center>
                     <Center fontSize={13} color={"darkred"}> contractAddress : {validateAndParseAddress(testContract.address)}  </Center>
-                    <Center fontSize={13} color={"darkred"}> WalletAccountAddress : {!!myWalletAccount ? validateAndParseAddress(myWalletAccount.address) : ""}  </Center>
+                    <Center fontSize={13} color={"darkred"}> WalletAccountAddress : {!!myWalletAccount?.address ? validateAndParseAddress(myWalletAccount.address) : "address not available"}  </Center>
                     <Center fontSize={13} color={"darkred"}> WalletAccountChain : {shortString.decodeShortString(chainIdWA)}  </Center>
                 </>
                 <>

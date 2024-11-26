@@ -34,18 +34,18 @@ export async function scanObjectForWalletsCustom(
   isWalletObject: (wallet: any) => boolean,
 ): Promise<ValidWallet[]> {
   const wallets = await getStarknet.getAvailableWallets({});
-
+  console.log("List of starknet wallets", wallets);
   const validWallets: ValidWallet[] = await Promise.all(wallets.map(
     async (wallet: WALLET_API.StarknetWindowObject) => {
       let isValid = await checkCompatibility(wallet);
       // If not valid still check maybe its a virtual wallet ? 
-      if(!isValid){
-        try{
+      if (!isValid) {
+        try {
           resolveVirtualWallet
           wallet = await (wallet as any).loadWallet(window)
         }
-        catch(e){
-          console.log(e)
+        catch (e) {
+          console.log("Not a virtual wallet", e)
         }
         isValid = await checkCompatibility(wallet);
       }
@@ -91,9 +91,11 @@ export default function SelectWallet() {
   const [walletList, setWalletList] = useState<ValidWallet[]>([]);
 
   const handleSelectedWallet = async (selectedWallet: WALLET_API.StarknetWindowObject) => {
+    setMyWallet(selectedWallet); // zustand
+    setSelectWalletUI(false);
     console.log("Trying to connect wallet=", selectedWallet);
     setMyWallet(selectedWallet); // zustand
-    setMyWalletAccount(new WalletAccount(myFrontendProviders[2], selectedWallet));
+    setMyWalletAccount(await WalletAccount.connect(myFrontendProviders[2], selectedWallet));
 
     const result = await wallet.requestAccounts(selectedWallet);
     if (typeof (result) == "string") {
@@ -178,8 +180,7 @@ export default function SelectWallet() {
                       fontSize='lg'
                       fontWeight='bold'
                       onClick={() => {
-                        setMyWallet(wallet.wallet); // zustand
-                        setSelectWalletUI(false);
+
                         handleSelectedWallet(wallet.wallet);
                         onClose();
                       }} >

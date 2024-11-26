@@ -70,7 +70,7 @@ export default function Page() {
     <Provider>
       <div>
         <p className={styles.bgText}>
-          Test WalletAccount of Starknet.js v6.17.0 <br></br>
+          Test WalletAccount of Starknet.js v6.19.0 <br></br>
           with get-starknet-core v4.0.3
         </p>
         <Center>

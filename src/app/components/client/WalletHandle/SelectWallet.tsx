@@ -95,8 +95,9 @@ export default function SelectWallet() {
     setSelectWalletUI(false);
     console.log("Trying to connect wallet=", selectedWallet);
     setMyWallet(selectedWallet); // zustand
-    setMyWalletAccount(await WalletAccount.connect(myFrontendProviders[2], selectedWallet));
-
+    const myWA=await WalletAccount.connect(myFrontendProviders[2], selectedWallet);
+    setMyWalletAccount(myWA);
+    console.log("WalletAccount created=",myWA);
     const result = await wallet.requestAccounts(selectedWallet);
     if (typeof (result) == "string") {
       console.log("This Wallet is not compatible.");

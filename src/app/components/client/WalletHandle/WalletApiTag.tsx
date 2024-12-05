@@ -105,39 +105,39 @@ export default function WalletApiTag() {
 
             <SimpleGrid minChildWidth="305px" gap="20px" paddingBottom="20px">
                 <RpcWalletCommand
-                    command={constants.CommandWallet.wallet_requestAccounts}
+                    command={"wallet_requestAccounts"}
                     param=""
                     symbol="silentMode"
                 />
                 <RpcWalletCommand
-                    command={constants.CommandWallet.wallet_requestAccounts}
+                    command={"wallet_requestAccounts"}
                     param=""
                     symbol="noSilentMode"
                 />
                 <RpcWalletCommand
-                    command={constants.CommandWallet.wallet_requestChainId}
+                    command={"wallet_requestChainId"}
                     param=""
                 />
                 <RpcWalletCommand
-                    command={constants.CommandWallet.wallet_watchAsset}
+                    command={"wallet_watchAsset"}
                     param={chainFromContext===SNconstants.StarknetChainId.SN_MAIN?constants.addrLORDmainnet:constants.addrLORDtestnet}
                     symbol={"LORD"}
                 />
                 <RpcWalletCommand
-                    command={constants.CommandWallet.wallet_switchStarknetChain}
+                    command={"wallet_switchStarknetChain"}
                     param={SNconstants.StarknetChainId.SN_MAIN}
                 />
                 <RpcWalletCommand
-                    command={constants.CommandWallet.wallet_addStarknetChain}
+                    command={"wallet_addStarknetChain"}
                     param="ZORG"
                 />
 
                 <RpcWalletCommand
-                    command={constants.CommandWallet.starknet_addInvokeTransaction}
+                    command={"wallet_addInvokeTransaction"}
                     param="100"
                 />
                 <RpcWalletCommand
-                    command={constants.CommandWallet.starknet_addDeclareTransaction}
+                    command={"wallet_addDeclareTransaction"}
                     param="Object"
                     tip="2 transactions to accept, separated by few seconds"
                 />
@@ -146,24 +146,24 @@ export default function WalletApiTag() {
                     param="Object"
                 /> */}
                 <RpcWalletCommand
-                    command={constants.CommandWallet.starknet_signTypedData}
+                    command={"wallet_signTypedData"}
                     param="Object"
                 />
                  <RpcWalletCommand
-                    command={constants.CommandWallet.wallet_supportedWalletApi}
+                    command={"wallet_supportedWalletApi"}
                     param=""
                 />
 
                 <RpcWalletCommand
-                    command={constants.CommandWallet.starknet_supportedSpecs}
+                    command={"wallet_supportedSpecs"}
                     param=""
                 />
                 <RpcWalletCommand
-                    command={constants.CommandWallet.wallet_getPermissions}
+                    command={"wallet_getPermissions"}
                     param=""
                 />
                 <RpcWalletCommand
-                    command={constants.CommandWallet.wallet_deploymentData}
+                    command={"wallet_deploymentData"}
                     param=""
                 />
             </SimpleGrid>

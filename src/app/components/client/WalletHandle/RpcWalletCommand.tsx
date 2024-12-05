@@ -78,7 +78,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
 
   async function callCommand(command: constants.CommandWallet, param: string) {
     switch (command) {
-      case constants.CommandWallet.wallet_requestAccounts: {
+      case "wallet_requestAccounts": {
         if (myWallet) {
           let txtResponse: string = "";
           try {
@@ -100,7 +100,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         }
         break;
       }
-      case constants.CommandWallet.wallet_requestChainId: {
+      case "wallet_requestChainId": {
         if (myWallet) {
           const response = await wallet.requestChainId(myWallet);
           const respText: string = response === null ? "null" : shortString.decodeShortString(response);
@@ -109,7 +109,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         }
         break;
       }
-      case constants.CommandWallet.wallet_watchAsset: {
+      case "wallet_watchAsset": {
         if (myWallet) {
           const myAsset: WALLET_API.WatchAssetParameters = {
             type: "ERC20",
@@ -137,7 +137,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         }
         break;
       }
-      case constants.CommandWallet.wallet_switchStarknetChain: {
+      case "wallet_switchStarknetChain": {
         if (myWallet) {
           let response: string = "";
           try {
@@ -152,7 +152,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         }
         break;
       }
-      case constants.CommandWallet.wallet_addStarknetChain: {
+      case "wallet_addStarknetChain": {
         const myChainId: WALLET_API.AddStarknetChainParameters = {
           id: param,
           chain_id: shortString.encodeShortString(param),  // A 0x-prefixed hexadecimal string
@@ -184,7 +184,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         break;
       }
 
-      case constants.CommandWallet.starknet_addInvokeTransaction: {
+      case "wallet_addInvokeTransaction": {
         // param other than 100 will be reverted.
         const contractAddress = RejectContractAddress[myFrontendProviderIndex];
         //const contractCallData = new CallData(rejectAbi);
@@ -226,7 +226,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         break;
       }
 
-      case constants.CommandWallet.starknet_addDeclareTransaction: {
+      case "wallet_addDeclareTransaction": {
         if (myWallet) {
 
           let response: string = "";
@@ -264,7 +264,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         break;
       }
 
-      case constants.CommandWallet.starknet_signTypedData: {
+      case "wallet_signTypedData": {
         const myTypedData: TypedData = {
           domain: {
             name: "Example DApp",
@@ -301,7 +301,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         }
         break;
       }
-      case constants.CommandWallet.wallet_supportedWalletApi: {
+      case "wallet_supportedWalletApi": {
         if (myWallet) {
           let response: string = "";
           try {
@@ -318,7 +318,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         }
         break;
       }
-      case constants.CommandWallet.starknet_supportedSpecs: {
+      case "wallet_supportedSpecs": {
         if (myWallet) {
           let response: string = "";
           try {
@@ -334,7 +334,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         }
         break;
       }
-      case constants.CommandWallet.wallet_getPermissions: {
+      case "wallet_getPermissions": {
         if (myWallet) {
           let response: string = "";
           try {
@@ -350,7 +350,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         }
         break;
       }
-      case constants.CommandWallet.wallet_deploymentData: {
+      case "wallet_deploymentData": {
         if (myWallet) {
           let response: string = "";
           try {

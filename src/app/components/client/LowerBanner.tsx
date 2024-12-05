@@ -25,7 +25,7 @@ export default function LowerBanner() {
       {" "}- {" "}
       <Link color="blue.700" href='https://github.com/PhilippeR26/Starknet-WalletAccount/blob/api/doc/walletAPIspec.md' > spec documentation<SquareArrowOutUpRight margin-left="2px" /></Link>
       {" "}- Powered by {" "}
-      <Link color="blue.700" href='https://starknetjs.com' > Starknet.js v6.17.0<SquareArrowOutUpRight margin-left="2px" /></Link>
+      <Link color="blue.700" href='https://starknetjs.com' > Starknet.js v6.20.3<SquareArrowOutUpRight margin-left="2px" /></Link>
     </Box>
   )
 }

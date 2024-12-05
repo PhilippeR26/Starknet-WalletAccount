@@ -1,4 +1,5 @@
 import './globals.css'
+import { Provider } from "@/components/ui/provider"
 
 export const metadata = {
   title: 'Starknet-WalletAccount',
@@ -14,9 +15,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        {children}</body>
+        <Provider>{children}</Provider>
+      </body>
     </html>
   )
 }

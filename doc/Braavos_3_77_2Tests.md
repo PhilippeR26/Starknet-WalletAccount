@@ -1,13 +1,20 @@
 # Test report for Braavos wallet 3.77.2 (Linux/Chrome, testnet)
 
 Use of test DAPP https://starknet-wallet-account.vercel.app/ 
-Tests of conformity to get-starknet v4 (wallet spec 0.7).
+Tests of conformity to get-starknet v4.0.3 (wallet spec 0.7).
+
+|Wallet locked|DAPP ||
+|---|---|--|
+||Not connected|Connected|
+|No|1|2|
+|yes|3|4|
+<br>
 
 - Event networkChanged : ✅
 - Event accountsChanged: ✅
 
-|                    Function                    |                   wallet locked + not connected                    |           Once unlocked + not connected            |                                           once unlocked and connected                                           |
-| :--------------------------------------------: | :------------------------------------------------: | :------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------: |
+|                    Function                    |                   wallet locked + not connected (case 3)                   |           Once unlocked + not connected (case 1) |                                           Once unlocked and connected (case 2) | Wallet locked + not connected (case 4)|
+| :--------------------------------------------: | :------------------------------------------------: | :------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------: | :--:|
 |             wallet_getPermissions              |     expected: silent return []<br>Braavos: ✅      |     expected: silent return []<br>Braavos: ✅      |                                expected: silent return ["accounts"] <br>Braavos: ✅                                |
 | wallet_requestAccounts <br> silentMode : true  |     expected: silent return []<br>Braavos: ❌ Error: Cannot read properties of undefined (reading 'toString')      |     expected: silent return []<br>Braavos: ❌ Error: Cannot read properties of undefined (reading 'toString')      |                                  expected: silent return [address]<br>Braavos: ✅                                  |
 | wallet_requestAccounts <br> silentMode : false |          expected: Unlock UI<br>Braavos: ✅           |       expected: DAPP connect UI<br>Braavos: ✅        |                                  expected: silent return [address]<br>Braavos: ✅                                  |

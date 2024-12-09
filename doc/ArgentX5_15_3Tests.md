@@ -1,6 +1,6 @@
 # Test report for ArgentX wallet 5.15.3 (Linux/Chrome, testnet)
 
-Use of test DAPP https://starknet-wallet-account.vercel.app/ 
+Use of test DAPP https://starknet-wallet-account.vercel.app/  
 Tests of conformity to get-starknet v4 (wallet spec 0.7).
 
 - Event networkChanged : ✅

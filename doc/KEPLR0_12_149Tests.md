@@ -1,12 +1,13 @@
-# Test report for KEPLR wallet 0.12.149 (windows 10/Chrome, testnet)
+# Test report for KEPLR wallet 0.12.159 (Linux/Chrome, testnet)
 
 Use of test DAPP https://starknet-wallet-account.vercel.app/ 
-Tests of conformity to get-starknet v4.
+Tests of conformity to get-starknet v4.0.4 (wallet spec 0.7)
 
 - Event networkChanged : ✅
 - Event accountsChanged: 🔶 (not applicable as the wallet can handle only one account).
 
-|                    Function                    |           wallet locked + not connected            |           Once unlocked + not connected            |                                           once unlocked and connected                                           |
+|
+| Function  |  wallet locked + not connected (case 3) | Once unlocked + not connected (case 1) |Once unlocked and connected (case 2) | Connected + Wallet locked (case 4)|
 | :--------------------------------------------: | :------------------------------------------------: | :------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------: |
 |             wallet_getPermissions              |     expected: silent return []<br>KEPLR: ❌(1)      |     expected: silent return []<br>KEPLR: ❌(1)      |                                expected: silent return ["accounts"] <br>KEPLR: ✅                                |
 | wallet_requestAccounts <br> silentMode : true  |     expected: silent return []<br>KEPLR: ❌(1)      |     expected: silent return []<br>KEPLR: ❌(1)      |                                  expected: silent return [address]<br>KEPLR: ✅                                  |

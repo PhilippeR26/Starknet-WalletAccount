@@ -1,5 +1,6 @@
 # Starknet Wallet API
 
+> version : v1.2.4 06/dec/2024, add case unlocked&connect to behavior table.  
 > version : v1.2.3 06/nov/2024, precision about message signature of non deployed account.  
 > version : v1.2.2 02/nov/2024, behavior table added and clarify no need of first usage pre-requires.  
 > version : v1.2.1 14/june/2024, details for invoke params with Starknet.js v6.  
@@ -667,22 +668,29 @@ const resp = await myWallet.request({type: "wallet_supportedWalletApi"});
 ```
 
 # Behavior summary table :
+|Wallet |DAPP ||
+|---:|:---:|:--:|
+||**Not connected**|**Connected**|
+|**Unlocked**|1|2|
+|**Locked**|3|4|
+<br>
+
 Expected behavior:
-|                    Function                    |       wallet locked + not connected       | Once unlocked + not connected |     once unlocked and connected     |
-| :--------------------------------------------: | :-----------------------: | :---------------------------: | :---------------------------------: |
-|             wallet_getPermissions              |     silent return []      |       silent return []        |     silent return ["accounts"]      |
-| wallet_requestAccounts <br> silentMode : true  |     silent return []      |       silent return []        |       silent return [address]       |
-| wallet_requestAccounts <br> silentMode : false |         Unlock UI         |        DAPP connect UI        |       silent return [address]       |
-|               wallet_watchAsset                |         Unlock UI         |        DAPP connect UI        |      UI proposing a new token       |
-|            wallet_addStarknetChain             |         Unlock UI         |        DAPP connect UI        |      UI proposing a new chain       |
-|           wallet_switchStarknetChain           |         Unlock UI         |        DAPP connect UI        |    UI proposing to change chain     |
-|             wallet_requestChainId              |  silent return a string   |    silent return a string     |       silent return a string        |
-|             wallet_deploymentData              | silent return of an error |   silent return of an error   | silent return an object or an error |
-|          wallet_addInvokeTransaction           |         Unlock UI         |        DAPP connect UI        |         UI for transaction          |
-|          wallet_addDeclareTransaction          |         Unlock UI         |        DAPP connect UI        |      UI for class declaration       |
-|              wallet_signTypedData              |         Unlock UI         |        DAPP connect UI        |      UI for message signature       |
-|             wallet_supportedSpecs              |  silent return [string]   |    silent return [string]     |       silent return [string]        |
-|           wallet_supportedWalletApi            |  silent return [string]   |    silent return [string]     |       silent return [string]        |
+| Function  |  wallet locked + not connected <br> (case 3) | Once unlocked + not connected <br> (case 1) |Once unlocked and connected <br> (case 2) | Connected + Wallet locked <br> (case 4)|
+| :--------------------------------------------: | :-----------------------: | :---------------------------: | :---------------------------------: |:--:|
+|             wallet_getPermissions              |     silent return []      |       silent return []        |     silent return ["accounts"]      |silent return [] |
+| wallet_requestAccounts <br> silentMode : true  |     silent return []      |       silent return []        |       silent return [address]       |silent return []  |
+| wallet_requestAccounts <br> silentMode : false |         Unlock UI         |        DAPP connect UI        |       silent return [address] |Unlock UI |
+|               wallet_watchAsset                |         Unlock UI         |        DAPP connect UI        |      UI proposing a new token       |Unlock UI|
+|            wallet_addStarknetChain             |         Unlock UI         |        DAPP connect UI        |      UI proposing a new chain       |Unlock UI|
+|           wallet_switchStarknetChain           |         Unlock UI         |        DAPP connect UI        |    UI proposing to change chain     |Unlock UI |
+|             wallet_requestChainId              |  silent return a string   |    silent return a string     |       silent return a string        |silent return a string     |
+|             wallet_deploymentData              | silent return of an error |   silent return of an error   | silent return an object or an error |silent return of an error |
+|          wallet_addInvokeTransaction           |         Unlock UI         |        DAPP connect UI        |         UI for transaction   |Unlock UI |
+|          wallet_addDeclareTransaction          |         Unlock UI         |        DAPP connect UI        |      UI for class declaration  |Unlock UI |
+|              wallet_signTypedData              |         Unlock UI         |        DAPP connect UI        |      UI for message signature       |Unlock UI |
+|             wallet_supportedSpecs              |  silent return [string]   |    silent return [string]     |       silent return [string]        |silent return [string]   |
+|           wallet_supportedWalletApi            |  silent return [string]   |    silent return [string]     |       silent return [string]  |silent return [string]   |
 
 # Wallet API version :
 

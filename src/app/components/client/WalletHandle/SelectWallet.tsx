@@ -161,7 +161,7 @@ export default function SelectWallet() {
           Select a wallet:
         </DialogHeader>
         <DialogBody
-          paddingX={"20px"}
+          px={"20px"}
         >
           <VStack
             separator={<StackSeparator borderColor='gray.200' />}
@@ -203,7 +203,6 @@ export default function SelectWallet() {
                   </>}
                 </>
               })
-
             }
           </VStack>
         </DialogBody>

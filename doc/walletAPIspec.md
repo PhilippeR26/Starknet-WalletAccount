@@ -1,5 +1,6 @@
 # Starknet Wallet API
 
+> version : v1.3.0 23/dec/2024, to be in accordance with spec 0.8rc2, add errors DEPLOYMENT_DATA_NOT_AVAILABLE & CHAIN_ID_NOT_SUPPORTED, add silentMode in wallet_switchStarknetChain.  
 > version : v1.2.4 06/dec/2024, add case unlocked&connect to behavior table.  
 > version : v1.2.3 06/nov/2024, precision about message signature of non deployed account.  
 > version : v1.2.2 02/nov/2024, behavior table added and clarify no need of first usage pre-requires.  
@@ -291,6 +292,7 @@ Change the current network of the wallet.
 ```typescript
 interface SwitchStarknetChainParameters {
   chainId: string // A 0x-prefixed hexadecimal string of an encoded text
+  silentMode?: boolean
 }
 ```
 ### Output :
@@ -299,6 +301,13 @@ response : boolean
 ```
 ### Behavior :
 - The wallet opens a window to ask if you agree to change the current network in the wallet. If you agree, returns `true`. 
+- Optional silentMode : if true, the wallet will not show the wallet-unlock UI in case of a locked wallet, nor the dApp-connect UI in case of a non-connected dApp. If the Wallet is unlocked and the DAPP connected, the wallet shows the change chain UI ; otherwise, the response is an error :
+```typescript
+interface CHAIN_ID_NOT_SUPPORTED {
+  code: 117;
+  message: "An error occurred (CHAIN_ID_NOT_SUPPORTED)";
+}
+```
 - If something is inconsistent in the input data, the method fails with this error :
 ```typescript
 interface UNLISTED_NETWORK {
@@ -374,6 +383,13 @@ Provides the data that will be used by the wallet to deploy an existing account 
 interface ACCOUNT_ALREADY_DEPLOYED {
   code: 115;
   message: 'An error occurred (ACCOUNT_ALREADY_DEPLOYED)';
+}
+``` 
+- If the wallet is locked and the DAPP not connected, the method fails with this error :
+```typescript
+interface DEPLOYMENT_DATA_NOT_AVAILABLE {
+  code: 116;
+  message: "An error occurred (DEPLOYMENT_DATA_NOT_AVAILABLE)";
 }
 ``` 
 ### Example :
@@ -679,13 +695,14 @@ Expected behavior:
 | Function  |  wallet locked + not connected <br> (case 3) | Once unlocked + not connected <br> (case 1) |Once unlocked and connected <br> (case 2) | Connected + Wallet locked <br> (case 4)|
 | :--------------------------------------------: | :-----------------------: | :---------------------------: | :---------------------------------: |:--:|
 |             wallet_getPermissions              |     silent return []      |       silent return []        |     silent return ["accounts"]      |silent return [] |
-| wallet_requestAccounts <br> silentMode : true  |     silent return []      |       silent return []        |       silent return [address]       |silent return []  |
-| wallet_requestAccounts <br> silentMode : false |         Unlock UI         |        DAPP connect UI        |       silent return [address] |Unlock UI |
+| wallet_requestAccounts <br> silent_mode : false |         Unlock UI         |        DAPP connect UI        |       silent return [address] |Unlock UI |
+| wallet_requestAccounts <br> silent_mode : true  |     silent return []      |       silent return []        |       silent return [address]       |silent return []  |
 |               wallet_watchAsset                |         Unlock UI         |        DAPP connect UI        |      UI proposing a new token       |Unlock UI|
 |            wallet_addStarknetChain             |         Unlock UI         |        DAPP connect UI        |      UI proposing a new chain       |Unlock UI|
-|           wallet_switchStarknetChain           |         Unlock UI         |        DAPP connect UI        |    UI proposing to change chain     |Unlock UI |
-|             wallet_requestChainId              |  silent return a string   |    silent return a string     |       silent return a string        |silent return a string     |
-|             wallet_deploymentData              | silent return of an error |   silent return of an error   | silent return an object or an error |silent return of an error |
+|           wallet_switchStarknetChain <br> silent_mode : false          |         Unlock UI         |        DAPP connect UI        |    UI proposing to change chain     |Unlock UI |
+| wallet_switchStarknetChain <br> silent_mode : true          |         silent return of an error 117         |        silent return of an error 117        |    UI proposing to change chain     |silent return of an error 117 |
+|   wallet_requestChainId    |  silent return a string   |    silent return a string     |       silent return a string        |silent return a string     |
+|             wallet_deploymentData              | silent return of an error 116 |   silent return of an error 116  | silent return an object or an error 115 |silent return of an error 116 |
 |          wallet_addInvokeTransaction           |         Unlock UI         |        DAPP connect UI        |         UI for transaction   |Unlock UI |
 |          wallet_addDeclareTransaction          |         Unlock UI         |        DAPP connect UI        |      UI for class declaration  |Unlock UI |
 |              wallet_signTypedData              |         Unlock UI         |        DAPP connect UI        |      UI for message signature       |Unlock UI |

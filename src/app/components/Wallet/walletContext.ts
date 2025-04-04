@@ -3,8 +3,6 @@ import { create } from "zustand";
 import { ProviderInterface, AccountInterface, type WalletAccount } from "starknet";
 import {WALLET_API } from "@starknet-io/types-js";
 
-// import { StarknetWindowObject } from "@/app/core/StarknetWindowObject";
-
 export interface WalletState {
     StarknetWalletObject: WALLET_API.StarknetWindowObject | undefined,
     setMyStarknetWalletObject: (wallet: WALLET_API.StarknetWindowObject) => void,

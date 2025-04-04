@@ -16,7 +16,7 @@ const BraavosProxyConstructor = (BraavosInitializer: Calldata) => CallData.compi
 });
 
 export function calculateAddressBraavos(
-    privateKeyBraavos: num.BigNumberish,
+    privateKeyBraavos: BigNumberish,
 ): string {
     const starkKeyPubBraavos = ec.starkCurve.getStarkKey(num.toHex(privateKeyBraavos));
     const BraavosInitializer: Calldata = calcBraavosInit(starkKeyPubBraavos);

@@ -29,7 +29,7 @@ export default function InteractContract() {
                 setBlockData({
                     timeStamp: resp.timestamp,
                     blockHash: resp.block_hash ?? "",
-                    blockNumber: resp.block_number,
+                    blockNumber: resp.block_number ?? 0,
                     gasPrice: resp.l1_gas_price.price_in_wei ?? ""
                 }
 

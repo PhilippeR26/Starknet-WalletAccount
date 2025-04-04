@@ -18,10 +18,7 @@
     "@types/node": "22.8.4",
     "@types/react": "18.3.12",
     "@types/react-dom": "18.3.1",
-    "axios": "^1.7.7",
-    "dotenv": "^16.4.5",
     "lucide-react": "^0.454.0",
-    "material-react-toastify": "^10.0.5",
     "next": "^15.0.2",
     "next-themes": "^0.3.0",
     "react": "18.3.1",
@@ -29,13 +26,12 @@
     "react-icons": "^5.3.0",
     "server-only": "^0.0.1",
     "sharp": "^0.33.5",
-    "starknet": "^6.20.3",
-    "swr": "^2.2.5",
-    "typescript": "^5.6.3",
+    "starknet": "7.0.1",
     "zustand": "^5.0.1"
   },
   "devDependencies": {
     "encoding": "^0.1.13",
+    "typescript": "^5.6.3",
     "simple-zustand-devtools": "^1.1.0"
   },
   "findUnusedExports": {

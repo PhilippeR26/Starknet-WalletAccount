@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from 'next/image'
 import styles from './page.module.css'
 import { Center, Box, Tabs } from '@chakra-ui/react';
-import { Button } from "@/components/ui/button";
+import { Button } from "@chakra-ui/react";
 import { Provider } from "@/components/ui/provider";
 import { constants as SNconstants, shortString } from 'starknet';
 import InteractContract from './components/client/Contract/InteractContract';
@@ -19,33 +19,33 @@ import LowerBanner from "./components/client/LowerBanner";
 
 export default function Page() {
 
-  const displaySelectWalletUI = useStoreWallet(state => state.displaySelectWalletUI);
-  const setSelectWalletUI = useStoreWallet(state => state.setSelectWalletUI);
+  const {displaySelectWalletUI} = useStoreWallet(state => state);
+  const {setSelectWalletUI} = useStoreWallet(state => state);
 
   const addressAccountFromContext = useStoreWallet(state => state.address);
-  const setAddressAccount = useStoreWallet(state => state.setAddressAccount);
+  const {setAddressAccount} = useStoreWallet(state => state);
 
   const myFrontendProviderIndex = useFrontendProvider(state => state.currentFrontendProviderIndex);
-  const setCurrentFrontendProviderIndex = useFrontendProvider(state => state.setCurrentFrontendProviderIndex);
+  const {setCurrentFrontendProviderIndex} = useFrontendProvider(state => state);
 
   const myWallet = useStoreWallet(state => state.StarknetWalletObject);
   const setMyWallet = useStoreWallet(state => state.setMyStarknetWalletObject);
 
   const chainFromContext = useStoreWallet(state => state.chain);
-  const setChain = useStoreWallet(state => state.setChain);
+  const {setChain} = useStoreWallet(state => state);
 
   const accountFromContext = useStoreWallet(state => state.account);
-  const setAccount = useStoreWallet(state => state.setAccount);
+  const {setAccount} = useStoreWallet(state => state);
 
   const providerFromContext = useStoreWallet(state => state.provider);
-  const setProvider = useStoreWallet(state => state.setProvider);
+  const {setProvider} = useStoreWallet(state => state);
 
-  const isConnected = useStoreWallet(state => state.isConnected);
-  const setConnected = useStoreWallet(state => state.setConnected);
+  const {isConnected, setConnected} = useStoreWallet(state => state);
 
-  const walletApiList = useStoreWallet(state => state.walletApiList);
-  const selectedApiVersion = useStoreWallet(state => state.selectedApiVersion);
-  const setSelectedApiVersion = useStoreWallet(state => state.setSelectedApiVersion);
+  const {walletApiList} = useStoreWallet(state => state);
+  const {selectedApiVersion} = useStoreWallet(state => state);
+  const {setSelectedApiVersion} = useStoreWallet(state => state);
+
   const [selectedOption, setSelectedOption] = useState<number>(0);
 
 
@@ -70,8 +70,8 @@ export default function Page() {
     <Provider>
       <div>
         <p className={styles.bgText}>
-          Test WalletAccount of Starknet.js v6.20.3 <br></br>
-          with get-starknet-core v4.0.4
+          Test WalletAccount of Starknet.js v8.6.0 <br></br>
+          with get-starknet-core v4.0.8
         </p>
         <Center>
           <Image src={starknetJsImg} alt='starknet.js' width={150} />
@@ -150,7 +150,7 @@ export default function Page() {
                       address = {addressAccountFromContext}<br />
                       chain = {chainFromContext != "" ? shortString.decodeShortString(chainFromContext) : ""}
                       <br />
-                      provider = the frontend provider uses {Object.keys(SNconstants.StarknetChainId)[myFrontendProviderIndex]
+                      provider = the frontend provider uses {myFrontendProviderIndex==0?"MAINNET":"TESTNET"
                       }
                       <br />
                       isConnected={isConnected ? "Yes" : "No"}

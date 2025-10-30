@@ -23,7 +23,7 @@ export default function GetBalance({ tokenAddress }: Props) {
     const [decimals, setDecimals] = useState<number>(1)
     const [symbol, setSymbol] = useState<string>("");
 
-    const myContract = new Contract(erc20Abi, tokenAddress, providerSN);
+    const myContract = new Contract({ abi: erc20Abi, address: tokenAddress, providerOrAccount: providerSN });
     useEffect(() => {
         myContract.decimals()
             .then((resp: any) => {

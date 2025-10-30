@@ -8,13 +8,23 @@ This repo contains a DAPP to interact with the Starknet blockchain, using the ne
 
 > [!IMPORTANT]
 > Stars are appreciated!
+> 
+## specification :
+
+The official Starkware specification of the wallet API is here : https://github.com/starkware-libs/starknet-specs/wallet-api/wallet_rpc.json
+
+The corresponding TypeScript library is here : https://github.com/starknet-io/types-js
+
+> [!IMPORTANT]
+> **An easier way to read Wallet API documentation I created is [here]([doc/walletAPIspec.md](https://github.com/PhilippeR26/Starknet-WalletAccount/blob/api/doc/walletAPIspec.md))**
+
 
 ### Wallet API entry points :
-The `Wallet API` tab is exposing all the low level entry points of this new API :
+The `Wallet API` tab is exposing all the low level entry points of this API :
 ![](./Images/Api.png)
 
 ### WalletAccount usage :
-The `WalletAccount` tab allows you to test some features of this new class of Starknet.js v6.8.
+The `WalletAccount` tab allows you to test some features of this new Starknet.js class.
 ![](./Images/WalletAccount.png)
 Let's see more in detail this WalletAccount.  
 It's very similar to a Starknet.js `Account` class. There is anyway a huge difference : the private key is hold in a browser wallet (as ArgentX or Braavos), and any signature is managed by the wallet.  
@@ -30,8 +40,8 @@ As several Wallets can be installed in your browser, the WalletAccount needs the
 You can also create your own UI to select the wallet. In this DAPP, I have created a custom UI [here](./src/app/components/client/WalletHandle/SelectWallet.tsx).  
 So, you instantiate a new Wallet account with :
 ```typescript
-import { connect } from "get-starknet"; // v4.0.0
-import { WalletAccount } from "starknet"; // v6.8.0 min
+import { connect } from "get-starknet"; // v4.0.8
+import { WalletAccount } from "starknet"; // v8.6.0
 const myFrontendProvider = "https://free-rpc.nethermind.io/sepolia-juno/v0_7";
 // UI to select a wallet :
 const selectedWallet = await connect({ modalMode: "alwaysAsk", modalTheme: "light" }); 
@@ -43,14 +53,6 @@ And you have some extra functionalities :
 - subscription to these events : account / network changes in the wallet.
 - direct access to the wallet API entry points.
 
-
-## specification :
-
-The official Starkware specification of the wallet API is here : https://github.com/starkware-libs/starknet-specs/wallet-api/wallet_rpc.json
-
-The corresponding TypeScript library is here : https://github.com/starknet-io/types-js
-
-**An easier to read Wallet API documentation I created is [here](doc/walletAPIspec.md)**
 
 ## Getting Started 🚀 :
 

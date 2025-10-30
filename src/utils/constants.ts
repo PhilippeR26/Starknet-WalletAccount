@@ -11,9 +11,9 @@ export type CommandWallet = keyof WALLET_API.RpcTypeToMessageMap;
 export type StarknetChainIdEntry = keyof typeof SNconstants.StarknetChainId;
 
 export const myFrontendProviders: ProviderInterface[] = [
-    new RpcProvider({ nodeUrl: "https://starknet-mainnet.public.blastapi.io/rpc/v0_7" }),
+    new RpcProvider({ nodeUrl: "https://starknet.g.alchemy.com/starknet/version/rpc/v0_9/" + process.env.NEXT_PUBLIC_PROVIDER_URL }),
     new RpcProvider({ nodeUrl: "https://starknet-testnet.public.blastapi.io/rpc/v0_7" }),
-    new RpcProvider({ nodeUrl: "https://free-rpc.nethermind.io/sepolia-juno/v0_7" })];
+    new RpcProvider({ nodeUrl: "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_9/" + process.env.NEXT_PUBLIC_PROVIDER_URL })];
 
 export const RejectContractAddress: string[] = [
     "0x541b0409e65bf546ff6c3090f4c07c53938b20c1f659250b84ce5eb66d4485e", // mainnet

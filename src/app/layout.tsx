@@ -1,7 +1,8 @@
+import type { Metadata } from 'next'
 import './globals.css'
 import { Provider } from "@/components/ui/provider"
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Starknet-WalletAccount',
   description: 'test of WalletAccount for Starknet',
   icons: {

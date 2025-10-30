@@ -5,7 +5,7 @@ import { useStoreBlock } from "../Block/blockContext";
 import { useStoreWallet } from '../../Wallet/walletContext';
 
 import { Text, Center, Spinner, Box } from "@chakra-ui/react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@chakra-ui/react";
 import styles from '../../../page.module.css'
 
 import { rejectAbi } from "../../../contracts/abis/rejectAbi";
@@ -25,7 +25,7 @@ export default function PlayWithCairo1() {
     const [balance, setBalance] = useState<number>(0);
     const [transactionHash, setTransactionHash] = useState<string>("");
 
-    const cairo1Contract = new Contract(rejectAbi, contractAddress, providerSN);
+    const cairo1Contract = new Contract({ abi: rejectAbi, address: contractAddress, providerOrAccount: providerSN });
     if (accountFromContext) { cairo1Contract.connect(accountFromContext); }
 
     useEffect(() => {
@@ -62,7 +62,7 @@ export default function PlayWithCairo1() {
                             <Text className={styles.text1}>Balance = {balance} tokens</Text>
                             <Center>
                                 <Button
-                      variant="surface"
+                                    variant="surface"
                                     ml="4"
                                     textDecoration="none !important"
                                     outline="none !important"

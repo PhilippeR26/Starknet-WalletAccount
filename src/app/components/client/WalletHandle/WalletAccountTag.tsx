@@ -9,7 +9,7 @@ import { rejectContract } from "@/app/contracts/reject.sierra.json";
 import { RejectContractAddress, accountClass, myFrontendProviders } from "@/utils/constants";
 import { useFrontendProvider } from "../provider/providerContext";
 import { useStoreWallet } from "../../Wallet/walletContext";
-import { Button } from "@/components/ui/button";
+import { Button } from "@chakra-ui/react";
 
 export default function WalletAccountTag() {
     const DISPLAY_DURATION = 15 * 1000 // ms
@@ -37,8 +37,8 @@ export default function WalletAccountTag() {
     const [displayReadWalletAccount, setDisplayReadWalletAccount] = useState<Boolean>(false);
     const [resultReadWalletAccount, setResultReadWalletAccount] = useState<string>("");
 
-    const [testContract, SetTestContract] = useState<Contract>(new Contract(rejectContract.abi, "0x00"));
-    const [testContractWA, SetTestContractWA] = useState<Contract>(new Contract(rejectContract.abi, "0x00"));
+    const [testContract, SetTestContract] = useState<Contract>(new Contract({ abi: rejectContract.abi, address: "0x00" }));
+    const [testContractWA, SetTestContractWA] = useState<Contract>(new Contract({ abi: rejectContract.abi, address: "0x00" }));
 
     const handleReadMyProvider = () => {
         let response: string = "N/A";
@@ -203,16 +203,16 @@ export default function WalletAccountTag() {
     );
 
     const DefineContract = () => {
-        SetTestContract(new Contract(
-            rejectContract.abi,
-            RejectContractAddress[myFrontendProviderIndex],
-            myFrontendProviders[myFrontendProviderIndex]
-        ))
-        SetTestContractWA(new Contract(
-            rejectContract.abi,
-            RejectContractAddress[myFrontendProviderIndex],
-            myWalletAccount
-        ))
+        SetTestContract(new Contract({
+            abi: rejectContract.abi,
+            address: RejectContractAddress[myFrontendProviderIndex],
+            providerOrAccount: myFrontendProviders[myFrontendProviderIndex]
+        }))
+        SetTestContractWA(new Contract({
+            abi: rejectContract.abi,
+            address: RejectContractAddress[myFrontendProviderIndex],
+            providerOrAccount: myWalletAccount
+        }))
     }
     useEffect(
         () => {
@@ -236,7 +236,7 @@ export default function WalletAccountTag() {
                 separator={<StackSeparator borderColor='gray.300' />}
             >
                 <>
-                    <Center fontSize={16} fontWeight={700} color={"firebrick"}> Use of {Object.keys(SNconstants.StarknetChainId)[myFrontendProviderIndex]} network </Center>
+                    <Center fontSize={16} fontWeight={700} color={"firebrick"}> Use of {myFrontendProviderIndex==0?"MAINNET ❌":"TESTNET ✅"} network </Center>
 
                     <Center fontSize={14} color={"darkred"}> my frontend provider Id : {myFrontendProviderIndex}  </Center>
                     <Center fontSize={13} color={"darkred"}> contractAddress : {validateAndParseAddress(testContract.address)}  </Center>

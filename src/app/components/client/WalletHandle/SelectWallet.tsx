@@ -11,8 +11,8 @@ import {
   DialogRoot,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@chakra-ui/react";
+import { Button } from "@chakra-ui/react";
 import { useStoreWallet } from "../../Wallet/walletContext";
 import { useFrontendProvider } from "../provider/providerContext";
 import { useEffect } from "react";
@@ -75,7 +75,7 @@ export default function SelectWallet() {
   const myWalletAccount = useStoreWallet(state => state.myWalletAccount);
   const setMyWalletAccount = useStoreWallet(state => state.setMyWalletAccount);
   const myFrontendProviderIndex = useFrontendProvider(state => state.currentFrontendProviderIndex);
-  const setCurrentFrontendProviderIndex = useFrontendProvider(state => state.setCurrentFrontendProviderIndex);
+  const {setCurrentFrontendProviderIndex} = useFrontendProvider(state => state);
 
   const isConnected = useStoreWallet(state => state.isConnected);
   const setConnected = useStoreWallet(state => state.setConnected);

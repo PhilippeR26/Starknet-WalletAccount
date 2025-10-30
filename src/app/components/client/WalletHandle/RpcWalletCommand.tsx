@@ -9,8 +9,8 @@ import {
   DialogRoot,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@chakra-ui/react";
+import { Button } from "@chakra-ui/react";
 import { Tooltip } from "@/components/ui/tooltip";
 import { CallData, GetBlockResponse, constants as SNconstants, TypedData, cairo, ec, encode, hash, json, shortString, stark, addAddressPadding, wallet, Contract, type Call, type Calldata } from "starknet";
 import React, { useEffect, useState } from "react";
@@ -50,17 +50,17 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
   const [response, setResponse] = useState<string>("N/A");
   const walletFromContext = useStoreWallet(state => state.StarknetWalletObject);
   const getChainId = useStoreWallet(state => state.chain);
-  const [testRejectContract, SetRejectContract] = useState<Contract>(new Contract(rejectContract.abi, "0x00"));
+  const [testRejectContract, SetRejectContract] = useState<Contract>(new Contract({ abi: rejectContract.abi, address: "0x00" }));
 
   const selectedApiVersion = useStoreWallet(state => state.selectedApiVersion);
 
 
   const DefineRejectContract = () => {
-    SetRejectContract(new Contract(
-      rejectContract.abi,
-      RejectContractAddress[myFrontendProviderIndex],
-      constants.myFrontendProviders[myFrontendProviderIndex]
-    ))
+    SetRejectContract(new Contract({
+      abi: rejectContract.abi,
+      address: RejectContractAddress[myFrontendProviderIndex],
+      providerOrAccount: constants.myFrontendProviders[myFrontendProviderIndex]
+    }))
 
   }
   useEffect(
@@ -201,7 +201,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         //   }]
         // }
         //const contract=new Contract(rejectAbi,contractAddress,undefined);
-        const myCall: Call = new Contract(rejectAbi, contractAddress, undefined).populate(funcName, { p1: Number(param) });
+        const myCall: Call = new Contract({ abi: rejectAbi, address: contractAddress }).populate(funcName, { p1: Number(param) });
         const myParams: WALLET_API.AddInvokeTransactionParameters = {
           calls: [{
             contract_address: myCall.contractAddress,

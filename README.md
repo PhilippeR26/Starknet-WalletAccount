@@ -16,7 +16,8 @@ The official Starkware specification of the wallet API is here : https://github.
 The corresponding TypeScript library is here : https://github.com/starknet-io/types-js
 
 > [!IMPORTANT]
-> **An easier way to read Wallet API documentation I created is [here](https://github.com/PhilippeR26/Starknet-WalletAccount/blob/api/doc/walletAPIspec.md)**
+> - **An easier way to read the Wallet API: a documentation I created is [here](https://github.com/PhilippeR26/Starknet-WalletAccount/blob/api/doc/walletAPIspec.md).**  
+> - A documentation for wallet teams is [here](https://github.com/PhilippeR26/Starknet-WalletAccount/blob/api/doc/migrateToGetStarknetV4.md).
 
 
 ### Wallet API entry points :

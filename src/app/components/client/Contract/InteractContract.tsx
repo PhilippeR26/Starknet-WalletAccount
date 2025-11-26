@@ -25,7 +25,7 @@ export default function InteractContract() {
     function catchBlock() {
         providerSN?.getBlock("latest").then((resp: GetBlockResponse) => {
             // console.log("end getBloc");
-            if (resp.status !== 'PENDING') {
+            if (resp.status !== 'PRE_CONFIRMED') {
                 setBlockData({
                     timeStamp: resp.timestamp,
                     blockHash: resp.block_hash ?? "",

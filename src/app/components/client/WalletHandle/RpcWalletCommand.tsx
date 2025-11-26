@@ -1,32 +1,20 @@
-import { Box, Center, useDisclosure } from "@chakra-ui/react";
-import {
-  DialogActionTrigger,
-  DialogBody,
-  DialogCloseTrigger,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogRoot,
-  DialogTitle,
-  DialogTrigger,
-} from "@chakra-ui/react";
+import { Box, Center, Dialog, useDisclosure } from "@chakra-ui/react";
 import { Button } from "@chakra-ui/react";
 import { Tooltip } from "@/components/ui/tooltip";
-import { CallData, GetBlockResponse, constants as SNconstants, TypedData, cairo, ec, encode, hash, json, shortString, stark, addAddressPadding, wallet, Contract, type Call, type Calldata } from "starknet";
-import React, { useEffect, useState } from "react";
+import { CallData, GetBlockResponse, constants as SNconstants, TypedData, cairo, ec, encode, hash, json, shortString, stark, addAddressPadding, walletV5, Contract, type Call, type Calldata } from "starknet";
+import { useEffect, useState } from "react";
 
 import * as constants from "@/utils/constants";
 import { RejectContractAddress } from "@/utils/constants";
 import { useStoreWallet } from "../../Wallet/walletContext";
-import { WALLET_API } from "@starknet-io/types-js";
 
 import { rejectAbi } from "../../../contracts/abis/rejectAbi";
 import { getHelloTestSierra } from "@/app/contracts/declareHelloTestSierra";
 import { getHelloTestCasm } from "@/app/contracts/declareHelloTestCasm";
-import { wait } from "@/utils/utils";
-import { resolve } from "path";
 import { useFrontendProvider } from "../provider/providerContext";
 import { rejectContract } from "@/app/contracts/reject.sierra.json";
+import type { WALLET_API } from "@starknet-io/starknet-types-010";
+
 
 
 
@@ -84,9 +72,9 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
           try {
             let response: string[] = [""];
             if (symbol === "silentMode") {
-              response = await wallet.requestAccounts(myWallet, true);
+              response = await walletV5.requestAccounts(myWallet, true);
             } else {
-              response = await wallet.requestAccounts(myWallet, false);
+              response = await walletV5.requestAccounts(myWallet, false);
             }
             txtResponse = addAddressPadding(response[0]);
           } catch (err: any) {
@@ -102,7 +90,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
       }
       case "wallet_requestChainId": {
         if (myWallet) {
-          const response = await wallet.requestChainId(myWallet);
+          const response = await walletV5.requestChainId(myWallet);
           const respText: string = response === null ? "null" : shortString.decodeShortString(response);
           setResponse(response + " (" + respText + ")");
           onOpen();
@@ -126,7 +114,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
           }
           let response: string = "";
           try {
-            response = (await wallet.watchAsset(myWallet, myAsset)) ? "true" : "false";
+            response = (await walletV5.watchAsset(myWallet, myAsset)) ? "true" : "false";
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
           }
@@ -141,7 +129,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         if (myWallet) {
           let response: string = "";
           try {
-            response = (await wallet.switchStarknetChain(myWallet, param as SNconstants.StarknetChainId)) ? "true" : "false";
+            response = (await walletV5.switchStarknetChain(myWallet, param as SNconstants.StarknetChainId)) ? "true" : "false";
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
           }
@@ -172,7 +160,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         if (myWallet) {
           let response: string = "";
           try {
-            response = (await wallet.addStarknetChain(myWallet, myChainId)) ? "true" : "false";
+            response = (await walletV5.addStarknetChain(myWallet, myChainId)) ? "true" : "false";
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
           }
@@ -213,7 +201,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
           let response: string = "";
           try {
             console.log("execute call =", myParams)
-            const resp = (await wallet.addInvokeTransaction(myWallet, myParams));
+            const resp = (await walletV5.addInvokeTransaction(myWallet, myParams));
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
@@ -242,7 +230,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
                 calldata: []
               }]
             }
-            const txH = await wallet.addInvokeTransaction(myWallet, myParams0);
+            const txH = await walletV5.addInvokeTransaction(myWallet, myParams0);
 
             await constants.myFrontendProviders[myFrontendProviderIndex].waitForTransaction(txH.transaction_hash);
             const myParams: WALLET_API.AddDeclareTransactionParameters = {
@@ -251,7 +239,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
               contract_class: getHelloTestSierra(declareNonce),
 
             }
-            const resp = await wallet.addDeclareTransaction(myWallet, myParams);
+            const resp = await walletV5.addDeclareTransaction(myWallet, myParams);
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
@@ -289,7 +277,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         if (myWallet) {
           let response: string = "";
           try {
-            const resp = (await wallet.signMessage(myWallet, myTypedData));
+            const resp = (await walletV5.signMessage(myWallet, myTypedData));
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
@@ -306,7 +294,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
           let response: string = "";
           try {
             // ************* TODO : change function name when implemented in Starknet.js *********
-            const resp = (await wallet.supportedSpecs(myWallet));
+            const resp = (await walletV5.supportedSpecs(myWallet));
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
@@ -322,7 +310,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         if (myWallet) {
           let response: string = "";
           try {
-            const resp = (await wallet.supportedSpecs(myWallet));
+            const resp = (await walletV5.supportedSpecs(myWallet));
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
@@ -338,7 +326,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         if (myWallet) {
           let response: string = "";
           try {
-            const resp = (await wallet.getPermissions(myWallet));
+            const resp = (await walletV5.getPermissions(myWallet));
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
@@ -354,7 +342,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         if (myWallet) {
           let response: string = "";
           try {
-            const resp = (await wallet.deploymentData(myWallet));
+            const resp = (await walletV5.deploymentData(myWallet));
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
@@ -408,43 +396,44 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
           }
 
         </Center>
-        <DialogRoot
+        <Dialog.Root
+          placement={"center"}
           open={open}
           onOpenChange={onClose}
         >
+          <Dialog.Positioner>
+            <Dialog.Content
+              margin={"20px"}
+              padding={"10px"}>
+              <Dialog.Header>
+                <Dialog.Title fontSize='lg' fontWeight='bold'>
+                  Command sent to Wallet.
+                </Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                Command : {command} <br />
+                Param : {param} <br />
+                Response : {response}
+              </Dialog.Body>
 
-
-          <DialogContent
-            margin={"20px"}
-            padding={"10px"}>
-            <DialogHeader>
-              <DialogTitle fontSize='lg' fontWeight='bold'>
-                Command sent to Wallet.
-              </DialogTitle>
-            </DialogHeader>
-            <DialogBody>
-              Command : {command} <br />
-              Param : {param} <br />
-              Response : {response}
-            </DialogBody>
-
-            <DialogFooter>
-              <DialogActionTrigger asChild>
-                {/* <Button ref={cancelRef} onClick={onClose}>
+              <Dialog.Footer>
+                <Dialog.ActionTrigger asChild>
+                  {/* <Button ref={cancelRef} onClick={onClose}>
                                 Cancel
                             </Button> */}
-                <Button
-                  colorScheme='red'
-                  onClick={onClose}
-                  ml={3}
-                  variant="surface"
-                >
-                  OK
-                </Button>
-              </DialogActionTrigger>
-            </DialogFooter>
-          </DialogContent>
-        </DialogRoot>
+                  <Button
+                    colorScheme='red'
+                    onClick={onClose}
+                    ml={3}
+                    variant="surface"
+                  >
+                    OK
+                  </Button>
+                </Dialog.ActionTrigger>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Dialog.Root>
       </Box>
     </>
   );

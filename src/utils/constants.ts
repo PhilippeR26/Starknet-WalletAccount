@@ -1,5 +1,5 @@
 import { ProviderInterface, RpcProvider, constants as SNconstants } from "starknet";
-import { WALLET_API } from "@starknet-io/types-js";
+import { WALLET_API } from "@starknet-io/starknet-types-010";
 
 
 export const addrETH = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";

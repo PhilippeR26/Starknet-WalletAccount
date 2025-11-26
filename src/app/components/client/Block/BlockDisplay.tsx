@@ -14,7 +14,7 @@ export default function BlockDisplay({ providerSN }: Props) {
     useEffect(() => {
         const tim = setInterval(() => {
             providerSN.getBlock("latest").then((resp: GetBlockResponse) => {
-                if (resp.status !== 'PENDING') {
+                if (resp.status !== 'PRE_CONFIRMED') {
                     setBlockData({
                         timeStamp: resp.timestamp,
                         blockHash: resp.block_hash ?? "",

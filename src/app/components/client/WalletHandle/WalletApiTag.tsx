@@ -1,22 +1,22 @@
-import React from 'react';
+import { useCallback } from 'react';
 import { useEffect, useState } from 'react';
-import { Center,  Box, SimpleGrid, useDisclosure } from "@chakra-ui/react";
-import { GetBlockResponse, constants as SNconstants, shortString, validateAndParseAddress, wallet } from "starknet";
-import {WALLET_API } from "@starknet-io/types-js";
-
-
-import { useStoreBlock, dataBlockInit } from "../Block/blockContext";
+import { Center, Box, SimpleGrid, useDisclosure } from "@chakra-ui/react";
+import { constants as SNconstants, validateAndParseAddress } from "starknet";
+import type { StandardEventsChangeProperties } from "@wallet-standard/features";
 import { useStoreWallet } from '../../Wallet/walletContext';
 import * as constants from "../../../../utils/constants";
-import styles from '../../../page.module.css'
 import RpcWalletCommand from './RpcWalletCommand';
 import { useFrontendProvider } from '../provider/providerContext';
+import { getStarknetChainId } from "@starknet-io/get-starknet-wallet-standard/chains";
+
 
 export default function WalletApiTag() {
     // wallet context
-    const providerSN = useStoreWallet(state => state.provider);
-    const selectedWallet = useStoreWallet(state => state.StarknetWalletObject);
-    const myAccountWallet = useStoreWallet(state => state.myWalletAccount);
+    const {
+        provider: providerSN,
+        StarknetWalletObject: selectedWallet,
+        myWalletAccount,
+    } = useStoreWallet(state => state);
 
     const myFrontendProviderIndex = useFrontendProvider(state => state.currentFrontendProviderIndex);
     const setCurrentFrontendProviderIndex = useFrontendProvider(state => state.setCurrentFrontendProviderIndex);
@@ -33,48 +33,35 @@ export default function WalletApiTag() {
 
     const [time1, setTime1] = useState<string>("N/A");
     const [time2, setTime2] = useState<string>("N/A");
+
+    const handleAccount = useCallback((change: StandardEventsChangeProperties) => {
+        console.log("Event detected", change.accounts);
+        if (change.accounts?.length) {
+            console.log("account event=", change.accounts[0].address);
+            const textAddr = validateAndParseAddress(change.accounts[0].address);
+            setRespChangedAccount(textAddr);
+            setAddressAccount(textAddr);
+            setTime1(getTime());
+            const network = change.accounts[0].chains[0];
+            const chainId = getStarknetChainId(network);
+            console.log("chainId=", chainId);
+            setRespChangedNetwork(chainId);
+            setChain(chainId); //zustand
+            setCurrentFrontendProviderIndex(chainId === SNconstants.StarknetChainId.SN_MAIN ? 0 : 2);
+            console.log("change Provider index to", chainId);
+            setTime2(getTime())
+        }
+    }, []);
+
     useEffect(
         () => {
             console.log("subscribe to events.");
-            const handleAccount: WALLET_API.AccountChangeEventHandler = (accounts: string[] | undefined) => {
-                console.log("accounts change subscription=", accounts);
-                if (accounts?.length) {
-                    const textAddr = validateAndParseAddress(accounts[0])
-                    setRespChangedAccount(textAddr);
-                    setAddressAccount(textAddr);
-                };
-                setTime1(getTime());
-            };
-            selectedWallet?.on("accountsChanged", handleAccount);
-
-            const handleNetwork: WALLET_API.NetworkChangeEventHandler = (chainId?: string, accounts?: string[]) => {
-                console.log("network change subscription=", chainId);
-                if (!!chainId) {
-                    setRespChangedNetwork(chainId);
-                    setChain(chainId); //zustand
-                    setCurrentFrontendProviderIndex(chainId===SNconstants.StarknetChainId.SN_MAIN?0:2);
-                    
-                    console.log("change Provider index to", chainId);
-                };
-                setTime2(getTime());
-            }
-            selectedWallet?.on("networkChanged", handleNetwork);
-
-            // or
-            // myAccountWallet?.onAccountChange(handleAccount);
-            // myAccountWallet?.onNetworkChanged(handleNetwork);
-
-            // or
-            // if (!!selectedWallet) {
-            //     wallet.onAccountChange(selectedWallet, handleAccount);
-            //     wallet.onNetworkChanged(selectedWallet, handleNetwork);
-            // }
+            myWalletAccount?.onChange(handleAccount);
             return () => {
                 console.log("unsubscribe to events.");
                 if (!!selectedWallet) {
-                    selectedWallet.off("accountsChanged", handleAccount);
+                    myWalletAccount?.unsubscribeChange();
                     console.log("events OFF");
-                    selectedWallet.off('networkChanged', handleNetwork);
                 }
             }
         },
@@ -120,7 +107,7 @@ export default function WalletApiTag() {
                 />
                 <RpcWalletCommand
                     command={"wallet_watchAsset"}
-                    param={chainFromContext===SNconstants.StarknetChainId.SN_MAIN?constants.addrLORDmainnet:constants.addrLORDtestnet}
+                    param={chainFromContext === SNconstants.StarknetChainId.SN_MAIN ? constants.addrLORDmainnet : constants.addrLORDtestnet}
                     symbol={"LORD"}
                 />
                 <RpcWalletCommand
@@ -149,7 +136,7 @@ export default function WalletApiTag() {
                     command={"wallet_signTypedData"}
                     param="Object"
                 />
-                 <RpcWalletCommand
+                <RpcWalletCommand
                     command={"wallet_supportedWalletApi"}
                     param=""
                 />
@@ -170,10 +157,9 @@ export default function WalletApiTag() {
 
             <SimpleGrid minChildWidth="320px" gap="20px" paddingBottom="40px">
                 <Box bg="green.200" color='black' borderWidth='1px' borderRadius='lg'>
-                    <Center>.id : {selectedWallet?.id}</Center>
                     <Center>.name : {selectedWallet?.name} </Center>
                     <Center>.version : {selectedWallet?.version} </Center>
-                    <Center>.icon : {typeof (selectedWallet?.icon) === "string" ? selectedWallet?.icon.slice(0, 30) : "day " + selectedWallet?.icon.light.slice(0, 30) + " | " + selectedWallet?.icon.dark.slice(0, 30)} </Center>
+                    <Center>.icon : {typeof (selectedWallet?.icon) === "string" && selectedWallet?.icon.slice(0, 30)  } </Center>
                 </Box>
                 {/*<Box bg="green.200" color='black' borderWidth='1px' borderRadius='lg'>*/}
                 {/*    <Center>.selectedAddress : {wallet?.selectedAddress?.slice(0, 20) + "..."} </Center>*/}

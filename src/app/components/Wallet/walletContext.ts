@@ -1,19 +1,20 @@
 "use client";
 import { create } from "zustand";
-import { ProviderInterface, AccountInterface, type WalletAccount } from "starknet";
-import {WALLET_API } from "@starknet-io/types-js";
+import { ProviderInterface, AccountInterface, type WalletAccountV5 } from "starknet";
+import { type WalletWithStarknetFeatures } from "@starknet-io/get-starknet-wallet-standard/features";
+
 
 // import { StarknetWindowObject } from "@/app/core/StarknetWindowObject";
 
 export interface WalletState {
-    StarknetWalletObject: WALLET_API.StarknetWindowObject | undefined,
-    setMyStarknetWalletObject: (wallet: WALLET_API.StarknetWindowObject) => void,
+    StarknetWalletObject: WalletWithStarknetFeatures | undefined,
+    setMyStarknetWalletObject: (wallet: WalletWithStarknetFeatures) => void,
     address: string,
     setAddressAccount: (address: string) => void,
     chain: string,
     setChain: (chain: string) => void,
-    myWalletAccount: WalletAccount|undefined;
-    setMyWalletAccount: (myWAccount:WalletAccount)=>void;
+    myWalletAccount: WalletAccountV5|undefined;
+    setMyWalletAccount: (myWAccount:WalletAccountV5)=>void;
     account: AccountInterface | undefined,
     setAccount: (account: AccountInterface) => void,
     provider: ProviderInterface | undefined,
@@ -31,13 +32,13 @@ export interface WalletState {
 
 export const useStoreWallet = create<WalletState>()(set => ({
     StarknetWalletObject: undefined,
-    setMyStarknetWalletObject: (wallet: WALLET_API.StarknetWindowObject) => { set(state => ({ StarknetWalletObject: wallet })) },
+    setMyStarknetWalletObject: (wallet: WalletWithStarknetFeatures) => { set(state => ({ StarknetWalletObject: wallet })) },
     address: "",
     setAddressAccount: (address: string) => { set(state => ({ address })) },
     chain: "",
     setChain: (chain: string) => { set(state => ({ chain: chain })) },
     myWalletAccount: undefined,
-    setMyWalletAccount: (myWAccount: WalletAccount) => { set(state => ({ myWalletAccount: myWAccount })) },
+    setMyWalletAccount: (myWAccount: WalletAccountV5) => { set(state => ({ myWalletAccount: myWAccount })) },
     account: undefined,
     setAccount: (account: AccountInterface) => { set(state => ({ account })) },
     provider: undefined,

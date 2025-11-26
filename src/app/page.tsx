@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import Image from 'next/image'
 import styles from './page.module.css'
 import { Center, Box, Tabs } from '@chakra-ui/react';
 import { Button } from "@chakra-ui/react";
 import { Provider } from "@/components/ui/provider";
-import { constants as SNconstants, shortString } from 'starknet';
+import { CairoBytes31 } from 'starknet';
 import InteractContract from './components/client/Contract/InteractContract';
 import { useStoreWallet } from './components/Wallet/walletContext';
 import starknetJsImg from '../../public/Images/StarkNet-JS_logo.png';
@@ -15,63 +14,33 @@ import SelectWallet from './components/client/WalletHandle/SelectWallet';
 import WalletAccountTag from './components/client/WalletHandle/WalletAccountTag';
 import { useFrontendProvider } from './components/client/provider/providerContext';
 import LowerBanner from "./components/client/LowerBanner";
-// import { connect } from "get-starknet";
 
 export default function Page() {
-
-  const {displaySelectWalletUI} = useStoreWallet(state => state);
-  const {setSelectWalletUI} = useStoreWallet(state => state);
-
   const addressAccountFromContext = useStoreWallet(state => state.address);
-  const {setAddressAccount} = useStoreWallet(state => state);
+  const { setAddressAccount } = useStoreWallet(state => state);
 
   const myFrontendProviderIndex = useFrontendProvider(state => state.currentFrontendProviderIndex);
-  const {setCurrentFrontendProviderIndex} = useFrontendProvider(state => state);
+  const { setCurrentFrontendProviderIndex } = useFrontendProvider(state => state);
 
   const myWallet = useStoreWallet(state => state.StarknetWalletObject);
   const setMyWallet = useStoreWallet(state => state.setMyStarknetWalletObject);
 
   const chainFromContext = useStoreWallet(state => state.chain);
-  const {setChain} = useStoreWallet(state => state);
+  const { setChain } = useStoreWallet(state => state);
 
-  const accountFromContext = useStoreWallet(state => state.account);
-  const {setAccount} = useStoreWallet(state => state);
-
+  
   const providerFromContext = useStoreWallet(state => state.provider);
-  const {setProvider} = useStoreWallet(state => state);
+  const { setProvider } = useStoreWallet(state => state);
 
-  const {isConnected, setConnected} = useStoreWallet(state => state);
-
-  const {walletApiList} = useStoreWallet(state => state);
-  const {selectedApiVersion} = useStoreWallet(state => state);
-  const {setSelectedApiVersion} = useStoreWallet(state => state);
-
-  const [selectedOption, setSelectedOption] = useState<number>(0);
-
-
-  const handleSelectChange = (event: any) => {
-    const selectedValue = Number(event.target.value);
-    setSelectedOption(selectedValue);
-    const correspondingString = selectedValue == 0 ? "default" : walletApiList[selectedValue - 1];
-    setSelectedApiVersion(correspondingString);
-    console.log("selected value=", selectedValue, correspondingString);
-  };
-
-  //   const handleConnect330Click = async () => {
-  //     console.log("open get-starknet. Do not work with v4.0.0!!!");
-  //     const getWalletSWO = await connect({ modalMode: "alwaysAsk", modalTheme: "light" });
-  //     console.log(getWalletSWO);
-
-  // }
-
+  const { isConnected, setConnected } = useStoreWallet(state => state);
 
 
   return (
     <Provider>
       <div>
         <p className={styles.bgText}>
-          Test WalletAccount of Starknet.js v8.6.0 <br></br>
-          with get-starknet-core v4.0.8
+          Test WalletAccountV5 of Starknet.js v9.0.0B <br></br>
+          with get-starknet v5.0.0
         </p>
         <Center>
           <Image src={starknetJsImg} alt='starknet.js' width={150} />
@@ -79,24 +48,9 @@ export default function Page() {
         <div>
           {!isConnected ? (
             <>
-              <Center>
-                <Button
-                  variant="surface"
-                  textDecoration="none !important"
-                  fontWeight='bold'
-                  outline="none !important"
-                  boxShadow="none !important"
-                  mt={3}
-                  px={5}
-                  onClick={() => setSelectWalletUI(true)}
-                // onClick={() => handleConnect330Click()}
-                >
-                  Connect a Wallet
-                </Button>
-                {displaySelectWalletUI && <SelectWallet></SelectWallet>}
-
-
-              </Center>
+              
+                 <SelectWallet></SelectWallet>
+              
             </>
           ) : (
             <>
@@ -111,7 +65,6 @@ export default function Page() {
                   px={5}
                   onClick={() => {
                     setConnected(false);
-                    setSelectWalletUI(false)
                   }}
                 >
                   {addressAccountFromContext
@@ -119,38 +72,26 @@ export default function Page() {
                     : "No Account"}
                 </Button>
               </Center>
-              {/* <Center mt={1}>
-                Wallet API version :
-                <Select
-                  w={100}
-                  ml={2}
-                  onChange={handleSelectChange}
-                  value={selectedOption}
-                >
-                  <option key={"idxApi0"} value={0}>default</option>
-                  {walletApiList.map((apiVersion, idx) => <option key={"idxApi" + (idx + 1).toString()} value={idx + 1}>{apiVersion}</option>)}
-                </Select>
-              </Center> */}
               <br />
-              <Tabs.Root 
-              variant="enclosed" 
-              colorScheme='facebook' 
-              size="lg" 
-              defaultValue="blockChain"
-              fitted >
+              <Tabs.Root
+                variant="enclosed"
+                colorScheme='facebook'
+                size="lg"
+                defaultValue="blockChain"
+                fitted >
                 <Tabs.List bg="bg.muted" rounded="l3" p="1" >
-              
-                  <Tabs.Trigger  fontWeight={"bold"} value="blockChain"> BlockChain</Tabs.Trigger>
+
+                  <Tabs.Trigger fontWeight={"bold"} value="blockChain"> BlockChain</Tabs.Trigger>
                   <Tabs.Trigger fontWeight={"bold"} value="walletAPI"> Wallet API</Tabs.Trigger>
-                  <Tabs.Trigger  fontWeight={"bold"} value="walletAccount"> WalletAccount</Tabs.Trigger>
+                  <Tabs.Trigger fontWeight={"bold"} value="walletAccount"> WalletAccount</Tabs.Trigger>
                 </Tabs.List>
                 <Tabs.Content value="blockChain">
                   <Box bg='pink.200' color='black' borderWidth='1px' borderRadius='md'>
                     <p className={styles.text1}>
                       address = {addressAccountFromContext}<br />
-                      chain = {chainFromContext != "" ? shortString.decodeShortString(chainFromContext) : ""}
+                      chain = {chainFromContext != "" ? new CairoBytes31(chainFromContext).decodeUtf8() : ""}
                       <br />
-                      provider = the frontend provider uses {myFrontendProviderIndex==0?"MAINNET":"TESTNET"
+                      provider = the frontend provider uses {myFrontendProviderIndex == 0 ? "MAINNET" : "TESTNET"
                       }
                       <br />
                       isConnected={isConnected ? "Yes" : "No"}

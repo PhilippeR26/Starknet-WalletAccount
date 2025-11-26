@@ -1,6 +1,6 @@
 
 import { useStoreWallet } from "../../Wallet/walletContext";
-import {WALLET_API } from "@starknet-io/types-js";
+import {WALLET_API } from "@starknet-io/starknet-types-010";
 
 export type Response = Pick<WALLET_API.RpcMessage, "result">["result"];
 
@@ -13,7 +13,7 @@ export async function callRequest(call: Omit<WALLET_API.RpcMessage, "result">): 
     let resp: Response | undefined = undefined;
     let crash: boolean = false;
     try {
-        resp = await myWallet.request(call);
+        resp = await myWallet.features["starknet:walletApi"].request(call);
 
     } catch {
         (err: any) => { console.log("Wallet request", call.type, " failed.\n", err) };

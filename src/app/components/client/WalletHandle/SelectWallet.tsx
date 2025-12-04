@@ -8,7 +8,10 @@ import { walletV5, validateAndParseAddress, constants as SNconstants, WalletAcco
 import { WALLET_API } from "@starknet-io/starknet-types-010";
 import { myFrontendProviders } from "@/utils/constants";
 import { createStore, type Store } from "@starknet-io/get-starknet-discovery";
-import { type WalletWithStarknetFeatures } from "@starknet-io/get-starknet-wallet-standard/features";
+import type {
+  WalletWithStarknetFeatures,
+  StandardEventsChangeProperties,
+} from '@starknet-io/get-starknet-wallet-standard/features';
 
 
 type ValidWallet = {

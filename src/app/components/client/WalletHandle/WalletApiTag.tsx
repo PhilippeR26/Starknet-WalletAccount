@@ -2,12 +2,15 @@ import { useCallback } from 'react';
 import { useEffect, useState } from 'react';
 import { Center, Box, SimpleGrid, useDisclosure } from "@chakra-ui/react";
 import { constants as SNconstants, validateAndParseAddress } from "starknet";
-import type { StandardEventsChangeProperties } from "@wallet-standard/features";
 import { useStoreWallet } from '../../Wallet/walletContext';
 import * as constants from "../../../../utils/constants";
 import RpcWalletCommand from './RpcWalletCommand';
 import { useFrontendProvider } from '../provider/providerContext';
 import { getStarknetChainId } from "@starknet-io/get-starknet-wallet-standard/chains";
+import type {
+  WalletWithStarknetFeatures,
+  StandardEventsChangeProperties,
+} from '@starknet-io/get-starknet-wallet-standard/features';
 
 
 export default function WalletApiTag() {

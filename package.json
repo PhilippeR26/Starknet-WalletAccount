@@ -9,25 +9,24 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@chakra-ui/react": "^3.28.0",
+    "@chakra-ui/react": "^3.30.0",
     "@emotion/react": "^11.14.0",
-    "@module-federation/runtime": "^0.21.2",
     "@starknet-io/get-starknet-discovery": "^5.0.0",
-    "lucide-react": "^0.548.0",
-    "next": "^16.0.1",
+    "@starknet-io/get-starknet-wallet-standard": "^5.0.0",
+    "lucide-react": "^0.555.0",
+    "next": "^16.0.7",
     "next-themes": "^0.4.6",
-    "react": "18.3.0",
-    "react-dom": "18.3.0",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
     "react-icons": "^5.5.0",
-    "sharp": "^0.34.4",
+    "sharp": "^0.34.5",
     "starknet": "github:PhilippeR26/starknet.js#WalletAccountV5",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
-    "@starknet-io/starknet-types-010": "npm:@starknet-io/types-js@0.10.0-beta.2",
-    "@types/node": "24.9.2",
-    "@types/react": "19.2.2",
-    "encoding": "^0.1.13",
+    "@starknet-io/starknet-types-010": "npm:@starknet-io/types-js@0.10.0",
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.7",
     "simple-zustand-devtools": "^1.1.0",
     "typescript": "^5.9.3"
   },

@@ -1,6 +1,6 @@
 
 import { useStoreWallet } from "../../Wallet/walletContext";
-import {WALLET_API } from "@starknet-io/starknet-types-010";
+import {WALLET_API } from "@starknet-io/types-js";
 
 export type Response = Pick<WALLET_API.RpcMessage, "result">["result"];
 

@@ -13,7 +13,7 @@ import { getHelloTestSierra } from "@/app/contracts/declareHelloTestSierra";
 import { getHelloTestCasm } from "@/app/contracts/declareHelloTestCasm";
 import { useFrontendProvider } from "../provider/providerContext";
 import { rejectContract } from "@/app/contracts/reject.sierra.json";
-import type { WALLET_API } from "@starknet-io/starknet-types-010";
+import type { WALLET_API } from "@starknet-io/types-js";
 
 
 

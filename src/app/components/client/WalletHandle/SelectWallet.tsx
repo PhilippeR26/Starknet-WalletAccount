@@ -5,7 +5,7 @@ import { useFrontendProvider } from "../provider/providerContext";
 import { useEffect } from "react";
 import { useState } from "react";
 import { walletV5, validateAndParseAddress, constants as SNconstants, WalletAccountV5 } from "starknet";
-import { WALLET_API } from "@starknet-io/starknet-types-010";
+import { WALLET_API } from "@starknet-io/types-js";
 import { myFrontendProviders } from "@/utils/constants";
 import { createStore, type Store } from "@starknet-io/get-starknet-discovery";
 import type {

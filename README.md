@@ -11,7 +11,7 @@ This repo contains a DAPP to interact with the Starknet blockchain, using the ne
 > 
 ## specification :
 
-The official Starkware specification of the wallet API is here : https://github.com/starkware-libs/starknet-specs/wallet-api/wallet_rpc.json
+The official Starkware specification of the wallet API is here : https://github.com/starkware-libs/starknet-specs/blob/master/wallet-api/wallet_rpc.json
 
 The corresponding TypeScript library is here : https://github.com/starknet-io/types-js
 

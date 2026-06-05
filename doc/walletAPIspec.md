@@ -474,6 +474,17 @@ const resp = await walletV6.addInvokeTransaction(myWallet, { calls: [myCallAPI] 
 > The Calldata requested by this API is different from the one provided by Starknet.js.  
 > So a conversion is needed when using this endpoint.
 
+### High-level example (WalletAccountV6) :
+`WalletAccountV6.execute()` accepts starknet.js `Call` directly — the conversion to wallet API format is handled internally :
+```typescript
+import { WalletAccountV6, type Call } from 'starknet'; // v10.x.x min
+
+// myWalletAccount is a WalletAccountV6 instance
+const myCall: Call = myContract.populate("increase_balance", { amount: 200 });
+const resp = await myWalletAccount.execute(myCall);
+// resp = {transaction_hash: "0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929"}
+```
+
 ### Example with STRK20 proof :
 ```typescript
 // Step 1 — prepare (generates ZK proof)

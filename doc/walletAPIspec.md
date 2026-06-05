@@ -1,5 +1,6 @@
 # Starknet Wallet API
 
+> version : v1.4.0 05/june/2026, in accordance with spec 0.10.3-rc0, add STRK20 privacy protocol (wallet_strk20InvokeTransaction, wallet_strk20PrepareInvoke, wallet_strk20Balances) and related types, add errors NOT_REGISTERED/INSUFFICIENT_PRIVATE_BALANCE/PRIVACY_LEAK, update wallet_addInvokeTransaction with optional proof field, fix silent_mode naming (was silentMode) in wallet_requestAccounts and wallet_switchStarknetChain, fix snake_case field names in wallet_addStarknetChain. Note: get-starknet V5 is not compatible with this spec; use get-starknet V6 (Starknet.js v10.x) or later.  
 > version : v1.3.0 23/dec/2024, to be in accordance with spec 0.8rc2, add errors DEPLOYMENT_DATA_NOT_AVAILABLE & CHAIN_ID_NOT_SUPPORTED, add silentMode in wallet_switchStarknetChain.  
 > version : v1.2.4 06/dec/2024, add case unlocked&connect to behavior table.  
 > version : v1.2.3 06/nov/2024, precision about message signature of non deployed account.  
@@ -28,75 +29,76 @@ This document is a documentation of the new interface between DAPPS and Starknet
   - [wallet\_signTypedData :](#wallet_signtypeddata-)
   - [wallet\_supportedSpecs :](#wallet_supportedspecs-)
   - [wallet\_supportedWalletApi :](#wallet_supportedwalletapi-)
+  - [wallet\_strk20InvokeTransaction :](#wallet_strk20invoketransaction-)
+  - [wallet\_strk20PrepareInvoke :](#wallet_strk20prepareinvoke-)
+  - [wallet\_strk20Balances :](#wallet_strk20balances-)
+- [STRK20 Privacy Protocol types :](#strk20-privacy-protocol-types-)
 - [Behavior summary table :](#behavior-summary-table-)
 - [Wallet API version :](#wallet-api-version-)
   - [Error :s](#error-s)
 
 
 # Connect the wallet :
-You have first to select which wallet to use.
+You have first to select which wallet to use. With get-starknet v6 discovery :
 ```typescript
-import { StarknetWindowObject, connect } from "@starknet-io/get-starknet"; // v4.0.0 mini
+import { createStore, type Store } from '@starknet-io/get-starknet/discovery'; // v6.0.0 min
+import type { WalletWithStarknetFeatures } from '@starknet-io/get-starknet-wallet-standard/features'; // v6
 
-const myWallet: StarknetWindowObject = await connect({ modalMode: "alwaysAsk", modalTheme: "light" });
+const store: Store = createStore();
+const walletsList: WalletWithStarknetFeatures[] = store.getWallets();
+// Create your own UI component to let the user select one of these wallets.
+const myWallet: WalletWithStarknetFeatures = walletsList[1]; // example: 2nd wallet
 ```
 
-You can now use the commands proposed by the wallet.
-> [!IMPORTANT]
-> In opposition to get-starknet V3, once selected by the user, the V4 SWO do not need any command to connect it ; it's immediately ready to use.
-
-Here with Starknet.js v6.8.0 mini :
+Once you have `myWallet`, you can call any wallet API command via the `walletV6` helpers from Starknet.js v10 :
 ```typescript
-const myCall: Call = myContract.populate(
-  "increase_balance", 
-  { amount: 200 });
+import { walletV6, type Call } from 'starknet'; // v10.x.x min
 
-const myRequest = {
-    type: "wallet_addInvokeTransaction",
-    params: [myCall],
-}
-const response = await myWallet.request(myRequest);
+const myCall: Call = myContract.populate("increase_balance", { amount: 200 });
+// Convert starknet.js Call (camelCase) to wallet API Call (snake_case):
+const myCallAPI = { contract_address: myCall.contractAddress, entry_point: myCall.entrypoint, calldata: myCall.calldata };
+const response = await walletV6.addInvokeTransaction(myWallet, { calls: [myCallAPI] });
 ```
+
+> [!WARNING]
+> **get-starknet V5 is not compatible with wallet API spec 0.10.3-rc0.** Use get-starknet V6 or later.
+
 > [!TIP]
-> Starknet.js proposes also the `WalletAccount` class to code at a higher and more confortable level.
+> Starknet.js v10 proposes also the `WalletAccountV6` class to code at a higher and more comfortable level.
 
 # Subscription to events :
-You can subscribe to 2 events : 
-- `accountsChanged` : Triggered each time you change the current account in the wallet.
-- `networkChanged` : Triggered each time you change the current network in the wallet.
+With get-starknet v6, both account and network changes are delivered through a single `change` event. The callback receives a `StandardEventsChangeProperties` object whose `accounts` array reflects the new wallet state.
 
-At each change of network, both account and network events are occurring.  
-At each change of account, only the account event is occurring.  
+At each change of network, both address and chain info are updated.  
+At each change of account, only the address is updated.  
 
-### Subscription :  
-#### accountsChanged :
+### Subscription :
 ```typescript
-const handleAccount: AccountChangeEventHandler = (accounts: string[] | undefined) => {
-    if (accounts?.length) {
-        const textAddr = accounts[0] // hex string
-        setChangedAccount(textAddr); // from a useState
-    };
+import type { StandardEventsChangeProperties } from '@wallet-standard/features';
+import { walletV6 } from 'starknet'; // v10.x.x min
+
+const handleChange = (change: StandardEventsChangeProperties) => {
+    if (change.accounts?.length) {
+        const address = change.accounts[0].address; // hex string
+        const chainId = change.accounts[0].chains[0]; // e.g. "starknet:SN_SEPOLIA"
+        setChangedAccount(address); // from a useState
+        setChangedNetwork(chainId);
+    }
 };
-myWallet?.on("accountsChanged", handleAccount);
-```
-
-#### networkChanged :
-```typescript
-const handleNetwork: NetworkChangeEventHandler = (chainId?: string, accounts?: string[]) => {
-    if (!!chainId) { setRespChangedNetwork(chainId) }; // from a useState
-}
-myWallet?.on("networkChanged", handleNetwork);
+// subscribeWalletEvent returns an unsubscribe function — store it to cancel the subscription later
+const unsubscribe = walletV6.subscribeWalletEvent(myWallet, handleChange);
 ```
 
 ### Un-subscription :
-Similar to subscription, using `.off` method.
 ```typescript
-wallet.off("accountsChanged", handleAccount);
-wallet.off('networkChanged', handleNetwork);
+unsubscribe(); // call the function returned by subscribeWalletEvent to stop receiving events
 ```
 
 # Available commands : 
-All these commands can be used with `myWallet.request()` :
+All these commands can be called via the `walletV6` helpers from Starknet.js v10. The function name mirrors the command name in camelCase (exception: `wallet_signTypedData` is wrapped as `signMessage`) :
+
+> [!NOTE]
+> **Spec vs library naming**: The official JSON-RPC spec uses snake_case for all parameter names. `@starknet-io/types-js` and Starknet.js generally follow the same naming, with one exception: the spec parameter `invoke_transaction` in `wallet_addInvokeTransaction` is mapped to `calls` in `@starknet-io/types-js`. Input sections below use spec parameter names; code examples use the types-js/Starknet.js names.
 
 ## wallet_getPermissions :
 ### Usage :
@@ -119,7 +121,7 @@ enum Permission {
 - This command is silent on Wallet side. No display on UI.
 ### Example :
 ```typescript
-const resp = await myWallet.request({type: "wallet_getPermissions"});
+const resp = await walletV6.getPermissions(myWallet);
 // resp = ["accounts"]
 ```
 
@@ -128,9 +130,7 @@ const resp = await myWallet.request({type: "wallet_getPermissions"});
 Get the account address of the wallet active account. 
 ### Input :
 ```typescript
-interface RequestAccountsParameters {
-  silentMode?: boolean
-}
+silent_mode?: boolean
 ```
 ### Output :
 ```typescript
@@ -138,11 +138,11 @@ response : string[]
 ```
 ### Behavior :
 - Returns an array of hex strings ; just use the first element.
-- Default optional silentMode : false -> if the Wallet is locked, or if the DAPP is not connected, the Wallet will ask to the user to unlock the Wallet or/and connect the DAPP to the current account. If the user rejects these requests, the answer is an empty array.
-- Optional silentMode : if true, the wallet will not show the wallet-unlock UI in case of a locked wallet, nor the dApp-connect UI in case of a non-connected dApp. If the Wallet is unlocked and the DAPP connected, the response is the array of strings ; otherwise, the response is an empty array.
+- Default optional silent_mode : false -> if the Wallet is locked, or if the DAPP is not connected, the Wallet will ask to the user to unlock the Wallet or/and connect the DAPP to the current account. If the user rejects these requests, the answer is an empty array.
+- Optional silent_mode : if true, the wallet will not show the wallet-unlock UI in case of a locked wallet, nor the dApp-connect UI in case of a non-connected dApp. If the Wallet is unlocked and the DAPP connected, the response is the array of strings ; otherwise, the response is an empty array.
 ### Example :
 ```typescript
-const resp = await myWallet.request({type: "wallet_requestAccounts"});
+const resp = await walletV6.requestAccounts(myWallet);
 // resp = ["0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929"]
 ```
   
@@ -172,9 +172,9 @@ response : boolean
 - If the address is not an ERC20, the method fails with this error : 
 ```typescript
 interface NOT_ERC20 {
-code: 111;
+  code: 111;
+  message: 'An error occurred (NOT_ERC20)';
 }
-message: 'An error occurred (NOT_ERC20)';
 ```
 - If the token is already displayed, the result is `true`.
 - If the user decline the proposal, the method fails with this error : 
@@ -208,7 +208,7 @@ const myAsset: WatchAssetParameters = {
       symbol: "xASTR"
   }
 }
-const resp = await myWallet.request({type: "wallet_watchAsset", params: myAsset});
+const resp = await walletV6.watchAsset(myWallet, myAsset);
 // resp = true
 ```
   
@@ -221,14 +221,14 @@ interface AddStarknetChainParameters {
   id: string
   chain_id: string // A 0x-prefixed hexadecimal string
   chain_name: string
-  rpc_ urls?: string[]
-  block_explorer_urls?: string[]
+  rpc_urls?: string[]
+  block_explorer_url?: string[]
   native_currency?: {
     type: 'ERC20'; // The asset's interface, e.g. 'ERC20'
     options: {
       address: string // A 0x-prefixed hexadecimal string
       name?: string
-      symbol?: string // 2-6 characters long
+      symbol?: string // 1-6 characters long
       decimals?: number
       image?: string // A string url of the token logo
     }
@@ -268,10 +268,10 @@ interface UNKNOWN_ERROR {
 ```typescript
 const myChain: AddStarknetChainParameters = {
     id: "ZORG",
-    chainId: shortString.encodeShortString("ZORG"),  
-    chainName: "ZORG",
-    rpcUrls: ["http://192.168.1.44:6060"],
-    nativeCurrency: {
+    chain_id: shortString.encodeShortString("ZORG"),  
+    chain_name: "ZORG",
+    rpc_urls: ["http://192.168.1.44:6060"],
+    native_currency: {
         type: "ERC20",
         options: {
             address: "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
@@ -281,7 +281,7 @@ const myChain: AddStarknetChainParameters = {
         }
     }
 }
-const resp = await myWallet.request(walletEvents);
+const resp = await walletV6.addStarknetChain(myWallet, myChain);
 // resp = true
 ```
  
@@ -290,10 +290,8 @@ const resp = await myWallet.request(walletEvents);
 Change the current network of the wallet. 
 ### Input :
 ```typescript
-interface SwitchStarknetChainParameters {
-  chainId: string // A 0x-prefixed hexadecimal string of an encoded text
-  silentMode?: boolean
-}
+chainId: string       // A 0x-prefixed hexadecimal string of an encoded text (required)
+silent_mode?: boolean
 ```
 ### Output :
 ```typescript
@@ -301,7 +299,7 @@ response : boolean
 ```
 ### Behavior :
 - The wallet opens a window to ask if you agree to change the current network in the wallet. If you agree, returns `true`. 
-- Optional silentMode : if true, the wallet will not show the wallet-unlock UI in case of a locked wallet, nor the dApp-connect UI in case of a non-connected dApp. If the Wallet is unlocked and the DAPP connected, the wallet shows the change chain UI ; otherwise, the response is an error :
+- Optional silent_mode : if true, the wallet will not show the wallet-unlock UI in case of a locked wallet, nor the dApp-connect UI in case of a non-connected dApp. If the Wallet is unlocked and the DAPP connected, the wallet shows the change chain UI ; otherwise, the response is an error :
 ```typescript
 interface CHAIN_ID_NOT_SUPPORTED {
   code: 117;
@@ -336,7 +334,7 @@ interface UNKNOWN_ERROR {
 const myChainId: SwitchStarknetChainParameters = {
     chainId: "0x534e5f5345504f4c4941" // SN_SEPOLIA
 }
-const resp = await myWallet.request({type: "wallet_switchStarknetChain", params: myChainId});
+const resp = await walletV6.switchStarknetChain(myWallet, myChainId.chainId);
 // resp = true
 ```
 
@@ -356,7 +354,7 @@ common chainId :
 - No errors possible for this method.
 ### Example :
 ```typescript
-const resp = await myWallet.request({type: "wallet_requestChainId"});
+const resp = await walletV6.requestChainId(myWallet);
 // resp = "0x534e5f5345504f4c4941"
 ```
 
@@ -394,7 +392,7 @@ interface DEPLOYMENT_DATA_NOT_AVAILABLE {
 ``` 
 ### Example :
 ```typescript
-const resp = await myWallet.request({type: "wallet_deploymentData"});
+const resp = await walletV6.deploymentData(myWallet);
 // resp = {
 //   address: "0x0111fb83be44a70468d51cfcf8bccd4190cf119e4b2f83530ea13b5d35b9849d",
 //   class_hash: "0x03a5029a79d1849f58229e22f7f2b96bdd1dc8680e6cd5530a3122839f2ab878",
@@ -406,18 +404,26 @@ const resp = await myWallet.request({type: "wallet_deploymentData"});
 
 ## wallet_addInvokeTransaction :
 ### Usage :
-Send one or several transaction(s) to the network. 
+Send one or several transaction(s) to the network. Can also submit a STRK20 privacy protocol transaction when a ZK proof (produced by `wallet_strk20PrepareInvoke`) is provided. 
 ### Input :
 ```typescript
-interface AddInvokeTransactionParameters {
-  calls: Call[]
-}
+invoke_transaction: Call[]  // A list of calls to invoke (required)
+proof?: STRK20_PROOF        // Optional ZK proof, required when submitting a STRK20 call from wallet_strk20PrepareInvoke
+api_version?: string
+
 type Call = {
   contract_address: string
   entry_point: string
   calldata?: string[]
 }
+type STRK20_PROOF = {
+  data: string        // Serialized proof. Empty string in simulate mode.
+  output: string[]    // L2-to-L1 message payload felts. Empty array in simulate mode.
+  proof_facts: string[] // Proof facts to include with the transaction. Empty array in simulate mode.
+}
 ```
+> [!NOTE]
+> **types-js / Starknet.js naming**: `@starknet-io/types-js` maps the spec parameter `invoke_transaction` to the property `calls` in `AddInvokeTransactionParameters`. When using types-js or Starknet.js, pass `params: { calls: [...] }` instead of `params: { invoke_transaction: [...] }`.
 ### Output :
 ```typescript
 response : interface AddInvokeTransactionResult {
@@ -426,6 +432,7 @@ response : interface AddInvokeTransactionResult {
 ```
 ### Behavior :
 - If the user approved the transaction in the wallet, the response is the transaction hash.
+- If a `proof` is provided, it must have been generated by `wallet_strk20PrepareInvoke` for the same set of calls; pass the `call` and `proof` from its result directly.
 - If an error occurred with these parameters, fails with Error :
 ```typescript
 interface INVALID_REQUEST_PAYLOAD {
@@ -459,12 +466,27 @@ const myCallAPI = {
   entry_point: myCall.entrypoint,
   calldata: myCall.calldata as Calldata
 };
-const resp = await myWallet.request({type: "wallet_addInvokeTransaction", params: [myCallAPI]});
+// Using types-js / Starknet.js: 'calls' is the types-js mapping for spec param 'invoke_transaction'
+const resp = await walletV6.addInvokeTransaction(myWallet, { calls: [myCallAPI] });
 // resp = {transaction_hash: "0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929"}
 ```
 > [!WARNING]
 > The Calldata requested by this API is different from the one provided by Starknet.js.  
 > So a conversion is needed when using this endpoint.
+
+### Example with STRK20 proof :
+```typescript
+// Step 1 — prepare (generates ZK proof)
+const prepared = await walletV6.strk20PrepareInvoke(myWallet, [
+  { type: "transfer", token: "0x...", amount: "1000", recipient: "0x..." }
+]);
+// Step 2 — submit with the proof (types-js: 'calls' maps to spec 'invoke_transaction')
+const resp = await walletV6.addInvokeTransaction(myWallet, {
+  calls: [prepared.call],
+  proof: prepared.proof
+});
+// resp = {transaction_hash: "0x..."}
+```
 
 ## wallet_addDeclareTransaction :
 ### Usage :
@@ -532,7 +554,7 @@ const myParams: AddDeclareTransactionParameters = {
         abi:json.stringify(contractSierra.abi),
     },
 }
-const resp = await myWallet.request({type: "wallet_addDeclareTransaction", params: myParams});
+const resp = await walletV6.addDeclareTransaction(myWallet, myParams);
 // resp = {transaction_hash: "0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929", class_hash: "0x2bfd9564754d9b4a326da62b2f22b8fea7bbeffd62da4fcaea986c323b7aeb"}
 ```
 
@@ -628,6 +650,7 @@ const myTypedData: TypedData = {
           name: "myDapp", 
           version: "1",
           chainId: shortString.encodeShortString("SN_GOERLI"), 
+      },
       message: {
           id: "0x0000004f000f",
           from: "0x2c94f628d125cd0e86eaefea735ba24c262b9a441728f63e5776661829a4066",
@@ -645,7 +668,8 @@ const myTypedData: TypedData = {
       },
   }
 }
-const resp = await myWallet.request({type: "wallet_signTypedData", params: myTypedData});
+// Note: the walletV6 wrapper for wallet_signTypedData is named signMessage
+const resp = await walletV6.signMessage(myWallet, myTypedData);
 // resp = ["0x490864293786342333657489548354947743460397232672997805795441858116745355019", "0x2855273948349341532300559537680769749551471477465497884530979636925080056604"]
 ```
 
@@ -662,7 +686,7 @@ response : string[]
 - The response is an array of strings. Each string is the version of a supported starknet API version. Includes only the 2 main digits, with the`.` as separator ; example : `0.7`.
 ### Example :
 ```typescript
-const resp = await myWallet.request({type: "wallet_supportedSpecs"});
+const resp = await walletV6.supportedSpecs(myWallet);
 // resp = ["0.6","0.7"]
 ```
 
@@ -679,8 +703,251 @@ response : string[]
 - The response is an array of strings. Each string is the version of a supported Wallet API version. Includes only the 2 main digits, with the `.` as separator ; example : `0.7`.
 ### Example :
 ```typescript
-const resp = await myWallet.request({type: "wallet_supportedWalletApi"});
+// walletV6 does not expose a helper for this command; use the raw request:
+const resp = await myWallet.features['starknet:walletApi'].request({type: "wallet_supportedWalletApi"});
 // resp = ["0.7","0.8"]
+```
+
+## wallet_strk20InvokeTransaction :
+### Usage :
+Execute one or more STRK20 privacy protocol actions in a single transaction. The wallet builds the calldata, generates the ZK proof and submits the transaction. This is the all-in-one alternative to the `wallet_strk20PrepareInvoke` + `wallet_addInvokeTransaction` two-step flow.
+> [!WARNING]
+> ZK proof generation is required. This call can take significantly longer than `wallet_addInvokeTransaction`. The dApp must tolerate long-running calls.
+### Input :
+```typescript
+actions: STRK20_ACTION[]  // Ordered list of actions to execute atomically (required, minimum 1)
+api_version?: string
+```
+See [STRK20 Privacy Protocol types](#strk20-privacy-protocol-types-) for the `STRK20_ACTION` union type.
+### Output :
+```typescript
+response : { transaction_hash: string }
+```
+### Behavior :
+- The wallet shows an approval UI for the privacy actions. If the user approves, the wallet generates the ZK proof, submits the transaction and returns the transaction hash.
+- Registration into the privacy pool is handled transparently by the wallet. If the account is not registered :
+```typescript
+interface NOT_REGISTERED {
+  code: 118;
+  message: 'An error occurred (NOT_REGISTERED)';
+}
+```
+- If the private balance is insufficient for a withdraw or transfer action :
+```typescript
+interface INSUFFICIENT_PRIVATE_BALANCE {
+  code: 119;
+  message: 'An error occurred (INSUFFICIENT_PRIVATE_BALANCE)';
+}
+```
+- If completing the operation may compromise user privacy :
+```typescript
+interface PRIVACY_LEAK {
+  code: 120;
+  message: 'An error occurred (PRIVACY_LEAK)';
+}
+```
+- If an error occurred with these parameters :
+```typescript
+interface INVALID_REQUEST_PAYLOAD {
+  code: 114;
+  message: 'An error occurred (INVALID_REQUEST_PAYLOAD)';
+}
+```
+- If the user decline the proposal :
+```typescript
+interface USER_REFUSED_OP {
+  code: 113;
+  message: 'An error occurred (USER_REFUSED_OP)';
+}
+```
+- Other error :
+```typescript
+interface UNKNOWN_ERROR {
+  code: 163;
+  message: 'An error occurred (UNKNOWN_ERROR)';
+}
+```
+### Example :
+```typescript
+const resp = await walletV6.strk20InvokeTransaction(myWallet, [
+  {
+    type: "transfer",
+    token: "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+    amount: "1000000000000000000",
+    recipient: "0x067f5a62ec72010308cee6368a8488c8df74f1d375b989f96d48cde1c88c7929"
+  }
+]);
+// resp = { transaction_hash: "0x..." }
+```
+
+## wallet_strk20PrepareInvoke :
+### Usage :
+Prepare a STRK20 privacy protocol transaction by building the calldata and generating a ZK proof, without submitting it to the network. The dApp is responsible for submitting the result via `wallet_addInvokeTransaction` (passing the returned `call` as `calls[0]` and the returned `proof`). Use `simulate: true` to skip ZK proof generation for fee estimation or UI previews — the returned call is **not submittable on-chain** in that case.
+> [!WARNING]
+> When `simulate` is false (default), ZK proof generation is required. This call can take significantly longer than `wallet_addInvokeTransaction`. The dApp must tolerate long-running calls.
+### Input :
+```typescript
+actions: STRK20_ACTION[]  // Ordered list of actions to bundle (required, minimum 1)
+simulate?: boolean        // If true, skip ZK proof generation. Default: false.
+api_version?: string
+```
+See [STRK20 Privacy Protocol types](#strk20-privacy-protocol-types-) for the `STRK20_ACTION` union type.
+### Output :
+```typescript
+response : STRK20_CALL_AND_PROOF
+// type STRK20_CALL_AND_PROOF = {
+//   call: Call           // The Starknet call to submit (typically targeting the privacy pool contract)
+//   proof: STRK20_PROOF  // ZK proof material. All fields empty when simulate was true.
+// }
+```
+### Behavior :
+- Returns the assembled `call` and its `proof`. Pass both directly to `wallet_addInvokeTransaction` to submit the transaction.
+- When `simulate: true`, the proof fields (`data`, `output`, `proof_facts`) are present but empty — the returned call cannot be submitted on-chain.
+- Errors are the same as `wallet_strk20InvokeTransaction` (NOT_REGISTERED, INSUFFICIENT_PRIVATE_BALANCE, PRIVACY_LEAK, INVALID_REQUEST_PAYLOAD, USER_REFUSED_OP, API_VERSION_NOT_SUPPORTED, UNKNOWN_ERROR).
+### Example :
+```typescript
+// Step 1 — prepare (generates ZK proof)
+const prepared = await walletV6.strk20PrepareInvoke(myWallet, [
+  {
+    type: "deposit",
+    token: "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+    amount: "500000000000000000"
+  }
+]);
+// prepared = { call: { contract_address: "0x...", entry_point: "...", calldata: [...] }, proof: { data: "...", output: [...], proof_facts: [...] } }
+
+// Step 2 — submit (types-js: 'calls' maps to spec 'invoke_transaction')
+const resp = await walletV6.addInvokeTransaction(myWallet, {
+  calls: [prepared.call],
+  proof: prepared.proof
+});
+// resp = { transaction_hash: "0x..." }
+```
+
+## wallet_strk20Balances :
+### Usage :
+Query the private STRK20 balances of the current account for a list of token addresses. Returns one balance entry per requested token, in the same order as the input.
+### Input :
+```typescript
+tokens: string[]   // List of token contract addresses (required, minimum 1)
+api_version?: string
+```
+### Output :
+```typescript
+response : STRK20_BALANCE_ENTRY[]
+// type STRK20_BALANCE_ENTRY = {
+//   token: string   // token contract address
+//   balance: string // private balance in smallest unit, as felt
+// }
+```
+### Behavior :
+- Returns one `STRK20_BALANCE_ENTRY` per requested token, in the same order as the input `tokens` array.
+- If the account is not registered in the STRK20 privacy protocol :
+```typescript
+interface NOT_REGISTERED {
+  code: 118;
+  message: 'An error occurred (NOT_REGISTERED)';
+}
+```
+- If an error occurred with these parameters :
+```typescript
+interface INVALID_REQUEST_PAYLOAD {
+  code: 114;
+  message: 'An error occurred (INVALID_REQUEST_PAYLOAD)';
+}
+```
+- If the user decline the query :
+```typescript
+interface USER_REFUSED_OP {
+  code: 113;
+  message: 'An error occurred (USER_REFUSED_OP)';
+}
+```
+- Other error :
+```typescript
+interface UNKNOWN_ERROR {
+  code: 163;
+  message: 'An error occurred (UNKNOWN_ERROR)';
+}
+```
+### Example :
+```typescript
+const ETH = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
+const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
+const resp = await walletV6.strk20Balances(myWallet, [ETH, STRK]);
+// resp = [
+//   { token: "0x049d...", balance: "500000000000000000" },
+//   { token: "0x0471...", balance: "0" }
+// ]
+```
+
+# STRK20 Privacy Protocol types :
+
+The STRK20 privacy protocol enables private token operations using ZK proofs. It supports four action types (deposit, withdraw, transfer, invoke). All amounts are expressed in the token's smallest unit.
+
+```typescript
+// ZK proof produced by wallet_strk20PrepareInvoke
+type STRK20_PROOF = {
+  data: string          // Serialized proof. Empty string in simulate mode.
+  output: string[]      // L2-to-L1 message payload: [class_hash, ...serialized_server_actions]. Empty array in simulate mode.
+  proof_facts: string[] // Proof facts to include with the transaction. Empty array in simulate mode.
+}
+
+// Result of wallet_strk20PrepareInvoke
+type STRK20_CALL_AND_PROOF = {
+  call: Call          // The Starknet call to submit (typically targets the privacy pool contract)
+  proof: STRK20_PROOF // ZK proof material (all fields empty when produced in simulate mode)
+}
+
+// Wallet-resolved placeholder substituted by the wallet during action assembly.
+// Allowed patterns:
+//   ${openNoteIds[N]} — expands to the Nth note ID created by openNote actions in the same transaction (0-based index)
+//   ${poolAddress}    — expands to the privacy pool contract address
+type STRK20_CALLDATA_PLACEHOLDER = string
+
+type STRK20_CALLDATA_ITEM = string | STRK20_CALLDATA_PLACEHOLDER
+
+// Deposit public tokens from the user's account into the privacy pool (always to self)
+type STRK20_DEPOSIT_ACTION = {
+  type: 'deposit'
+  token: string    // token contract address
+  amount: string   // amount as felt
+}
+
+// Withdraw funds from the privacy pool to a public recipient address
+type STRK20_WITHDRAW_ACTION = {
+  type: 'withdraw'
+  token: string
+  amount: string
+  recipient: string  // public Starknet address that receives the withdrawn funds
+}
+
+// Privately transfer funds inside the privacy pool to another registered user
+type STRK20_TRANSFER_ACTION = {
+  type: 'transfer'
+  token: string
+  amount: string
+  recipient: string  // Starknet address of the registered recipient inside the privacy pool
+}
+
+// Invoke an arbitrary contract entry point as part of the same STRK20 transaction.
+// Calldata items may be literal felts or wallet-resolved placeholders.
+type STRK20_INVOKE_ACTION = {
+  type: 'invoke'
+  contract: string
+  calldata: STRK20_CALLDATA_ITEM[]
+}
+
+type STRK20_ACTION =
+  | STRK20_DEPOSIT_ACTION
+  | STRK20_WITHDRAW_ACTION
+  | STRK20_TRANSFER_ACTION
+  | STRK20_INVOKE_ACTION
+
+type STRK20_BALANCE_ENTRY = {
+  token: string    // token contract address
+  balance: string  // private balance in smallest unit, as felt
+}
 ```
 
 # Behavior summary table :
@@ -708,16 +975,20 @@ Expected behavior:
 |              wallet_signTypedData              |         Unlock UI         |        DAPP connect UI        |      UI for message signature       |Unlock UI |
 |             wallet_supportedSpecs              |  silent return [string]   |    silent return [string]     |       silent return [string]        |silent return [string]   |
 |           wallet_supportedWalletApi            |  silent return [string]   |    silent return [string]     |       silent return [string]  |silent return [string]   |
+|        wallet_strk20InvokeTransaction          |  Unlock UI  |  DAPP connect UI  |  UI for STRK20 transaction  |Unlock UI |
+|          wallet_strk20PrepareInvoke            |  Unlock UI  |  DAPP connect UI  |  UI for STRK20 transaction preparation  |Unlock UI |
+|            wallet_strk20Balances               |  Unlock UI  |  DAPP connect UI  |  silent return balance array  |Unlock UI |
 
 # Wallet API version :
 
 All entries of this Wallet API have an optional parameter to define the version of API used to create the request. 
 ## Example :<!-- omit from toc -->
 ```typescript
-const myParams = {
-  api_version: "0.7"
-}
-const resp = await myWallet.request({type: "wallet_requestChainId", params: myParams});
+// walletV6 helpers do not expose api_version; use the raw request to pass it explicitly:
+const resp = await myWallet.features['starknet:walletApi'].request({
+  type: "wallet_requestChainId",
+  params: { api_version: "0.7" }
+});
 // resp = "0x534e5f5345504f4c4941"
 ```
 ## Error :<!-- omit from toc -->s
@@ -728,4 +999,3 @@ interface API_VERSION_NOT_SUPPORTED {
   message: 'An error occurred (API_VERSION_NOT_SUPPORTED)';
 }
 ```
-

@@ -303,8 +303,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         if (myWallet && walletV6Cast) {
           let response: string = "";
           try {
-            // walletV6 has no helper for wallet_supportedWalletApi, raw request required
-            const resp = await (walletV6Cast as any).features['starknet:walletApi'].request({ type: "wallet_supportedWalletApi" });
+            const resp = await walletV6.supportedWalletApi(walletV6Cast);
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message

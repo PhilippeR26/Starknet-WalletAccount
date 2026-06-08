@@ -78,7 +78,7 @@ export default function WalletAccountTag() {
                 async (result: any) => {
                     const txH = result.transaction_hash;
                     console.log("txH=", txH);
-                    const txR = await myWalletAccount?.channel.waitForTransaction(txH);
+                    const txR = await myWalletAccount?.provider.waitForTransaction(txH);
                     console.log("txR=", txR);
                     response = json.stringify(txR, undefined, 2);
                 })
@@ -97,7 +97,7 @@ export default function WalletAccountTag() {
                 async (result: any) => {
                     const txH = result.transaction_hash;
                     console.log("txH=", txH);
-                    const txR = await myWalletAccount?.channel.waitForTransaction(txH);
+                    const txR = await myWalletAccount?.provider.waitForTransaction(txH);
                     console.log("txR=", txR);
                     response = json.stringify(txR, undefined, 2);
                 })
@@ -119,7 +119,7 @@ export default function WalletAccountTag() {
                     console.log("deploy account success");
                     const txH = result.transaction_hash;
                     console.log("txH=", txH);
-                    const txR = await myWalletAccount?.channel.waitForTransaction(txH);
+                    const txR = await myWalletAccount?.provider.waitForTransaction(txH);
                     console.log("txR=", txR);
                     console.log("Private Key of new account =", privK);
                     response = json.stringify(txR, undefined, 2);
@@ -173,7 +173,7 @@ export default function WalletAccountTag() {
 
     const getWAchainId = () => {
         console.log("getWAchainId");
-        myWalletAccount?.getChainId()
+        myWalletAccount?.provider.getChainId()
             .then(
                 (result: any) => {
                     setChainIdWA(result.toString());
@@ -211,7 +211,7 @@ export default function WalletAccountTag() {
         SetTestContractWA(new Contract({
             abi: rejectContract.abi,
             address: RejectContractAddress[myFrontendProviderIndex],
-            providerOrAccount: myWalletAccount
+            providerOrAccount: myWalletAccount as any
         }))
     }
     useEffect(

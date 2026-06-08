@@ -127,6 +127,12 @@ export default function WalletApiTag() {
                     param="100"
                 />
                 <RpcWalletCommand
+                    command={"wallet_addInvokeTransaction"}
+                    param="100"
+                    symbol="withProof"
+                    tip="Invoke with a fake proof — tests whether the proof field is accepted"
+                />
+                <RpcWalletCommand
                     command={"wallet_addDeclareTransaction"}
                     param="Object"
                     tip="2 transactions to accept, separated by few seconds"
@@ -155,6 +161,21 @@ export default function WalletApiTag() {
                 <RpcWalletCommand
                     command={"wallet_deploymentData"}
                     param=""
+                />
+                <RpcWalletCommand
+                    command={"wallet_strk20Balances"}
+                    param={`[${constants.addrETH}, ${constants.addrSTRK}]`}
+                    tip="ETH and STRK balances in the privacy pool"
+                />
+                <RpcWalletCommand
+                    command={"wallet_strk20PrepareInvoke"}
+                    param={"deposit 1 STRK (1e18), simulate=false"}
+                    tip="Prepare a deposit of 1 STRK (generates ZK proof)"
+                />
+                <RpcWalletCommand
+                    command={"wallet_strk20InvokeTransaction"}
+                    param={"deposit 1 STRK (1e18)"}
+                    tip="Execute a deposit of 1 STRK into the privacy pool"
                 />
             </SimpleGrid>
 

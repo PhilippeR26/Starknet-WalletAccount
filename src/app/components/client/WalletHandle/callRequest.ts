@@ -13,7 +13,7 @@ export async function callRequest(call: Omit<WALLET_API.RpcMessage, "result">): 
     let resp: Response | undefined = undefined;
     let crash: boolean = false;
     try {
-        resp = await myWallet.features["starknet:walletApi"].request(call);
+        resp = await (myWallet.features["starknet:walletApi"] as any).request(call);
 
     } catch {
         (err: any) => { console.log("Wallet request", call.type, " failed.\n", err) };

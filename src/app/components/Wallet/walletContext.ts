@@ -1,6 +1,6 @@
 "use client";
 import { create } from "zustand";
-import { ProviderInterface, AccountInterface, type WalletAccountV5 } from "starknet";
+import { ProviderInterface, AccountInterface, type WalletAccountV6 } from "starknet";
 import { type WalletWithStarknetFeatures } from "@starknet-io/get-starknet-wallet-standard/features";
 
 
@@ -13,8 +13,8 @@ export interface WalletState {
     setAddressAccount: (address: string) => void,
     chain: string,
     setChain: (chain: string) => void,
-    myWalletAccount: WalletAccountV5|undefined;
-    setMyWalletAccount: (myWAccount:WalletAccountV5)=>void;
+    myWalletAccount: WalletAccountV6|undefined;
+    setMyWalletAccount: (myWAccount:WalletAccountV6)=>void;
     account: AccountInterface | undefined,
     setAccount: (account: AccountInterface) => void,
     provider: ProviderInterface | undefined,
@@ -38,7 +38,7 @@ export const useStoreWallet = create<WalletState>()(set => ({
     chain: "",
     setChain: (chain: string) => { set(state => ({ chain: chain })) },
     myWalletAccount: undefined,
-    setMyWalletAccount: (myWAccount: WalletAccountV5) => { set(state => ({ myWalletAccount: myWAccount })) },
+    setMyWalletAccount: (myWAccount: WalletAccountV6) => { set(state => ({ myWalletAccount: myWAccount })) },
     account: undefined,
     setAccount: (account: AccountInterface) => { set(state => ({ account })) },
     provider: undefined,

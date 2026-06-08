@@ -1,7 +1,8 @@
 import { Box, Center, Dialog, useDisclosure } from "@chakra-ui/react";
 import { Button } from "@chakra-ui/react";
 import { Tooltip } from "@/components/ui/tooltip";
-import { CallData, GetBlockResponse, constants as SNconstants, TypedData, cairo, ec, encode, hash, json, shortString, stark, addAddressPadding, walletV5, Contract, type Call, type Calldata } from "starknet";
+import { CallData, GetBlockResponse, constants as SNconstants, TypedData, cairo, ec, encode, hash, json, shortString, stark, addAddressPadding, walletV6, Contract, type Call, type Calldata } from "starknet";
+import type { WalletWithStarknetFeatures as WalletWithStarknetFeaturesV6 } from '@starknet-io/get-starknet-wallet-standard-v6/features';
 import { useEffect, useState } from "react";
 
 import * as constants from "@/utils/constants";
@@ -41,6 +42,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
   const [testRejectContract, SetRejectContract] = useState<Contract>(new Contract({ abi: rejectContract.abi, address: "0x00" }));
 
   const selectedApiVersion = useStoreWallet(state => state.selectedApiVersion);
+  const walletV6Cast = walletFromContext as unknown as WalletWithStarknetFeaturesV6 | undefined;
 
 
   const DefineRejectContract = () => {
@@ -67,14 +69,14 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
   async function callCommand(command: constants.CommandWallet, param: string) {
     switch (command) {
       case "wallet_requestAccounts": {
-        if (myWallet) {
+        if (myWallet && walletV6Cast) {
           let txtResponse: string = "";
           try {
             let response: string[] = [""];
             if (symbol === "silentMode") {
-              response = await walletV5.requestAccounts(myWallet, true);
+              response = await walletV6.requestAccounts(walletV6Cast, true);
             } else {
-              response = await walletV5.requestAccounts(myWallet, false);
+              response = await walletV6.requestAccounts(walletV6Cast, false);
             }
             txtResponse = addAddressPadding(response[0]);
           } catch (err: any) {
@@ -89,8 +91,8 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         break;
       }
       case "wallet_requestChainId": {
-        if (myWallet) {
-          const response = await walletV5.requestChainId(myWallet);
+        if (myWallet && walletV6Cast) {
+          const response = await walletV6.requestChainId(walletV6Cast);
           const respText: string = response === null ? "null" : shortString.decodeShortString(response);
           setResponse(response + " (" + respText + ")");
           onOpen();
@@ -98,7 +100,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         break;
       }
       case "wallet_watchAsset": {
-        if (myWallet) {
+        if (myWallet && walletV6Cast) {
           const myAsset: WALLET_API.WatchAssetParameters = {
             type: "ERC20",
             options: {
@@ -114,7 +116,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
           }
           let response: string = "";
           try {
-            response = (await walletV5.watchAsset(myWallet, myAsset)) ? "true" : "false";
+            response = (await walletV6.watchAsset(walletV6Cast, myAsset)) ? "true" : "false";
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
           }
@@ -126,10 +128,10 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         break;
       }
       case "wallet_switchStarknetChain": {
-        if (myWallet) {
+        if (myWallet && walletV6Cast) {
           let response: string = "";
           try {
-            response = (await walletV5.switchStarknetChain(myWallet, param as SNconstants.StarknetChainId)) ? "true" : "false";
+            response = (await walletV6.switchStarknetChain(walletV6Cast, param as SNconstants.StarknetChainId)) ? "true" : "false";
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
           }
@@ -157,10 +159,10 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
           }
         } // hex of string
 
-        if (myWallet) {
+        if (myWallet && walletV6Cast) {
           let response: string = "";
           try {
-            response = (await walletV5.addStarknetChain(myWallet, myChainId)) ? "true" : "false";
+            response = (await walletV6.addStarknetChain(walletV6Cast, myChainId)) ? "true" : "false";
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
           }
@@ -190,18 +192,26 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         // }
         //const contract=new Contract(rejectAbi,contractAddress,undefined);
         const myCall: Call = new Contract({ abi: rejectAbi, address: contractAddress }).populate(funcName, { p1: Number(param) });
-        const myParams: WALLET_API.AddInvokeTransactionParameters = {
-          calls: [{
-            contract_address: myCall.contractAddress,
-            entry_point: myCall.entrypoint,
-            calldata: myCall.calldata as Calldata
-          }]
-        };
-        if (myWallet) {
+        const baseCalls = [{
+          contract_address: myCall.contractAddress,
+          entry_point: myCall.entrypoint,
+          calldata: myCall.calldata as Calldata
+        }];
+        const myParams: WALLET_API.AddInvokeTransactionParameters = symbol === "withProof"
+          ? {
+              calls: baseCalls,
+              proof: {
+                data: "ZmFrZXByb29m",
+                output: [],
+                proof_facts: []
+              } as WALLET_API.STRK20_PROOF
+            }
+          : { calls: baseCalls };
+        if (myWallet && walletV6Cast) {
           let response: string = "";
           try {
             console.log("execute call =", myParams)
-            const resp = (await walletV5.addInvokeTransaction(myWallet, myParams));
+            const resp = await walletV6.addInvokeTransaction(walletV6Cast, myParams);
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
@@ -215,7 +225,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
       }
 
       case "wallet_addDeclareTransaction": {
-        if (myWallet) {
+        if (myWallet && walletV6Cast) {
 
           let response: string = "";
           try {
@@ -230,7 +240,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
                 calldata: []
               }]
             }
-            const txH = await walletV5.addInvokeTransaction(myWallet, myParams0);
+            const txH = await walletV6.addInvokeTransaction(walletV6Cast, myParams0);
 
             await constants.myFrontendProviders[myFrontendProviderIndex].waitForTransaction(txH.transaction_hash);
             const myParams: WALLET_API.AddDeclareTransactionParameters = {
@@ -239,7 +249,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
               contract_class: getHelloTestSierra(declareNonce),
 
             }
-            const resp = await walletV5.addDeclareTransaction(myWallet, myParams);
+            const resp = await walletV6.addDeclareTransaction(walletV6Cast, myParams);
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
@@ -274,10 +284,10 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
           },
 
         };
-        if (myWallet) {
+        if (myWallet && walletV6Cast) {
           let response: string = "";
           try {
-            const resp = (await walletV5.signMessage(myWallet, myTypedData));
+            const resp = await walletV6.signMessage(walletV6Cast, myTypedData);
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
@@ -290,11 +300,11 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         break;
       }
       case "wallet_supportedWalletApi": {
-        if (myWallet) {
+        if (myWallet && walletV6Cast) {
           let response: string = "";
           try {
-            // ************* TODO : change function name when implemented in Starknet.js *********
-            const resp = (await walletV5.supportedSpecs(myWallet));
+            // walletV6 has no helper for wallet_supportedWalletApi, raw request required
+            const resp = await (walletV6Cast as any).features['starknet:walletApi'].request({ type: "wallet_supportedWalletApi" });
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
@@ -307,10 +317,10 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         break;
       }
       case "wallet_supportedSpecs": {
-        if (myWallet) {
+        if (myWallet && walletV6Cast) {
           let response: string = "";
           try {
-            const resp = (await walletV5.supportedSpecs(myWallet));
+            const resp = await walletV6.supportedSpecs(walletV6Cast);
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
@@ -323,10 +333,10 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         break;
       }
       case "wallet_getPermissions": {
-        if (myWallet) {
+        if (myWallet && walletV6Cast) {
           let response: string = "";
           try {
-            const resp = (await walletV5.getPermissions(myWallet));
+            const resp = await walletV6.getPermissions(walletV6Cast);
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message
@@ -339,10 +349,73 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         break;
       }
       case "wallet_deploymentData": {
-        if (myWallet) {
+        if (myWallet && walletV6Cast) {
           let response: string = "";
           try {
-            const resp = (await walletV5.deploymentData(myWallet));
+            const resp = await walletV6.deploymentData(walletV6Cast);
+            response = json.stringify(resp, undefined, 2);
+          } catch (err: any) {
+            response = "Error " + err.code + " = " + err.message
+          }
+          finally {
+            setResponse(response);
+            onOpen();
+          }
+        }
+        break;
+      }
+      case "wallet_strk20Balances": {
+        if (myWallet && walletV6Cast) {
+          let response: string = "";
+          try {
+            const resp = await walletV6.strk20Balances(walletV6Cast, [
+              constants.addrETH,
+              constants.addrSTRK
+            ]);
+            response = json.stringify(resp, undefined, 2);
+          } catch (err: any) {
+            response = "Error " + err.code + " = " + err.message
+          }
+          finally {
+            setResponse(response);
+            onOpen();
+          }
+        }
+        break;
+      }
+      case "wallet_strk20PrepareInvoke": {
+        if (myWallet && walletV6Cast) {
+          let response: string = "";
+          try {
+            // Deposit 1 STRK (1e18) into the privacy pool
+            const actions: WALLET_API.STRK20_ACTION[] = [{
+              type: "deposit",
+              token: constants.addrSTRK,
+              amount: "1000000000000000000"
+            }];
+            const resp = await walletV6.strk20PrepareInvoke(walletV6Cast, actions, false);
+            response = json.stringify(resp, undefined, 2);
+          } catch (err: any) {
+            response = "Error " + err.code + " = " + err.message
+          }
+          finally {
+            setResponse(response);
+            onOpen();
+          }
+        }
+        break;
+      }
+      case "wallet_strk20InvokeTransaction": {
+        if (myWallet && walletV6Cast) {
+          let response: string = "";
+          try {
+            // Deposit 1 STRK (1e18) into the privacy pool
+            const actions: WALLET_API.STRK20_ACTION[] = [{
+              type: "deposit",
+              token: constants.addrSTRK,
+              amount: "1000000000000000000"
+            }];
+            const resp = await walletV6.strk20InvokeTransaction(walletV6Cast, actions);
             response = json.stringify(resp, undefined, 2);
           } catch (err: any) {
             response = "Error " + err.code + " = " + err.message

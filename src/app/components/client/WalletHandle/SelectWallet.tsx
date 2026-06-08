@@ -4,7 +4,8 @@ import { useStoreWallet } from "../../Wallet/walletContext";
 import { useFrontendProvider } from "../provider/providerContext";
 import { useEffect } from "react";
 import { useState } from "react";
-import { walletV5, validateAndParseAddress, constants as SNconstants, WalletAccountV5 } from "starknet";
+import { walletV6, validateAndParseAddress, constants as SNconstants, WalletAccountV6 } from "starknet";
+import type { WalletWithStarknetFeatures as WalletWithStarknetFeaturesV6 } from '@starknet-io/get-starknet-wallet-standard-v6/features';
 import { WALLET_API } from "@starknet-io/types-js";
 import { myFrontendProviders } from "@/utils/constants";
 import { createStore, type Store } from "@starknet-io/get-starknet-discovery";
@@ -69,11 +70,12 @@ export default function SelectWallet() {
   async function handleSelectedWallet(selectedWallet: WalletWithStarknetFeatures) {
     setMyWallet(selectedWallet); // zustand
     console.log("Trying to connect wallet=", selectedWallet);
-    setMyWallet(selectedWallet); // zustand
-    const myWA = await WalletAccountV5.connect(myFrontendProviders[2], selectedWallet);
+    // Cast V5 wallet to V6 type: the V6 stub is structurally compatible with V5
+    const walletV6Type = selectedWallet as unknown as WalletWithStarknetFeaturesV6;
+    const myWA = await WalletAccountV6.connect(myFrontendProviders[2], walletV6Type);
     setMyWalletAccount(myWA);
     console.log("WalletAccount created=", myWA);
-    const result = await walletV5.requestAccounts(selectedWallet);
+    const result = await walletV6.requestAccounts(walletV6Type);
     if (typeof (result) == "string") {
       console.log("This Wallet is not compatible.");
       return;
@@ -83,16 +85,15 @@ export default function SelectWallet() {
       const addr = validateAndParseAddress(result[0]);
       setAddressAccount(addr); // zustand
     }
-    const isConnectedWallet: boolean = await walletV5.getPermissions(selectedWallet).then((res: any) => (res as WALLET_API.Permission[]).includes(WALLET_API.Permission.ACCOUNTS));
+    const isConnectedWallet: boolean = await walletV6.getPermissions(walletV6Type).then((res: any) => (res as WALLET_API.Permission[]).includes(WALLET_API.Permission.ACCOUNTS));
     setConnected(isConnectedWallet); // zustand
     if (isConnectedWallet) {
-      const chainId = (await walletV5.requestChainId(selectedWallet)) as string;
+      const chainId = (await walletV6.requestChainId(walletV6Type)) as string;
       setChain(chainId);
       setCurrentFrontendProviderIndex(chainId === SNconstants.StarknetChainId.SN_MAIN ? 0 : 2);
-
       console.log("change Provider index to :", myFrontendProviderIndex);
     }
-    setWalletApi(await walletV5.supportedSpecs(selectedWallet));
+    setWalletApi(await walletV6.supportedSpecs(walletV6Type));
   }
 
   useEffect(

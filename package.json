@@ -11,9 +11,8 @@
   "dependencies": {
     "@chakra-ui/react": "^3.30.0",
     "@emotion/react": "^11.14.0",
-    "@starknet-io/get-starknet-discovery": "^5.0.0",
-    "@starknet-io/get-starknet-wallet-standard": "^5.0.0",
-    "@starknet-io/get-starknet-wallet-standard-v6": "file:/D/starknetFork/starknet.js/packages/get-starknet-wallet-standard-v6",
+    "@starknet-io/get-starknet-discovery": "^6.0.1",
+    "@starknet-io/get-starknet-wallet-standard": "^6.0.1",
     "lucide-react": "^0.556.0",
     "next": "^16.0.8",
     "next-themes": "^0.4.6",
@@ -25,7 +24,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
-    "@starknet-io/types-js": "file:/D/Starknet/types-jsFork/types-js",
+    "@starknet-io/types-js": "0.10.3-beta.1",
     "@types/node": "24.10.2",
     "@types/react": "19.2.7",
     "simple-zustand-devtools": "^1.1.0",

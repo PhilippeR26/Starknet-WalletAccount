@@ -1,5 +1,6 @@
 # Starknet Wallet API
 
+> version : v1.4.1 17/june/2026, in accordance with spec 0.10.3-rc1 and rc2: STRK20_TRANSFER_ACTION.amount now accepts the literal `"OPEN"` to transfer the full opened note balance (rc1); wallet_strk20Balances now accepts an empty tokens array to return all shielded balances (rc2).  
 > version : v1.4.0 05/june/2026, in accordance with spec 0.10.3-rc0, add STRK20 privacy protocol (wallet_strk20InvokeTransaction, wallet_strk20PrepareInvoke, wallet_strk20Balances) and related types, add errors NOT_REGISTERED/INSUFFICIENT_PRIVATE_BALANCE/PRIVACY_LEAK, update wallet_addInvokeTransaction with optional proof field, fix silent_mode naming (was silentMode) in wallet_requestAccounts and wallet_switchStarknetChain, fix snake_case field names in wallet_addStarknetChain. Note: get-starknet V5 is not compatible with this spec; use get-starknet V6 (Starknet.js v10.x) or later.  
 > version : v1.3.0 23/dec/2024, to be in accordance with spec 0.8rc2, add errors DEPLOYMENT_DATA_NOT_AVAILABLE & CHAIN_ID_NOT_SUPPORTED, add silentMode in wallet_switchStarknetChain.  
 > version : v1.2.4 06/dec/2024, add case unlocked&connect to behavior table.  
@@ -840,7 +841,7 @@ const resp = await walletV6.addInvokeTransaction(myWallet, {
 Query the private STRK20 balances of the current account for a list of token addresses. Returns one balance entry per requested token, in the same order as the input.
 ### Input :
 ```typescript
-tokens: string[]   // List of token contract addresses (required, minimum 1)
+tokens: string[]   // List of token contract addresses (required). An empty array returns the balances of all shielded tokens.
 api_version?: string
 ```
 ### Output :
@@ -853,6 +854,7 @@ response : STRK20_BALANCE_ENTRY[]
 ```
 ### Behavior :
 - Returns one `STRK20_BALANCE_ENTRY` per requested token, in the same order as the input `tokens` array.
+- If `tokens` is an empty array, returns one entry per shielded token the wallet currently holds in the privacy pool (order unspecified).
 - If the account is not registered in the STRK20 privacy protocol :
 ```typescript
 interface NOT_REGISTERED {
@@ -937,7 +939,7 @@ type STRK20_WITHDRAW_ACTION = {
 type STRK20_TRANSFER_ACTION = {
   type: 'transfer'
   token: string
-  amount: string
+  amount: string | 'OPEN'  // Amount in smallest unit, or "OPEN" to transfer the full opened note balance
   recipient: string  // Starknet address of the registered recipient inside the privacy pool
 }
 

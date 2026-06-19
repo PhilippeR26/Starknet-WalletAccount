@@ -20,13 +20,14 @@
     "react-dom": "19.2.1",
     "react-icons": "^5.5.0",
     "sharp": "^0.34.5",
-    "starknet": "^9.1.1",
+    "starknet": "github:PhilippeR26/starknet.js#WalletAccountV6",
     "zustand": "^5.0.9"
   },
   "devDependencies": {
-    "@starknet-io/types-js": "0.10.3-beta.1",
+    "@starknet-io/types-js": "0.10.3-beta.3",
     "@types/node": "24.10.2",
     "@types/react": "19.2.7",
+    "baseline-browser-mapping": "^2.10.38",
     "simple-zustand-devtools": "^1.1.0",
     "typescript": "^5.9.3"
   },

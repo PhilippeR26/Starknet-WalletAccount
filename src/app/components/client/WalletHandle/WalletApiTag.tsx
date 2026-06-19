@@ -5,6 +5,7 @@ import { constants as SNconstants, validateAndParseAddress } from "starknet";
 import { useStoreWallet } from '../../Wallet/walletContext';
 import * as constants from "../../../../utils/constants";
 import RpcWalletCommand from './RpcWalletCommand';
+import Strk20Panel from './Strk20Panel';
 import { useFrontendProvider } from '../provider/providerContext';
 import { getStarknetChainId } from "@starknet-io/get-starknet-wallet-standard/chains";
 import type {
@@ -162,22 +163,8 @@ export default function WalletApiTag() {
                     command={"wallet_deploymentData"}
                     param=""
                 />
-                <RpcWalletCommand
-                    command={"wallet_strk20Balances"}
-                    param={`[${constants.addrETH}, ${constants.addrSTRK}]`}
-                    tip="ETH and STRK balances in the privacy pool"
-                />
-                <RpcWalletCommand
-                    command={"wallet_strk20PrepareInvoke"}
-                    param={"deposit 1 STRK (1e18), simulate=false"}
-                    tip="Prepare a deposit of 1 STRK (generates ZK proof)"
-                />
-                <RpcWalletCommand
-                    command={"wallet_strk20InvokeTransaction"}
-                    param={"deposit 1 STRK (1e18)"}
-                    tip="Execute a deposit of 1 STRK into the privacy pool"
-                />
             </SimpleGrid>
+            <Strk20Panel />
 
             <SimpleGrid minChildWidth="320px" gap="20px" paddingBottom="40px">
                 <Box bg="green.200" color='black' borderWidth='1px' borderRadius='lg'>

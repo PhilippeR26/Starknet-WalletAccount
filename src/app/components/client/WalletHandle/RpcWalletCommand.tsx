@@ -363,69 +363,6 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         }
         break;
       }
-      case "wallet_strk20Balances": {
-        if (myWallet && walletV6Cast) {
-          let response: string = "";
-          try {
-            const resp = await walletV6.strk20Balances(walletV6Cast, [
-              constants.addrETH,
-              constants.addrSTRK
-            ]);
-            response = json.stringify(resp, undefined, 2);
-          } catch (err: any) {
-            response = "Error " + err.code + " = " + err.message
-          }
-          finally {
-            setResponse(response);
-            onOpen();
-          }
-        }
-        break;
-      }
-      case "wallet_strk20PrepareInvoke": {
-        if (myWallet && walletV6Cast) {
-          let response: string = "";
-          try {
-            // Deposit 1 STRK (1e18) into the privacy pool
-            const actions: WALLET_API.STRK20_ACTION[] = [{
-              type: "deposit",
-              token: constants.addrSTRK,
-              amount: "1000000000000000000"
-            }];
-            const resp = await walletV6.strk20PrepareInvoke(walletV6Cast, actions, false);
-            response = json.stringify(resp, undefined, 2);
-          } catch (err: any) {
-            response = "Error " + err.code + " = " + err.message
-          }
-          finally {
-            setResponse(response);
-            onOpen();
-          }
-        }
-        break;
-      }
-      case "wallet_strk20InvokeTransaction": {
-        if (myWallet && walletV6Cast) {
-          let response: string = "";
-          try {
-            // Deposit 1 STRK (1e18) into the privacy pool
-            const actions: WALLET_API.STRK20_ACTION[] = [{
-              type: "deposit",
-              token: constants.addrSTRK,
-              amount: "1000000000000000000"
-            }];
-            const resp = await walletV6.strk20InvokeTransaction(walletV6Cast, actions);
-            response = json.stringify(resp, undefined, 2);
-          } catch (err: any) {
-            response = "Error " + err.code + " = " + err.message
-          }
-          finally {
-            setResponse(response);
-            onOpen();
-          }
-        }
-        break;
-      }
       default: {
         console.log("wrong Wallet command :", command);
         break;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent } from "react";
 import {
   Box,
   Button,
@@ -28,6 +28,8 @@ type ActionType = "deposit" | "withdraw" | "transfer" | "invoke";
 const TOKEN = constants.addrSTRK;
 // 1 STRK in smallest unit (1e18).
 const ONE_STRK = "1000000000000000000";
+// 5 STRK — the multi-action example needs at least 4 STRK shielded to run.
+const FIVE_STRK = "5000000000000000000";
 // Thicker, darker borders + horizontal padding so input fields clearly stand out.
 const FIELD_STYLE = {
   borderColor: "gray.400",
@@ -41,6 +43,41 @@ const BTN_STYLE = { paddingX: "20px" } as const;
 // "1000000" -> "1 000 000".
 function groupDigits(value: string): string {
   return value.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+// Avoid the SSR warning that useLayoutEffect triggers during server render.
+const useBrowserLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+// STRK20 results carry huge fields (the base64 proof `data`, long calldata /
+// output / proof_facts arrays). Truncate any oversized string or array for the
+// result dialog while keeping the overall structure readable.
+const MAX_STR = 80;
+const MAX_ARR = 12;
+
+function truncateDeep(value: unknown): unknown {
+  if (typeof value === "string") {
+    return value.length > MAX_STR
+      ? `${value.slice(0, MAX_STR)}… (${value.length} chars, truncated)`
+      : value;
+  }
+  if (Array.isArray(value)) {
+    const items: unknown[] = value.slice(0, MAX_ARR).map(truncateDeep);
+    if (value.length > MAX_ARR) {
+      items.push(`… (${value.length} items total, truncated)`);
+    }
+    return items;
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [k, truncateDeep(v)])
+    );
+  }
+  return value;
+}
+
+function formatResult(r: unknown): string {
+  return json.stringify(truncateDeep(r), undefined, 2);
 }
 
 export default function Strk20Panel() {
@@ -65,7 +102,38 @@ export default function Strk20Panel() {
   );
 
   const recipientNeeded = actionType === "withdraw" || actionType === "transfer";
+  const recipientFilled = recipient.trim().length > 0;
   const allEnabled = actionType === "transfer";
+
+  // Keep the caret stable in the Amount field despite the digit-grouping reformat
+  // (a controlled+formatted input otherwise jumps the caret to the end on each edit).
+  const amountRef = useRef<HTMLInputElement>(null);
+  const amountCaretRef = useRef<number | null>(null);
+  useBrowserLayoutEffect(() => {
+    if (amountCaretRef.current != null && amountRef.current) {
+      const pos = amountCaretRef.current;
+      amountRef.current.setSelectionRange(pos, pos);
+      amountCaretRef.current = null;
+    }
+  }, [amount]);
+
+  function handleAmountChange(e: ChangeEvent<HTMLInputElement>) {
+    const el = e.currentTarget;
+    const caret = el.selectionStart ?? el.value.length;
+    // Count digits left of the caret, then place the caret after that many
+    // digits in the freshly grouped string.
+    const digitsLeft = el.value.slice(0, caret).replace(/\D/g, "").length;
+    const digitsOnly = el.value.replace(/\D/g, "");
+    const formatted = groupDigits(digitsOnly);
+    let count = 0;
+    let pos = 0;
+    while (pos < formatted.length && count < digitsLeft) {
+      if (/\d/.test(formatted.charAt(pos))) count += 1;
+      pos += 1;
+    }
+    amountCaretRef.current = pos;
+    setAmount(digitsOnly);
+  }
 
   function show(sum: string, resp: string) {
     setSummary(sum);
@@ -123,7 +191,7 @@ export default function Strk20Panel() {
         kind === "prepare"
           ? await walletV6.strk20PrepareInvoke(wallet, [action], simulate)
           : await walletV6.strk20InvokeTransaction(wallet, [action]);
-      resp = json.stringify(r, undefined, 2);
+      resp = formatResult(r);
     } catch (err: any) {
       resp = "Error " + err.code + " = " + err.message;
     }
@@ -148,12 +216,12 @@ export default function Strk20Panel() {
     ];
     let resp: string;
     try {
-      const r = await walletV6.strk20PrepareInvoke(wallet, actions, true);
-      resp = json.stringify(r, undefined, 2);
+      const r = await walletV6.strk20InvokeTransaction(wallet, actions);
+      resp = formatResult(r);
     } catch (err: any) {
       resp = "Error " + err.code + " = " + err.message;
     }
-    show(actions.map(describe).join("  +  ") + "  (prepare simulate=true)", resp);
+    show(actions.map(describe).join("  +  ") + "  (invokeTransaction — on-chain)", resp);
   }
 
   async function queryBalances(tokens: string[]) {
@@ -161,7 +229,7 @@ export default function Strk20Panel() {
     let resp: string;
     try {
       const r = await walletV6.strk20Balances(wallet, tokens);
-      resp = json.stringify(r, undefined, 2);
+      resp = formatResult(r);
     } catch (err: any) {
       resp = "Error " + err.code + " = " + err.message;
     }
@@ -230,11 +298,10 @@ export default function Strk20Panel() {
               <HStack>
                 <Input
                   {...FIELD_STYLE}
+                  ref={amountRef}
                   value={useAllAmount ? "OPEN" : groupDigits(amount)}
                   disabled={useAllAmount}
-                  onChange={(e) =>
-                    setAmount(e.currentTarget.value.replace(/\D/g, ""))
-                  }
+                  onChange={handleAmountChange}
                 />
                 <Button
                   {...BTN_STYLE}
@@ -250,11 +317,15 @@ export default function Strk20Panel() {
 
             {recipientNeeded && (
               <Field.Root required>
-                <Field.Label color="red.600" fontWeight="bold">
+                {/* Red only while empty (required/missing); neutral once filled. */}
+                <Field.Label
+                  color={recipientFilled ? "gray.700" : "red.600"}
+                  fontWeight="bold"
+                >
                   Recipient (where funds go) <Field.RequiredIndicator />
                 </Field.Label>
                 <Input
-                  borderColor="red.600"
+                  borderColor={recipientFilled ? "gray.400" : "red.600"}
                   borderWidth="2px"
                   paddingX="12px"
                   placeholder="0x..."
@@ -264,25 +335,45 @@ export default function Strk20Panel() {
               </Field.Root>
             )}
 
-            <Checkbox.Root
-              checked={simulate}
-              onCheckedChange={(e) => setSimulate(e.checked === true)}
+            {/* The simulate toggle applies ONLY to Prepare invoke — group them. */}
+            <Box
+              borderWidth="1px"
+              borderColor="blue.400"
+              borderRadius="md"
+              bg="blue.50"
+              padding="10px"
             >
-              <Checkbox.HiddenInput />
-              <Checkbox.Control />
-              <Checkbox.Label>
-                simulate (no proof, nothing submitted — recommended first)
-              </Checkbox.Label>
-            </Checkbox.Root>
+              <Stack gap="10px" align="flex-start">
+                <Checkbox.Root
+                  checked={simulate}
+                  onCheckedChange={(e) => setSimulate(e.checked === true)}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label>
+                    simulate (no proof, nothing submitted — recommended first)
+                  </Checkbox.Label>
+                </Checkbox.Root>
+                <Button
+                  {...BTN_STYLE}
+                  colorPalette="blue"
+                  variant="surface"
+                  onClick={() => send("prepare")}
+                >
+                  Prepare invoke
+                </Button>
+              </Stack>
+            </Box>
 
-            <HStack>
-              <Button {...BTN_STYLE} colorPalette="blue" variant="surface" onClick={() => send("prepare")}>
-                Prepare invoke
-              </Button>
-              <Button {...BTN_STYLE} colorPalette="blue" variant="surface" onClick={() => send("invoke")}>
-                Invoke transaction
-              </Button>
-            </HStack>
+            {/* Invoke transaction always submits on-chain (no simulate). */}
+            <Button
+              {...BTN_STYLE}
+              colorPalette="blue"
+              variant="surface"
+              onClick={() => send("invoke")}
+            >
+              Invoke transaction (submits on-chain)
+            </Button>
           </>
         )}
       </Stack>
@@ -292,7 +383,7 @@ export default function Strk20Panel() {
       {/* Block B — multi-action example */}
       <Center>
         <Button {...BTN_STYLE} colorPalette="teal" variant="surface" onClick={loadMultiActionExample}>
-          Load multi-action example (deposit + transfer All → self)
+          Run multi-action example on-chain (deposit 5 STRK + transfer All → self)
         </Button>
       </Center>
 
@@ -333,13 +424,20 @@ export default function Strk20Panel() {
       {/* Result dialog */}
       <Dialog.Root placement="center" open={open} onOpenChange={onClose}>
         <Dialog.Positioner>
-          <Dialog.Content margin="20px" padding="10px">
+          <Dialog.Content
+            margin="20px"
+            padding="10px"
+            maxH="85vh"
+            display="flex"
+            flexDirection="column"
+            overflow="hidden"
+          >
             <Dialog.Header>
               <Dialog.Title fontSize="lg" fontWeight="bold">
                 STRK20 command result
               </Dialog.Title>
             </Dialog.Header>
-            <Dialog.Body>
+            <Dialog.Body flex="1" minH="0" overflowY="auto">
               <Text fontWeight="bold">Sent:</Text>
               <Text marginBottom="8px" wordBreak="break-all">
                 {summary || "N/A"}

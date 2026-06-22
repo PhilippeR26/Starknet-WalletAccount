@@ -20,6 +20,5 @@ XVerse ID 0x5d96b2697e1d46f19a506f3225aad1ae84e21e3b720ee7902dd64ac275086b9
 | prepara_invoke/ no simulate |                 ✅                  |      ❌      |
 |                      submit |                 ✅                  |      ✅      |
 |                  **INVOKE** |             not tested             | not tested  |
-|            **Multi action** |
-|     (without OPEN transfer) | ❌ Proceed, but no response to DAPP |      ✅      |  |  |
+|            **Multi action** | ❌ Proceed, but no response to DAPP |      ✅      |  |  |
 |   wallet_supportedWalletApi |            ❌ ["0.7.0"]             | ❌ ["0.8.0"] |

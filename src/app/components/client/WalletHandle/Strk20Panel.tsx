@@ -99,7 +99,6 @@ export default function Strk20Panel() {
   // Block A — single-action builder state
   const [actionType, setActionType] = useState<ActionType>("deposit");
   const [amount, setAmount] = useState<string>(ONE_STRK);
-  const [useAllAmount, setUseAllAmount] = useState<boolean>(false); // transfer amount: "OPEN"
   const [recipient, setRecipient] = useState<string>("");
   const [simulate, setSimulate] = useState<boolean>(true); // recommended first step
 
@@ -110,7 +109,6 @@ export default function Strk20Panel() {
 
   const recipientNeeded = actionType === "withdraw" || actionType === "transfer";
   const recipientFilled = recipient.trim().length > 0;
-  const allEnabled = actionType === "transfer";
 
   // Keep the caret stable in the Amount field despite the digit-grouping reformat
   // (a controlled+formatted input otherwise jumps the caret to the end on each edit).
@@ -169,12 +167,7 @@ export default function Strk20Panel() {
       case "withdraw":
         return { type: "withdraw", token: TOKEN, amount: num.toHex(amount), recipient };
       case "transfer":
-        return {
-          type: "transfer",
-          token: TOKEN,
-          amount: useAllAmount ? "OPEN" : num.toHex(amount),
-          recipient,
-        };
+        return { type: "transfer", token: TOKEN, amount: num.toHex(amount), recipient };
       default:
         return undefined; // invoke: under development
     }
@@ -211,33 +204,7 @@ export default function Strk20Panel() {
       show("multi-action example (blocked)", "Connect a wallet first (recipient = connected account).");
       return;
     }
-    // deposit 5 STRK, then transfer the full opened balance ("All") back to self.
-    const actions: WALLET_API.STRK20_ACTION[] = [
-      { type: "deposit", token: constants.addrSTRK, amount: num.toHex(FIVE_STRK) },
-      {
-        type: "transfer",
-        token: constants.addrSTRK,
-        amount: "OPEN",
-        recipient: connectedAddress,
-      },
-    ];
-    let resp: string;
-    try {
-      const r = await walletV6.strk20InvokeTransaction(wallet, actions);
-      resp = formatResult(r);
-    } catch (err: any) {
-      resp = formatError(err);
-    }
-    show(actions.map(describe).join("  +  ") + "  (invokeTransaction — on-chain)", resp);
-  }
-
-  async function loadMultiActionExampleFixed() {
-    if (!wallet) return;
-    if (!connectedAddress) {
-      show("multi-action example (blocked)", "Connect a wallet first (recipient = connected account).");
-      return;
-    }
-    // deposit 5 STRK, then transfer a fixed 1 STRK back to self (no "OPEN").
+    // deposit 5 STRK, then transfer a fixed 1 STRK back to self.
     const actions: WALLET_API.STRK20_ACTION[] = [
       { type: "deposit", token: constants.addrSTRK, amount: num.toHex(FIVE_STRK) },
       {
@@ -295,11 +262,7 @@ export default function Strk20Panel() {
             <NativeSelect.Field
               {...FIELD_STYLE}
               value={actionType}
-              onChange={(e) => {
-                const v = e.currentTarget.value as ActionType;
-                setActionType(v);
-                if (v !== "transfer") setUseAllAmount(false);
-              }}
+              onChange={(e) => setActionType(e.currentTarget.value as ActionType)}
             >
               <option value="deposit">deposit</option>
               <option value="withdraw">withdraw</option>
@@ -328,24 +291,12 @@ export default function Strk20Panel() {
 
             <Field.Root>
               <Field.Label>Amount (smallest unit)</Field.Label>
-              <HStack>
-                <Input
-                  {...FIELD_STYLE}
-                  ref={amountRef}
-                  value={useAllAmount ? "OPEN" : groupDigits(amount)}
-                  disabled={useAllAmount}
-                  onChange={handleAmountChange}
-                />
-                <Button
-                  {...BTN_STYLE}
-                  variant={useAllAmount ? "solid" : "surface"}
-                  colorPalette="purple"
-                  disabled={!allEnabled}
-                  onClick={() => setUseAllAmount((b) => !b)}
-                >
-                  All
-                </Button>
-              </HStack>
+              <Input
+                {...FIELD_STYLE}
+                ref={amountRef}
+                value={groupDigits(amount)}
+                onChange={handleAmountChange}
+              />
             </Field.Root>
 
             {recipientNeeded && (
@@ -415,10 +366,7 @@ export default function Strk20Panel() {
 
       {/* Block B — multi-action examples */}
       <Stack gap="10px" align="center">
-        <Button {...BTN_STYLE} colorPalette="teal" variant="surface" onClick={loadMultiActionExample}>
-          Run multi-action example on-chain (deposit 5 STRK + transfer All → self)
-        </Button>
-        <Button {...BTN_STYLE} colorPalette="cyan" variant="surface" onClick={loadMultiActionExampleFixed}>
+        <Button {...BTN_STYLE} colorPalette="cyan" variant="surface" onClick={loadMultiActionExample}>
           Run multi-action example on-chain (deposit 5 STRK + transfer 1 STRK → self)
         </Button>
       </Stack>

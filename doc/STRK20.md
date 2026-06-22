@@ -26,3 +26,4 @@ XVerse ID 0x5d96b2697e1d46f19a506f3225aad1ae84e21e3b720ee7902dd64ac275086b9
 |                  **INVOKE** |          not tested           |     not tested      |
 |            **Multi action** |                               |                     |
 |        (with OPEN transfer) | ❌ not enough fund to pay fees | ❌ Insufficient STRK |
+|   wallet_supportedWalletApi |          ❌ ["0.7.0"]          |     ❌ ["0.8.0"]     |

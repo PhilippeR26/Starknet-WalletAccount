@@ -80,6 +80,13 @@ function formatResult(r: unknown): string {
   return json.stringify(truncateDeep(r), undefined, 2);
 }
 
+// JSON-RPC errors carry a numeric `code`; transport-level failures (e.g. a
+// client timeout) do not — omit the "undefined" code in that case.
+function formatError(err: any): string {
+  const message = err?.message ?? String(err);
+  return err?.code !== undefined ? `Error ${err.code} = ${message}` : `Error: ${message}`;
+}
+
 export default function Strk20Panel() {
   const walletObject = useStoreWallet((state) => state.StarknetWalletObject);
   const connectedAddress = useStoreWallet((state) => state.address);
@@ -193,7 +200,7 @@ export default function Strk20Panel() {
           : await walletV6.strk20InvokeTransaction(wallet, [action]);
       resp = formatResult(r);
     } catch (err: any) {
-      resp = "Error " + err.code + " = " + err.message;
+      resp = formatError(err);
     }
     show(label, resp);
   }
@@ -204,9 +211,9 @@ export default function Strk20Panel() {
       show("multi-action example (blocked)", "Connect a wallet first (recipient = connected account).");
       return;
     }
-    // deposit 1 STRK, then transfer the full opened balance ("All") back to self.
+    // deposit 5 STRK, then transfer the full opened balance ("All") back to self.
     const actions: WALLET_API.STRK20_ACTION[] = [
-      { type: "deposit", token: constants.addrSTRK, amount: num.toHex(ONE_STRK) },
+      { type: "deposit", token: constants.addrSTRK, amount: num.toHex(FIVE_STRK) },
       {
         type: "transfer",
         token: constants.addrSTRK,
@@ -219,7 +226,33 @@ export default function Strk20Panel() {
       const r = await walletV6.strk20InvokeTransaction(wallet, actions);
       resp = formatResult(r);
     } catch (err: any) {
-      resp = "Error " + err.code + " = " + err.message;
+      resp = formatError(err);
+    }
+    show(actions.map(describe).join("  +  ") + "  (invokeTransaction — on-chain)", resp);
+  }
+
+  async function loadMultiActionExampleFixed() {
+    if (!wallet) return;
+    if (!connectedAddress) {
+      show("multi-action example (blocked)", "Connect a wallet first (recipient = connected account).");
+      return;
+    }
+    // deposit 5 STRK, then transfer a fixed 1 STRK back to self (no "OPEN").
+    const actions: WALLET_API.STRK20_ACTION[] = [
+      { type: "deposit", token: constants.addrSTRK, amount: num.toHex(FIVE_STRK) },
+      {
+        type: "transfer",
+        token: constants.addrSTRK,
+        amount: num.toHex(ONE_STRK),
+        recipient: connectedAddress,
+      },
+    ];
+    let resp: string;
+    try {
+      const r = await walletV6.strk20InvokeTransaction(wallet, actions);
+      resp = formatResult(r);
+    } catch (err: any) {
+      resp = formatError(err);
     }
     show(actions.map(describe).join("  +  ") + "  (invokeTransaction — on-chain)", resp);
   }
@@ -231,7 +264,7 @@ export default function Strk20Panel() {
       const r = await walletV6.strk20Balances(wallet, tokens);
       resp = formatResult(r);
     } catch (err: any) {
-      resp = "Error " + err.code + " = " + err.message;
+      resp = formatError(err);
     }
     show(
       tokens.length === 0
@@ -380,12 +413,15 @@ export default function Strk20Panel() {
 
       <Separator borderColor="gray.400" marginY="16px" />
 
-      {/* Block B — multi-action example */}
-      <Center>
+      {/* Block B — multi-action examples */}
+      <Stack gap="10px" align="center">
         <Button {...BTN_STYLE} colorPalette="teal" variant="surface" onClick={loadMultiActionExample}>
           Run multi-action example on-chain (deposit 5 STRK + transfer All → self)
         </Button>
-      </Center>
+        <Button {...BTN_STYLE} colorPalette="cyan" variant="surface" onClick={loadMultiActionExampleFixed}>
+          Run multi-action example on-chain (deposit 5 STRK + transfer 1 STRK → self)
+        </Button>
+      </Stack>
 
       <Separator borderColor="gray.400" marginY="16px" />
 

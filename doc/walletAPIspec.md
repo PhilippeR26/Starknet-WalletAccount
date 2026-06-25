@@ -1,6 +1,7 @@
 # Starknet Wallet API
 
-> version : v1.4.1 17/june/2026, in accordance with spec 0.10.3-rc1 and rc2: STRK20_TRANSFER_ACTION.amount now accepts the literal `"OPEN"` to transfer the full opened note balance (rc1); wallet_strk20Balances now accepts an empty tokens array to return all shielded balances (rc2).  
+> version : v1.4.2 25/june/2026, correct the `"OPEN"` semantics of STRK20_TRANSFER_ACTION.amount (the v1.4.1 description below was wrong): `"OPEN"` does NOT transfer an existing note balance — it **creates a new empty open note** (amount 0) owned by `recipient`, to be **filled by a paired `invoke` action in the same transaction** (canonical case: an AMM swap whose output amount is unknown when the transaction is built). A `${openNoteIds[N]}` placeholder references the Nth such `"OPEN"` transfer (0-based); there is no separate "openNote" action type. A `"OPEN"` transfer with no matching `invoke` to fill it returns INVALID_REQUEST_PAYLOAD.  
+> version : v1.4.1 17/june/2026, in accordance with spec 0.10.3-rc1 and rc2: STRK20_TRANSFER_ACTION.amount now accepts the literal `"OPEN"` (rc1); wallet_strk20Balances now accepts an empty tokens array to return all shielded balances (rc2).  
 > version : v1.4.0 05/june/2026, in accordance with spec 0.10.3-rc0, add STRK20 privacy protocol (wallet_strk20InvokeTransaction, wallet_strk20PrepareInvoke, wallet_strk20Balances) and related types, add errors NOT_REGISTERED/INSUFFICIENT_PRIVATE_BALANCE/PRIVACY_LEAK, update wallet_addInvokeTransaction with optional proof field, fix silent_mode naming (was silentMode) in wallet_requestAccounts and wallet_switchStarknetChain, fix snake_case field names in wallet_addStarknetChain. Note: get-starknet V5 is not compatible with this spec; use get-starknet V6 (Starknet.js v10.x) or later.  
 > version : v1.3.0 23/dec/2024, to be in accordance with spec 0.8rc2, add errors DEPLOYMENT_DATA_NOT_AVAILABLE & CHAIN_ID_NOT_SUPPORTED, add silentMode in wallet_switchStarknetChain.  
 > version : v1.2.4 06/dec/2024, add case unlocked&connect to behavior table.  
@@ -914,7 +915,7 @@ type STRK20_CALL_AND_PROOF = {
 
 // Wallet-resolved placeholder substituted by the wallet during action assembly.
 // Allowed patterns:
-//   ${openNoteIds[N]} — expands to the Nth note ID created by openNote actions in the same transaction (0-based index)
+//   ${openNoteIds[N]} — expands to the ID of the Nth open note created in the same transaction, i.e. the Nth `transfer` action with amount === "OPEN" (0-based index)
 //   ${poolAddress}    — expands to the privacy pool contract address
 type STRK20_CALLDATA_PLACEHOLDER = string
 
@@ -939,7 +940,7 @@ type STRK20_WITHDRAW_ACTION = {
 type STRK20_TRANSFER_ACTION = {
   type: 'transfer'
   token: string
-  amount: string | 'OPEN'  // Amount in smallest unit, or "OPEN" to transfer the full opened note balance
+  amount: string | 'OPEN'  // Amount in smallest unit; or "OPEN" to create a new empty open note (amount 0) filled later by a paired invoke action in the same transaction (see ${openNoteIds[N]})
   recipient: string  // Starknet address of the registered recipient inside the privacy pool
 }
 

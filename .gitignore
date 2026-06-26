@@ -41,3 +41,5 @@ next-env.d.ts
 package-lock.json
 A1priv/A1priv.ts
 /A1priv/
+
+/target

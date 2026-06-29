@@ -1,5 +1,6 @@
 # Starknet Wallet API
 
+> version : v1.4.3 29/june/2026, align the per-command error lists with the official spec: add the missing `UNKNOWN_ERROR` (code 163) to wallet_getPermissions, wallet_requestAccounts, wallet_requestChainId and wallet_deploymentData (wallet_requestChainId previously stated "No errors possible", which contradicted the spec).  
 > version : v1.4.2 25/june/2026, correct the `"OPEN"` semantics of STRK20_TRANSFER_ACTION.amount (the v1.4.1 description below was wrong): `"OPEN"` does NOT transfer an existing note balance — it **creates a new empty open note** (amount 0) owned by `recipient`, to be **filled by a paired `invoke` action in the same transaction** (canonical case: an AMM swap whose output amount is unknown when the transaction is built). A `${openNoteIds[N]}` placeholder references the Nth such `"OPEN"` transfer (0-based); there is no separate "openNote" action type. A `"OPEN"` transfer with no matching `invoke` to fill it returns INVALID_REQUEST_PAYLOAD.  
 > version : v1.4.1 17/june/2026, in accordance with spec 0.10.3-rc1 and rc2: STRK20_TRANSFER_ACTION.amount now accepts the literal `"OPEN"` (rc1); wallet_strk20Balances now accepts an empty tokens array to return all shielded balances (rc2).  
 > version : v1.4.0 05/june/2026, in accordance with spec 0.10.3-rc0, add STRK20 privacy protocol (wallet_strk20InvokeTransaction, wallet_strk20PrepareInvoke, wallet_strk20Balances) and related types, add errors NOT_REGISTERED/INSUFFICIENT_PRIVATE_BALANCE/PRIVACY_LEAK, update wallet_addInvokeTransaction with optional proof field, fix silent_mode naming (was silentMode) in wallet_requestAccounts and wallet_switchStarknetChain, fix snake_case field names in wallet_addStarknetChain. Note: get-starknet V5 is not compatible with this spec; use get-starknet V6 (Starknet.js v10.x) or later.  
@@ -121,6 +122,13 @@ enum Permission {
 - If the DAPP is not authorized for the current Wallet account, the response is an empty array.
 - If the Wallet is locked, the response is also an empty array.
 - This command is silent on Wallet side. No display on UI.
+- Other error :
+```typescript
+interface UNKNOWN_ERROR {
+  code: 163;
+  message: 'An error occurred (UNKNOWN_ERROR)';
+}
+```
 ### Example :
 ```typescript
 const resp = await walletV6.getPermissions(myWallet);
@@ -142,6 +150,13 @@ response : string[]
 - Returns an array of hex strings ; just use the first element.
 - Default optional silent_mode : false -> if the Wallet is locked, or if the DAPP is not connected, the Wallet will ask to the user to unlock the Wallet or/and connect the DAPP to the current account. If the user rejects these requests, the answer is an empty array.
 - Optional silent_mode : if true, the wallet will not show the wallet-unlock UI in case of a locked wallet, nor the dApp-connect UI in case of a non-connected dApp. If the Wallet is unlocked and the DAPP connected, the response is the array of strings ; otherwise, the response is an empty array.
+- Other error :
+```typescript
+interface UNKNOWN_ERROR {
+  code: 163;
+  message: 'An error occurred (UNKNOWN_ERROR)';
+}
+```
 ### Example :
 ```typescript
 const resp = await walletV6.requestAccounts(myWallet);
@@ -353,7 +368,13 @@ common chainId :
   SN_MAIN = "0x534e5f4d41494e",
   SN_SEPOLIA = "0x534e5f5345504f4c4941",
 ### Behavior :
-- No errors possible for this method.
+- Other error :
+```typescript
+interface UNKNOWN_ERROR {
+  code: 163;
+  message: 'An error occurred (UNKNOWN_ERROR)';
+}
+```
 ### Example :
 ```typescript
 const resp = await walletV6.requestChainId(myWallet);
@@ -392,6 +413,13 @@ interface DEPLOYMENT_DATA_NOT_AVAILABLE {
   message: "An error occurred (DEPLOYMENT_DATA_NOT_AVAILABLE)";
 }
 ``` 
+- Other error :
+```typescript
+interface UNKNOWN_ERROR {
+  code: 163;
+  message: 'An error occurred (UNKNOWN_ERROR)';
+}
+```
 ### Example :
 ```typescript
 const resp = await walletV6.deploymentData(myWallet);

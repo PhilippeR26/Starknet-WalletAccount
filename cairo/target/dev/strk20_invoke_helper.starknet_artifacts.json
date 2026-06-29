@@ -1,0 +1,1 @@
+{"version":1,"contracts":[{"id":"27328b66neel2","package_name":"strk20_invoke_helper","contract_name":"StrkInvokeHelper","module_path":"strk20_invoke_helper::StrkInvokeHelper","artifacts":{"sierra":"strk20_invoke_helper_StrkInvokeHelper.contract_class.json","casm":"strk20_invoke_helper_StrkInvokeHelper.compiled_contract_class.json"}}]}

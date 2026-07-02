@@ -12,6 +12,7 @@ import starknetJsImg from '../../public/Images/StarkNet-JS_logo.png';
 import WalletApiTag from './components/client/WalletHandle/WalletApiTag';
 import SelectWallet from './components/client/WalletHandle/SelectWallet';
 import WalletAccountTag from './components/client/WalletHandle/WalletAccountTag';
+import WalletAccountV6Tag from './components/client/WalletHandle/WalletAccountV6Tag';
 import { useFrontendProvider } from './components/client/provider/providerContext';
 import LowerBanner from "./components/client/LowerBanner";
 
@@ -84,6 +85,7 @@ export default function Page() {
                   <Tabs.Trigger fontWeight={"bold"} value="blockChain"> BlockChain</Tabs.Trigger>
                   <Tabs.Trigger fontWeight={"bold"} value="walletAPI"> Wallet API</Tabs.Trigger>
                   <Tabs.Trigger fontWeight={"bold"} value="walletAccount"> WalletAccount</Tabs.Trigger>
+                  <Tabs.Trigger fontWeight={"bold"} value="walletAccountV6"> WalletAccountV6</Tabs.Trigger>
                 </Tabs.List>
                 <Tabs.Content value="blockChain">
                   <Box bg='pink.200' color='black' borderWidth='1px' borderRadius='md'>
@@ -107,6 +109,9 @@ export default function Page() {
                 </Tabs.Content>
                 <Tabs.Content value="walletAccount">
                   <WalletAccountTag></WalletAccountTag>
+                </Tabs.Content>
+                <Tabs.Content value="walletAccountV6">
+                  <WalletAccountV6Tag></WalletAccountV6Tag>
                 </Tabs.Content>
               </Tabs.Root>
             </>

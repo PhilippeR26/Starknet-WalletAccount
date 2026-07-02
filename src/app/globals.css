@@ -75,8 +75,14 @@
 
 * {
   box-sizing: border-box;
-  padding: 0;
   margin: 0;
+}
+
+/* Reset padding on everything EXCEPT <button>: this rule is unlayered and would
+   otherwise beat Chakra's button recipe padding (emitted in @layer recipes),
+   killing horizontal padding on every Chakra Button across the DApp. */
+*:not(button) {
+  padding: 0;
 }
 
 html,

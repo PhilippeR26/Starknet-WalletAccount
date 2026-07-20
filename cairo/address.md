@@ -1,3 +1,4 @@
 contract class hash : 0x2a4482a13cb7f70dce6f7ba99c4ee6ce404379abeddd9b831b6bf24eb71e137
 
 contract address (mainnet) : 0x78ae662e0cc6d1ab2cfeaf2a51ba8783d88e31886f88a794d142f95a6f8735b
+contract address (testnet) : 0x4a51911a44eb4339fdb8704191f3b283bf80860f4ed29431d52592a2d35045e

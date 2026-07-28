@@ -78,9 +78,9 @@ export default function Strk20SubAccountPanel() {
   const provider = constants.myFrontendProviders[frontendProviderIndex];
   const anonymizerAddress = constants.Strk20AnonymizerAddress[frontendProviderIndex];
 
-  // TEMPORARY DIAGNOSTIC — counts the raw wallet-api requests, below starknet.js, to find
-  // out why an invoke asks for approval twice. Every request emitted adds a line to the
-  // dialog log :
+  // Counts the raw wallet-api requests, below starknet.js. Kept on purpose : it shows a
+  // wallet team exactly what this DAPP emits, which is how the duplicated invoke approval
+  // was pinned on the wallet. Every request emitted adds a line to the dialog log :
   //   one line, two approval windows  -> the wallet duplicates its UI
   //   two lines                       -> something on this side calls it twice
   // It reports its own failures too : a silent probe proves nothing.

@@ -6,6 +6,7 @@ import { useStoreWallet } from '../../Wallet/walletContext';
 import * as constants from "../../../../utils/constants";
 import RpcWalletCommand from './RpcWalletCommand';
 import Strk20Panel from './Strk20Panel';
+import Strk20SubAccountPanel from './Strk20SubAccountPanel';
 import { useFrontendProvider } from '../provider/providerContext';
 import { getStarknetChainId } from "@starknet-io/get-starknet-wallet-standard/chains";
 import type {
@@ -163,8 +164,20 @@ export default function WalletApiTag() {
                     command={"wallet_deploymentData"}
                     param=""
                 />
+                <RpcWalletCommand
+                    command={"wallet_strk20SubaccountCommitment"}
+                    param=""
+                    symbol="noNonce"
+                    tip={`Partial commitment of the "${constants.Strk20DappName}" sub-accounts — nonce-independent, shared by all of them`}
+                />
+                <RpcWalletCommand
+                    command={"wallet_strk20SubaccountCommitment"}
+                    param="0x0"
+                    tip={`Commitment of the "${constants.Strk20DappName}" sub-account of nonce 0x0`}
+                />
             </SimpleGrid>
             <Strk20Panel />
+            <Strk20SubAccountPanel />
 
             <SimpleGrid minChildWidth="320px" gap="20px" paddingBottom="40px">
                 <Box bg="green.200" color='black' borderWidth='1px' borderRadius='lg'>

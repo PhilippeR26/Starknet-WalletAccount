@@ -12,9 +12,10 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { hash, json, num, shortString, validateAndParseAddress } from "starknet";
-import type { WALLET_API } from "@starknet-io/types-js";
+import type { STRK20_ACTION } from "starknet";
 import styles from "../../../page.module.css";
 import * as constants from "@/utils/constants";
+import { shortHex } from "@/utils/utils";
 import { useStoreWallet } from "../../Wallet/walletContext";
 import { useFrontendProvider } from "../provider/providerContext";
 
@@ -44,12 +45,6 @@ function compactReceipt(txR: any): string {
     actual_fee: r?.actual_fee?.amount ?? r?.actual_fee,
   };
   return json.stringify(summary, undefined, 2);
-}
-
-// Shorten a felt/hex for display, like the wallet address ("0x1dc5a1c...1927a").
-function shortHex(h: string): string {
-  const hex = num.toHex(h);
-  return hex.length <= 13 ? hex : `${hex.slice(0, 7)}...${hex.slice(-4)}`;
 }
 
 // Verdict shown for the complex (echo invoke) action.
@@ -91,7 +86,7 @@ export default function WalletAccountV6Tag() {
   // wait for the receipt (privacy-pool txs verify a STARK proof on-chain — long budget).
   // Returns the tx hash on success, or undefined on error.
   async function submit(
-    actions: WALLET_API.STRK20_ACTION[],
+    actions: STRK20_ACTION[],
     setResult: (s: string) => void
   ): Promise<string | undefined> {
     if (!myWalletAccount) {
@@ -140,7 +135,7 @@ export default function WalletAccountV6Tag() {
 
   const handleShield = async () => {
     setResultShield("");
-    const actions: WALLET_API.STRK20_ACTION[] = [
+    const actions: STRK20_ACTION[] = [
       { type: "deposit", token: TOKEN, amount: num.toHex(TEN_STRK) },
     ];
     await submit(actions, setResultShield);
@@ -152,7 +147,7 @@ export default function WalletAccountV6Tag() {
       setResultUnshield("Connect a wallet first (recipient = connected account).");
       return;
     }
-    const actions: WALLET_API.STRK20_ACTION[] = [
+    const actions: STRK20_ACTION[] = [
       { type: "withdraw", token: TOKEN, amount: num.toHex(ONE_STRK), recipient: connectedAddress },
     ];
     await submit(actions, setResultUnshield);
@@ -164,7 +159,7 @@ export default function WalletAccountV6Tag() {
       setResultTransfer("Connect a wallet first (recipient = connected account).");
       return;
     }
-    const actions: WALLET_API.STRK20_ACTION[] = [
+    const actions: STRK20_ACTION[] = [
       { type: "transfer", token: TOKEN, amount: num.toHex(ONE_STRK), recipient: connectedAddress },
     ];
     await submit(actions, setResultTransfer);
@@ -183,7 +178,7 @@ export default function WalletAccountV6Tag() {
     const helper = num.toHex(constants.Strk20EchoHelperAddress);
     // "OPEN" / ${poolAddress} / ${openNoteIds[0]} are literal placeholder strings the
     // wallet substitutes during assembly — they must NOT be hex-normalized.
-    const actions: WALLET_API.STRK20_ACTION[] = [
+    const actions: STRK20_ACTION[] = [
       { type: "withdraw", token: TOKEN, amount: num.toHex(FIVE_STRK), recipient: helper },
       { type: "transfer", token: TOKEN, amount: "OPEN", recipient: connectedAddress },
       {

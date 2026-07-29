@@ -20,6 +20,7 @@ import { hash, json, num, walletV6 } from "starknet";
 import type { WalletWithStarknetFeatures as WalletWithStarknetFeaturesV6 } from "@starknet-io/get-starknet-wallet-standard/features";
 import type { WALLET_API } from "@starknet-io/types-js";
 import * as constants from "@/utils/constants";
+import { shortHex } from "@/utils/utils";
 import { useStoreWallet } from "../../Wallet/walletContext";
 import { useFrontendProvider } from "../provider/providerContext";
 
@@ -47,12 +48,6 @@ const BTN_STYLE = { paddingX: "20px" } as const;
 // "1000000" -> "1 000 000".
 function groupDigits(value: string): string {
   return value.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-}
-
-// Shorten a felt/hex for display, like the wallet address ("0x1dc5a1c...1927a").
-function shortHex(h: string): string {
-  const hex = num.toHex(h);
-  return hex.length <= 13 ? hex : `${hex.slice(0, 7)}...${hex.slice(-4)}`;
 }
 
 // Format a felt amount (STRK, 18 decimals) as a human STRK string.
@@ -262,6 +257,9 @@ export default function Strk20Panel() {
         return `transfer STRK amount=${action.amount} -> ${action.recipient}`;
       case "invoke":
         return `invoke ${action.contract}`;
+      // `subaccount_invoke` (wallet-api 0.10.4) is not built by this panel yet.
+      default:
+        return action.type;
     }
   }
 

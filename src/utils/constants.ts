@@ -19,14 +19,15 @@ export const myFrontendProviders: ProviderInterface[] = [
 // STRK20 echo invoke helper (Mainnet) — round-trips STRK through an open note.
 export const Strk20EchoHelperAddress = "0x78ae662e0cc6d1ab2cfeaf2a51ba8783d88e31886f88a794d142f95a6f8735b";
 
-// STRK20 sub-accounts : the DAPP name scoping this DAPP's sub-accounts. The wallet encodes
-// it as a Cairo short string (31 chars max). Not whitelisted anywhere : any DAPP can claim
-// any name, the wallet's approval UI is the only gate.
+// STRK20 shadow accounts : the DAPP name scoping this DAPP's shadow accounts. The wallet
+// encodes it as a Cairo short string (31 chars max). Not whitelisted anywhere : any DAPP
+// can claim any name, the wallet's approval UI is the only gate.
 export const Strk20DappName = "wallet-account";
 
-// STRK20 sub-account anonymizer, same index as myFrontendProviders. Its address is the
-// deployer of the sub-accounts, so it is needed to resolve a sub-account address from a
-// commitment — the wallet API does not expose it.
+// STRK20 shadow account anonymizer, same index as myFrontendProviders. Its address is the
+// deployer of the shadow accounts, so it is needed to resolve a shadow account address
+// from a commitment — the wallet API does not expose it. Both contracts were upgraded in
+// place for the shadow account rename, so the addresses below did not move.
 export const Strk20AnonymizerAddress: string[] = [
     "0x04f33230dc57855c6e7eabe66dfa0fde82c5458fd0e54827cdb7cb4c474888a7", // mainnet
     "0x00", // testnet deprecated

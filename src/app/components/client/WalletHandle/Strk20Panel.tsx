@@ -257,7 +257,7 @@ export default function Strk20Panel() {
         return `transfer STRK amount=${action.amount} -> ${action.recipient}`;
       case "invoke":
         return `invoke ${action.contract}`;
-      // `subaccount_invoke` (wallet-api 0.10.4) is not built by this panel yet.
+      // `shadow_account_invoke` (wallet-api 0.10.4) is not built by this panel yet.
       default:
         return action.type;
     }

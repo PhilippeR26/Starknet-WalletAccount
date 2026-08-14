@@ -6,7 +6,7 @@ import { useStoreWallet } from '../../Wallet/walletContext';
 import * as constants from "../../../../utils/constants";
 import RpcWalletCommand from './RpcWalletCommand';
 import Strk20Panel from './Strk20Panel';
-import Strk20SubAccountPanel from './Strk20SubAccountPanel';
+import Strk20ShadowAccountPanel from './Strk20ShadowAccountPanel';
 import { useFrontendProvider } from '../provider/providerContext';
 import { getStarknetChainId } from "@starknet-io/get-starknet-wallet-standard/chains";
 import type {
@@ -165,19 +165,19 @@ export default function WalletApiTag() {
                     param=""
                 />
                 <RpcWalletCommand
-                    command={"wallet_strk20SubaccountCommitment"}
+                    command={"wallet_strk20ShadowAccountCommitment"}
                     param=""
                     symbol="noNonce"
-                    tip={`Partial commitment of the "${constants.Strk20DappName}" sub-accounts — nonce-independent, shared by all of them`}
+                    tip={`Partial commitment of the "${constants.Strk20DappName}" shadow accounts — nonce-independent, shared by all of them`}
                 />
                 <RpcWalletCommand
-                    command={"wallet_strk20SubaccountCommitment"}
+                    command={"wallet_strk20ShadowAccountCommitment"}
                     param="0x0"
-                    tip={`Commitment of the "${constants.Strk20DappName}" sub-account of nonce 0x0`}
+                    tip={`Commitment of the "${constants.Strk20DappName}" shadow account of nonce 0x0`}
                 />
             </SimpleGrid>
             <Strk20Panel />
-            <Strk20SubAccountPanel />
+            <Strk20ShadowAccountPanel />
 
             <SimpleGrid minChildWidth="320px" gap="20px" paddingBottom="40px">
                 <Box bg="green.200" color='black' borderWidth='1px' borderRadius='lg'>

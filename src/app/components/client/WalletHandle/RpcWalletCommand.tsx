@@ -363,14 +363,14 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
         }
         break;
       }
-      case "wallet_strk20SubaccountCommitment": {
+      case "wallet_strk20ShadowAccountCommitment": {
         // Local computation by the wallet : no transaction, no fee, any network.
         // An empty param means "no nonce" : the wallet then returns the partial
-        // commitment, shared by every sub-account this user has for this DAPP.
+        // commitment, shared by every shadow account this user has for this DAPP.
         if (myWallet && walletV6Cast) {
           let response: string = "";
           try {
-            response = await walletV6.strk20SubaccountCommitment(
+            response = await walletV6.strk20ShadowAccountCommitment(
               walletV6Cast,
               constants.Strk20DappName,
               param === "" ? undefined : param

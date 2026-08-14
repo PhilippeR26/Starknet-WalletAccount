@@ -20,7 +20,7 @@ import { useFrontendProvider } from "../provider/providerContext";
 
 // All actions are fixed to STRK (project decision).
 const TOKEN = constants.addrSTRK;
-// The sub-account driven by this panel. Each nonce maps to a distinct sub-account.
+// The shadow account driven by this panel. Each nonce maps to a distinct shadow account.
 const NONCE = "0x0";
 // Amounts, in the token's smallest unit (1e18 = 1 STRK).
 const ONE_STRK = 10n ** 18n;
@@ -48,9 +48,9 @@ function formatError(err: any): string {
 }
 
 // Every balance the verification compares before / after an action.
-type Balances = { shielded: bigint; subAccount: bigint; user: bigint };
+type Balances = { shielded: bigint; shadowAccount: bigint; user: bigint };
 
-export default function Strk20SubAccountPanel() {
+export default function Strk20ShadowAccountPanel() {
   const walletObject = useStoreWallet((state) => state.StarknetWalletObject);
   const connectedAddress = useStoreWallet((state) => state.address);
   const frontendProviderIndex = useFrontendProvider((s) => s.currentFrontendProviderIndex);
@@ -126,7 +126,7 @@ export default function Strk20SubAccountPanel() {
     const cached = sessionStorage.getItem(key);
     if (cached) return cached;
     const partial = num.toHex(
-      await walletV6.strk20SubaccountCommitment(wallet, constants.Strk20DappName)
+      await walletV6.strk20ShadowAccountCommitment(wallet, constants.Strk20DappName)
     );
     sessionStorage.setItem(key, partial);
     return partial;
@@ -152,11 +152,11 @@ export default function Strk20SubAccountPanel() {
   // The patched request above writes through this, so it always uses the current append.
   appendRef.current = append;
 
-  // Resolve the sub-account address from the partial commitment computed by the wallet.
+  // Resolve the shadow account address from the partial commitment computed by the wallet.
   // The wallet API never returns the address, so it has to be rebuilt through the
-  // anonymizer : `get_sub_accounts` gives the deterministic address even before the
-  // sub-account is deployed. The anonymizer ABI is read on-chain.
-  async function resolveSubAccount(): Promise<{
+  // anonymizer : `get_shadow_accounts` gives the deterministic address even before the
+  // shadow account is deployed. The anonymizer ABI is read on-chain.
+  async function resolveShadowAccount(): Promise<{
     address: string;
     isDeployed: boolean;
     partial: string;
@@ -165,7 +165,15 @@ export default function Strk20SubAccountPanel() {
     const partial = await partialCommitment();
     const { abi } = await provider.getClassAt(anonymizerAddress);
     const anonymizer = new Contract({ abi, address: anonymizerAddress, providerOrAccount: provider });
-    const [info] = await anonymizer.get_sub_accounts(partial, NONCE, num.toHex(BigInt(NONCE) + 1n));
+    // `until_undeployed = false` : resolve every nonce of the range whatever its state.
+    // With `true` the view stops at the first undeployed nonce and returns only the
+    // deployed prefix, so a fresh shadow account would come back as an empty span.
+    const [info] = await anonymizer.get_shadow_accounts(
+      partial,
+      NONCE,
+      num.toHex(BigInt(NONCE) + 1n),
+      false
+    );
     // The anonymizer is bound to one pool at deployment, with no setter. If that pool is
     // not the one the wallet drives, this whole address resolution is off : the wallet
     // would be using another anonymizer, hence another identity_key and another address.
@@ -194,21 +202,21 @@ export default function Strk20SubAccountPanel() {
     return entry ? BigInt(entry.balance) : 0n;
   }
 
-  async function snapshot(subAccount: string): Promise<Balances> {
-    const [shielded, sub, user] = await Promise.all([
+  async function snapshot(shadowAccount: string): Promise<Balances> {
+    const [shielded, shadow, user] = await Promise.all([
       shieldedStrk(),
-      publicStrk(subAccount),
+      publicStrk(shadowAccount),
       connectedAddress ? publicStrk(connectedAddress) : Promise.resolve(0n),
     ]);
-    return { shielded, subAccount: sub, user };
+    return { shielded, shadowAccount: shadow, user };
   }
 
   // The three balances that moved, as text.
   function balanceReport(before: Balances, after: Balances): string {
     const line = (label: string, b: bigint, a: bigint) =>
-      `${label.padEnd(24)}: ${formatBalance(b, 18)} → ${formatBalance(a, 18)}  (${signedStrk(a - b)})`;
+      `${label.padEnd(26)}: ${formatBalance(b, 18)} → ${formatBalance(a, 18)}  (${signedStrk(a - b)})`;
     return [
-      line("sub-account public STRK", before.subAccount, after.subAccount),
+      line("shadow account public STRK", before.shadowAccount, after.shadowAccount),
       line("shielded STRK", before.shielded, after.shielded),
       line("wallet public STRK", before.user, after.user),
     ].join("\n");
@@ -219,44 +227,44 @@ export default function Strk20SubAccountPanel() {
   const handleResolve = async () => {
     if (!wallet) return;
     try {
-      const { address, isDeployed, partial, poolContract } = await resolveSubAccount();
+      const { address, isDeployed, partial, poolContract } = await resolveShadowAccount();
       const balances = await snapshot(address);
       show(
-        `resolve sub-account — dapp_name "${constants.Strk20DappName}", nonce ${NONCE}`,
+        `resolve shadow account — dapp_name "${constants.Strk20DappName}", nonce ${NONCE}`,
         [
           `anonymizer contract: ${anonymizerAddress}`,
           `pool contract      : ${poolContract}`,
           `partial commitment : ${partial}`,
-          `sub-account        : ${address}`,
+          `shadow account     : ${address}`,
           `is_deployed        : ${isDeployed}`,
           "",
-          `sub-account public STRK : ${formatBalance(balances.subAccount, 18)}`,
-          `shielded STRK           : ${formatBalance(balances.shielded, 18)}`,
+          `shadow account public STRK : ${formatBalance(balances.shadowAccount, 18)}`,
+          `shielded STRK              : ${formatBalance(balances.shielded, 18)}`,
         ].join("\n")
       );
     } catch (err: any) {
-      show("resolve sub-account", formatError(err));
+      show("resolve shadow account", formatError(err));
     }
   };
 
-  // ---- fund the sub-account, 100 % outside STRK20 ------------------------------------
+  // ---- fund the shadow account, 100 % outside STRK20 ---------------------------------
 
-  // Plain ERC-20 transfer from the wallet's base account to the sub-account address : no
-  // privacy pool involved at all. This is the "received from the outside" case, and the
+  // Plain ERC-20 transfer from the wallet's base account to the shadow account address :
+  // no privacy pool involved at all. This is the "received from the outside" case, and the
   // funds it parks there can later be swept in without any deposit, hence without AML
   // screening.
   const handleFund = async () => {
     if (!wallet) return;
-    let subAccount: string;
+    let shadowAccount: string;
     try {
-      subAccount = (await resolveSubAccount()).address;
+      shadowAccount = (await resolveShadowAccount()).address;
     } catch (err: any) {
-      show("fund sub-account", formatError(err));
+      show("fund shadow account", formatError(err));
       return;
     }
-    const label = `fund sub-account — public ERC-20 transfer of 1 STRK (no STRK20 action)`;
-    show(label, `sub-account : ${subAccount}\n`);
-    const before = await snapshot(subAccount);
+    const label = `fund shadow account — public ERC-20 transfer of 1 STRK (no STRK20 action)`;
+    show(label, `shadow account : ${shadowAccount}\n`);
+    const before = await snapshot(shadowAccount);
     append(WALLET_HINT);
     let txH: string;
     try {
@@ -265,7 +273,7 @@ export default function Strk20SubAccountPanel() {
           {
             contract_address: TOKEN,
             entry_point: "transfer",
-            calldata: hexCalldata([subAccount, cairo.uint256(ONE_STRK)]),
+            calldata: hexCalldata([shadowAccount, cairo.uint256(ONE_STRK)]),
           },
         ],
       });
@@ -277,12 +285,12 @@ export default function Strk20SubAccountPanel() {
     append(`transaction_hash = ${txH}\nWaiting for the receipt…\n`);
     try {
       await provider.waitForTransaction(txH, { retries: 100, retryInterval: 3000 });
-      const after = await snapshot(subAccount);
-      const gained = after.subAccount - before.subAccount;
+      const after = await snapshot(shadowAccount);
+      const gained = after.shadowAccount - before.shadowAccount;
       append(
         `\n--- verification ---\n${balanceReport(before, after)}\n\n` +
           (gained === ONE_STRK
-            ? "✅ sub-account funded with 1 STRK, entirely outside STRK20\n"
+            ? "✅ shadow account funded with 1 STRK, entirely outside STRK20\n"
             : `❌ unexpected gain : ${signedStrk(gained)} STRK\n`)
       );
     } catch (err: any) {
@@ -292,45 +300,45 @@ export default function Strk20SubAccountPanel() {
 
   // ---- sweep back into the shielded balance, one per collect_policy -------------------
 
-  // Create an open note owned by the user, then run a call AS the sub-account and collect
-  // its STRK into that note. No deposit action, so no AML screening applies.
+  // Create an open note owned by the user, then run a call AS the shadow account and
+  // collect its STRK into that note. No deposit action, so no AML screening applies.
   //
-  // `all`   : the whole balance → the sub-account ends at 0.
-  // `exact` : a fixed amount → the rest stays parked on the sub-account.
+  // `all`   : the whole balance → the shadow account ends at 0.
+  // `exact` : a fixed amount → the rest stays parked on the shadow account.
   // `diff`  : only what the interaction itself brought in, so the call has to actually
-  //           pull funds : `transfer_from(user, sub-account, 1 STRK)` executed as the
-  //           sub-account, which first needs the user to approve it (step 1 below).
+  //           pull funds : `transfer_from(user, shadow account, 1 STRK)` executed as the
+  //           shadow account, which first needs the user to approve it (step 1 below).
   const handleSweep = async (policy: WALLET_API.STRK20_COLLECT_POLICY) => {
     if (!wallet) return;
     if (!connectedAddress) {
       show("sweep", "Connect a wallet first : the open note recipient is the connected account.");
       return;
     }
-    let subAccount: string;
+    let shadowAccount: string;
     try {
-      subAccount = (await resolveSubAccount()).address;
+      shadowAccount = (await resolveShadowAccount()).address;
     } catch (err: any) {
       show(`sweep — collect_policy "${policy.type}"`, formatError(err));
       return;
     }
 
     const label =
-      `sweep sub-account → shielded — collect_policy "${policy.type}"` +
+      `sweep shadow account → shielded — collect_policy "${policy.type}"` +
       (policy.type === "exact" ? ` (${formatBalance(BigInt(policy.amount), 18)} STRK)` : "");
-    show(label, `sub-account : ${subAccount}\n`);
-    const before = await snapshot(subAccount);
+    show(label, `shadow account : ${shadowAccount}\n`);
+    const before = await snapshot(shadowAccount);
 
-    // `diff` needs an incoming transfer during the interaction : approve the sub-account
-    // first, from the wallet's base account (a public, non-STRK20 transaction).
+    // `diff` needs an incoming transfer during the interaction : approve the shadow
+    // account first, from the wallet's base account (a public, non-STRK20 transaction).
     if (policy.type === "diff") {
-      append(`\nstep 1/2 : approve the sub-account for 1 STRK\n${WALLET_HINT}`);
+      append(`\nstep 1/2 : approve the shadow account for 1 STRK\n${WALLET_HINT}`);
       try {
         const r = await walletV6.addInvokeTransaction(wallet, {
           calls: [
             {
               contract_address: TOKEN,
               entry_point: "approve",
-              calldata: hexCalldata([subAccount, cairo.uint256(ONE_STRK)]),
+              calldata: hexCalldata([shadowAccount, cairo.uint256(ONE_STRK)]),
             },
           ],
         });
@@ -344,7 +352,7 @@ export default function Strk20SubAccountPanel() {
       append("\nstep 2/2 : sweep\n");
     }
 
-    // The call executed AS the sub-account. The spec requires at least one call, so for
+    // The call executed AS the shadow account. The spec requires at least one call, so for
     // `all` / `exact` a harmless read is enough ; for `diff` it is what brings funds in.
     const calls: WALLET_API.Call[] =
       policy.type === "diff"
@@ -352,15 +360,15 @@ export default function Strk20SubAccountPanel() {
             {
               contract_address: TOKEN,
               entry_point: "transfer_from",
-              calldata: hexCalldata([connectedAddress, subAccount, cairo.uint256(ONE_STRK)]),
+              calldata: hexCalldata([connectedAddress, shadowAccount, cairo.uint256(ONE_STRK)]),
             },
           ]
-        : [{ contract_address: TOKEN, entry_point: "balance_of", calldata: [subAccount] }];
+        : [{ contract_address: TOKEN, entry_point: "balance_of", calldata: [shadowAccount] }];
 
     const actions: WALLET_API.STRK20_ACTION[] = [
       { type: "transfer", token: TOKEN, amount: "OPEN", recipient: connectedAddress },
       {
-        type: "subaccount_invoke",
+        type: "shadow_account_invoke",
         dapp_name: constants.Strk20DappName,
         nonce: NONCE,
         calls,
@@ -385,8 +393,8 @@ export default function Strk20SubAccountPanel() {
       const receipt: any = await provider.waitForTransaction(txH, { retries: 400, retryInterval: 3000 });
       const reverted =
         receipt?.execution_status === "REVERTED" || (receipt?.isSuccess && !receipt.isSuccess());
-      const after = await snapshot(subAccount);
-      const collected = before.subAccount - after.subAccount;
+      const after = await snapshot(shadowAccount);
+      const collected = before.shadowAccount - after.shadowAccount;
 
       // The shielded delta is NOT the pass criterion : the wallet inserts its own fee
       // withdrawal into the proven action set, so the shielded balance grows by less
@@ -395,24 +403,24 @@ export default function Strk20SubAccountPanel() {
       let expected: string;
       switch (policy.type) {
         case "all":
-          ok = after.subAccount === 0n;
-          expected = "the whole balance is collected, the sub-account is left at 0";
+          ok = after.shadowAccount === 0n;
+          expected = "the whole balance is collected, the shadow account is left at 0";
           break;
         case "exact":
           ok = collected === BigInt(policy.amount);
           expected = `exactly ${formatBalance(BigInt(policy.amount), 18)} STRK is collected, the rest stays parked`;
           break;
         case "diff":
-          // The sub-account gained 1 STRK during the call and gave the same amount back,
-          // so its balance is unchanged and the user paid the 1 STRK.
-          ok = after.subAccount === before.subAccount && before.user - after.user >= ONE_STRK;
+          // The shadow account gained 1 STRK during the call and gave the same amount
+          // back, so its balance is unchanged and the user paid the 1 STRK.
+          ok = after.shadowAccount === before.shadowAccount && before.user - after.user >= ONE_STRK;
           expected = "only the 1 STRK gained during the call is collected, the parked balance is untouched";
           break;
       }
       append(
         `execution_status = ${reverted ? "REVERTED" : "SUCCEEDED"}\n\n` +
           `--- verification ---\n${balanceReport(before, after)}\n` +
-          `collected from sub-account : ${formatBalance(collected, 18)} STRK\n` +
+          `collected from shadow account : ${formatBalance(collected, 18)} STRK\n` +
           `expected : ${expected}\n\n` +
           (reverted
             ? "❌ transaction reverted\n"
@@ -428,7 +436,7 @@ export default function Strk20SubAccountPanel() {
   return (
     <Box bg="gray.200" color="black" borderWidth="1px" borderRadius="lg" padding="16px" marginBottom="20px">
       <Center fontWeight="bold" fontSize="lg" marginBottom="4px">
-        STRK20 sub-account
+        STRK20 shadow account
       </Center>
       <Center fontSize="sm" marginBottom="12px" textAlign="center">
         dapp_name &quot;{constants.Strk20DappName}&quot;, nonce {NONCE} — anonymizer{" "}
@@ -437,9 +445,9 @@ export default function Strk20SubAccountPanel() {
 
       <Stack gap="10px" maxW="560px" margin="0 auto">
         <Text fontSize="sm">
-          The wallet API never returns a sub-account address, so if necessary every button below first
-          rebuilds it from the partial commitment through the anonymizer&apos;s{" "}
-          <b>get_sub_accounts</b> view, then runs its call and reports the balances that
+          The wallet API never returns a shadow account address, so if necessary every button below
+          first rebuilds it from the partial commitment through the anonymizer&apos;s{" "}
+          <b>get_shadow_accounts</b> view, then runs its call and reports the balances that
           moved.
         </Text>
 
@@ -450,7 +458,7 @@ export default function Strk20SubAccountPanel() {
           disabled={busy}
           onClick={() => run(handleResolve)}
         >
-          Resolve sub-account address
+          Resolve shadow account address
         </Button>
 
         <Button
@@ -498,7 +506,7 @@ export default function Strk20SubAccountPanel() {
           <Dialog.Content margin="20px" padding="10px" maxH="85vh" display="flex" flexDirection="column" overflow="hidden">
             <Dialog.Header>
               <Dialog.Title fontSize="lg" fontWeight="bold">
-                STRK20 sub-account result
+                STRK20 shadow account result
               </Dialog.Title>
             </Dialog.Header>
             <Dialog.Body flex="1" minH="0" overflowY="auto">

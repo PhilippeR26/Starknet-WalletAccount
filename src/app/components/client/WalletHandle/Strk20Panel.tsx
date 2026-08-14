@@ -23,6 +23,7 @@ import * as constants from "@/utils/constants";
 import { shortHex } from "@/utils/utils";
 import { useStoreWallet } from "../../Wallet/walletContext";
 import { useFrontendProvider } from "../provider/providerContext";
+import { DIALOG_BACKDROP, DIALOG_CONTENT, DIALOG_FOOTER, DIALOG_HEADER } from "./dialogStyle";
 
 // Single-action builder (Block A). `invoke` is intentionally excluded: it is only
 // meaningful bundled with a `transfer "OPEN"` (+ `withdraw`), so it lives in the
@@ -640,8 +641,10 @@ export default function Strk20Panel() {
 
       {/* Result dialog */}
       <Dialog.Root placement="center" open={open} onOpenChange={onClose}>
+        <Dialog.Backdrop {...DIALOG_BACKDROP} />
         <Dialog.Positioner>
           <Dialog.Content
+            {...DIALOG_CONTENT}
             margin="20px"
             padding="10px"
             maxH="85vh"
@@ -649,7 +652,7 @@ export default function Strk20Panel() {
             flexDirection="column"
             overflow="hidden"
           >
-            <Dialog.Header>
+            <Dialog.Header {...DIALOG_HEADER}>
               <Dialog.Title fontSize="lg" fontWeight="bold">
                 STRK20 command result
               </Dialog.Title>
@@ -693,7 +696,7 @@ export default function Strk20Panel() {
                 {response}
               </Box>
             </Dialog.Body>
-            <Dialog.Footer>
+            <Dialog.Footer {...DIALOG_FOOTER}>
               <Dialog.ActionTrigger asChild>
                 <Button {...BTN_STYLE} colorScheme="red" onClick={onClose} ml={3} variant="surface">
                   OK

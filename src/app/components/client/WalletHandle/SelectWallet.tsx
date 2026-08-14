@@ -7,6 +7,7 @@ import { useState } from "react";
 import { walletV6, validateAndParseAddress, constants as SNconstants, WalletAccountV6 } from "starknet";
 import { WALLET_API } from "@starknet-io/types-js";
 import { myFrontendProviders } from "@/utils/constants";
+import { DIALOG_BACKDROP, DIALOG_CONTENT, DIALOG_HEADER } from "./dialogStyle";
 import { createStore, type Store } from "@starknet-io/get-starknet-discovery";
 import type {
   WalletWithStarknetFeatures,
@@ -126,10 +127,12 @@ export default function SelectWallet() {
         </Center>
       </Dialog.Trigger>
       <Portal>
+        <Dialog.Backdrop {...DIALOG_BACKDROP} />
         <Dialog.Positioner>
-          <Dialog.Content>
+          <Dialog.Content {...DIALOG_CONTENT}>
             <Dialog.CloseTrigger />
             <Dialog.Header
+              {...DIALOG_HEADER}
               fontSize='xl'
               fontWeight='bold'
               padding={"20px"}

@@ -15,6 +15,7 @@ import { getHelloTestCasm } from "@/app/contracts/declareHelloTestCasm";
 import { useFrontendProvider } from "../provider/providerContext";
 import { rejectContract } from "@/app/contracts/reject.sierra.json";
 import type { WALLET_API } from "@starknet-io/types-js";
+import { DIALOG_BACKDROP, DIALOG_CONTENT, DIALOG_FOOTER, DIALOG_HEADER } from "./dialogStyle";
 
 
 
@@ -432,11 +433,13 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
           open={open}
           onOpenChange={onClose}
         >
+          <Dialog.Backdrop {...DIALOG_BACKDROP} />
           <Dialog.Positioner>
             <Dialog.Content
+              {...DIALOG_CONTENT}
               margin={"20px"}
               padding={"10px"}>
-              <Dialog.Header>
+              <Dialog.Header {...DIALOG_HEADER}>
                 <Dialog.Title fontSize='lg' fontWeight='bold'>
                   Command sent to Wallet.
                 </Dialog.Title>
@@ -447,7 +450,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
                 Response : {response}
               </Dialog.Body>
 
-              <Dialog.Footer>
+              <Dialog.Footer {...DIALOG_FOOTER}>
                 <Dialog.ActionTrigger asChild>
                   {/* <Button ref={cancelRef} onClick={onClose}>
                                 Cancel

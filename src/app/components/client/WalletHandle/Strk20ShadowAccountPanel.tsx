@@ -17,6 +17,7 @@ import * as constants from "@/utils/constants";
 import { formatBalance, shortHex } from "@/utils/utils";
 import { useStoreWallet } from "../../Wallet/walletContext";
 import { useFrontendProvider } from "../provider/providerContext";
+import { DIALOG_BACKDROP, DIALOG_CONTENT, DIALOG_FOOTER, DIALOG_HEADER } from "./dialogStyle";
 
 // All actions are fixed to STRK (project decision).
 const TOKEN = constants.addrSTRK;
@@ -502,9 +503,10 @@ export default function Strk20ShadowAccountPanel() {
 
       {/* While busy, ignore the outside click / Escape that would close the dialog. */}
       <Dialog.Root placement="center" open={open} onOpenChange={() => { if (!busy) onClose(); }}>
+        <Dialog.Backdrop {...DIALOG_BACKDROP} />
         <Dialog.Positioner>
-          <Dialog.Content margin="20px" padding="10px" maxH="85vh" display="flex" flexDirection="column" overflow="hidden">
-            <Dialog.Header>
+          <Dialog.Content {...DIALOG_CONTENT} margin="20px" padding="10px" maxH="85vh" display="flex" flexDirection="column" overflow="hidden">
+            <Dialog.Header {...DIALOG_HEADER}>
               <Dialog.Title fontSize="lg" fontWeight="bold">
                 STRK20 shadow account result
               </Dialog.Title>
@@ -533,7 +535,7 @@ export default function Strk20ShadowAccountPanel() {
                 {response}
               </Box>
             </Dialog.Body>
-            <Dialog.Footer>
+            <Dialog.Footer {...DIALOG_FOOTER}>
               {/* Always available, so a receipt that never comes cannot trap the user. */}
               {/* Gives up on a call that never comes back : the wallet promise may stay
                   pending forever, so `run`'s finally would never release the panel. */}

@@ -1,5 +1,6 @@
 # Starknet Wallet API documentation
 
+> version : v1.5.1 17/august/2026, in accordance with spec 0.10.4-rc.1, rename STRK20 sub-accounts to shadow accounts (`wallet_strk20ShadowAccountCommitment`, `shadow_account_invoke` action, `STRK20_SHADOW_ACCOUNT_INVOKE_ACTION` type), distinguish the versions of `wallet_supportedSpecs` and `wallet_supportedWalletApi`, bump minimum requirements to get-starknet v6.0.4 and Starknet.js v10.7.0.  
 > version : v1.5.0 31/july/2026, in accordance with spec 0.10.4-rc.0, add STRK20 sub-accounts (wallet_strk20SubaccountCommitment, `subaccount_invoke` action, STRK20_DAPP_NAME & STRK20_COLLECT_POLICY types), clarify who adds the STRK20 fee action, bump minimum requirements to get-starknet v6.0.3 and Starknet.js v10.6.0.  
 > version : v1.4.4 02/july/2026, align with the officially released spec 0.10.3 (no longer a release candidate): version strings returned by wallet_supportedSpecs and wallet_supportedWalletApi now use full semver (major.minor.patch, e.g. `0.10.3`) instead of the previously documented two-digit form, drop the `-rc0` suffix in the get-starknet V5 compatibility warning, bump the minimum get-starknet requirement to v6.0.2 (the release aligning @starknet-io/types-js on 0.10.3, STRK20 types included), and bump the minimum Starknet.js requirement to v10.4.0 (the release introducing WalletAccountV6 with STRK20 privacy protocol support).  
 > version : v1.4.3 29/june/2026, align the per-command error lists with the official spec: add the missing `UNKNOWN_ERROR` (code 163) to wallet_getPermissions, wallet_requestAccounts, wallet_requestChainId and wallet_deploymentData (wallet_requestChainId previously stated "No errors possible", which contradicted the spec).  
@@ -37,18 +38,17 @@ This document is a documentation of the new interface between DAPPS and Starknet
   - [wallet\_strk20InvokeTransaction :](#wallet_strk20invoketransaction-)
   - [wallet\_strk20PrepareInvoke :](#wallet_strk20prepareinvoke-)
   - [wallet\_strk20Balances :](#wallet_strk20balances-)
-  - [wallet\_strk20SubaccountCommitment :](#wallet_strk20subaccountcommitment-)
+  - [wallet\_strk20ShadowAccountCommitment :](#wallet_strk20shadowaccountcommitment-)
 - [STRK20 Privacy Protocol types :](#strk20-privacy-protocol-types-)
 - [Behavior summary table :](#behavior-summary-table-)
 - [Wallet API version :](#wallet-api-version-)
-  - [Error :s](#error-s)
 
 
 # Connect the wallet :
 You have first to select which wallet to use. With get-starknet v6 discovery :
 ```typescript
-import { createStore, type Store } from '@starknet-io/get-starknet/discovery'; // v6.0.3 min
-import type { WalletWithStarknetFeatures } from '@starknet-io/get-starknet-wallet-standard/features'; // v6.0.3
+import { createStore, type Store } from '@starknet-io/get-starknet-discovery'; // v6.0.4 min
+import type { WalletWithStarknetFeatures } from '@starknet-io/get-starknet-wallet-standard/features'; // v6.0.4
 
 const store: Store = createStore();
 const walletsList: WalletWithStarknetFeatures[] = store.getWallets();
@@ -56,9 +56,9 @@ const walletsList: WalletWithStarknetFeatures[] = store.getWallets();
 const myWallet: WalletWithStarknetFeatures = walletsList[1]; // example: 2nd wallet
 ```
 
-Once you have `myWallet`, you can call any wallet API command via the `walletV6` helpers from Starknet.js v10.6.0 :
+Once you have `myWallet`, you can call any wallet API command via the `walletV6` helpers from Starknet.js v10.7.0 :
 ```typescript
-import { walletV6, type Call } from 'starknet'; // v10.6.0 min
+import { walletV6, type Call } from 'starknet'; // v10.7.0 min
 
 const myCall: Call = myContract.populate("increase_balance", { amount: 200 });
 // Convert starknet.js Call (camelCase) to wallet API Call (snake_case):
@@ -67,10 +67,10 @@ const response = await walletV6.addInvokeTransaction(myWallet, { calls: [myCallA
 ```
 
 > [!WARNING]
-> **get-starknet V5 is not compatible with wallet API spec 0.10.4.** Use get-starknet V6.0.3 or later.
+> **get-starknet V5 is not compatible with wallet API spec 0.10.4.** Use get-starknet V6.0.4 or later.
 
 > [!TIP]
-> Starknet.js v10.6.0 proposes also the `WalletAccountV6` class to code at a higher and more comfortable level.
+> Starknet.js v10.7.0 proposes also the `WalletAccountV6` class to code at a higher and more comfortable level.
 
 # Subscription to events :
 With get-starknet v6, both account and network changes are delivered through a single `change` event. The callback receives a `StandardEventsChangeProperties` object whose `accounts` array reflects the new wallet state.
@@ -81,7 +81,7 @@ At each change of account, only the address is updated.
 ### Subscription :
 ```typescript
 import type { StandardEventsChangeProperties } from '@wallet-standard/features';
-import { walletV6 } from 'starknet'; // v10.6.0 min
+import { walletV6 } from 'starknet'; // v10.7.0 min
 
 const handleChange = (change: StandardEventsChangeProperties) => {
     if (change.accounts?.length) {
@@ -101,7 +101,7 @@ unsubscribe(); // call the function returned by subscribeWalletEvent to stop rec
 ```
 
 # Available commands : 
-All these commands can be called via the `walletV6` helpers from Starknet.js v10.6.0. The function name mirrors the command name in camelCase (exception: `wallet_signTypedData` is wrapped as `signMessage`) :
+All these commands can be called via the `walletV6` helpers from Starknet.js v10.7.0. The function name mirrors the command name in camelCase (exception: `wallet_signTypedData` is wrapped as `signMessage`) :
 
 > [!NOTE]
 > **Spec vs library naming**: The official JSON-RPC spec uses snake_case for all parameter names. `@starknet-io/types-js` and Starknet.js generally follow the same naming, with one exception: the spec parameter `invoke_transaction` in `wallet_addInvokeTransaction` is mapped to `calls` in `@starknet-io/types-js`. Input sections below use spec parameter names; code examples use the types-js/Starknet.js names.
@@ -510,7 +510,7 @@ const resp = await walletV6.addInvokeTransaction(myWallet, { calls: [myCallAPI] 
 ### High-level example (WalletAccountV6) :
 `WalletAccountV6.execute()` accepts starknet.js `Call` directly — the conversion to wallet API format is handled internally :
 ```typescript
-import { WalletAccountV6, type Call } from 'starknet'; // v10.6.0 min
+import { WalletAccountV6, type Call } from 'starknet'; // v10.7.0 min
 
 // myWalletAccount is a WalletAccountV6 instance
 const myCall: Call = myContract.populate("increase_balance", { amount: 200 });
@@ -727,11 +727,12 @@ No parameters.
 response : string[]
 ```
 ### Behavior :
-- The response is an array of strings. Each string is the semver of a supported Starknet JSON-RPC spec version, following full semantic versioning (major.minor.patch, the patch part being optional). A pre-release suffix is accepted here ; examples : `0.10.3`, `0.10.4-rc.0`.
+- The response is an array of strings. Each string is the semver of a supported Starknet JSON-RPC spec version, following full semantic versioning (major.minor.patch, the patch part being optional). A pre-release suffix is accepted here ; examples : `0.10.2`, `0.10.4-rc.1`.
+- These are the versions of the **full node** JSON-RPC spec, distinct from the Wallet API versions of `wallet_supportedWalletApi`. Both specs share one version number in the same repository, but from v0.10.4 onward each release changes only one of them : the releases 0.10.3 and 0.10.4 changed the Wallet API only, so the current full node spec is still `0.10.2`.
 ### Example :
 ```typescript
 const resp = await walletV6.supportedSpecs(myWallet);
-// resp = ["0.10.3"]
+// resp = ["0.10.2"]
 ```
 
 ## wallet_supportedWalletApi :
@@ -745,7 +746,8 @@ response : string[]
 ```
 ### Behavior :
 - The response is an array of strings: the full semver of the latest Wallet API version supported by the wallet, plus any past supported versions. Each string follows full semantic versioning (major.minor.patch) ; example : `0.10.4`.
-- Contrary to `wallet_supportedSpecs`, a pre-release suffix is **not** accepted here : a wallet implementing the spec 0.10.4-rc.0 answers `0.10.4`.
+- Contrary to `wallet_supportedSpecs`, a pre-release suffix is **not** accepted here : a wallet implementing the spec 0.10.4-rc.1 answers `0.10.4`.
+- These versions refer to Wallet API releases only : the wallet bumps them only when a release changes the Wallet API spec, whatever it answers to `wallet_supportedSpecs`.
 ### Example :
 ```typescript
 const resp = await walletV6.supportedWalletApi(myWallet);
@@ -825,17 +827,17 @@ const resp = await walletV6.strk20InvokeTransaction(myWallet, [
 ]);
 // resp = { transaction_hash: "0x..." }
 ```
-### Example with a sub-account :
+### Example with a shadow account :
 ```typescript
 const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
 const resp = await walletV6.strk20InvokeTransaction(myWallet, [
-  // 1. fund the sub-account from the private balance (its address is deterministic).
-  { type: "withdraw", token: STRK, amount: "0x4563918244f40000", recipient: subAccountAddress },
+  // 1. fund the shadow account from the private balance (its address is deterministic).
+  { type: "withdraw", token: STRK, amount: "0x4563918244f40000", recipient: shadowAccountAddress },
   // 2. one open note per expected output token.
   { type: "transfer", token: STRK, amount: "OPEN", recipient: myAddress },
-  // 3. the calls, executed by the sub-account (so it's the caller seen by the contract).
+  // 3. the calls, executed by the shadow account (so it's the caller seen by the contract).
   {
-    type: "subaccount_invoke",
+    type: "shadow_account_invoke",
     dapp_name: "myDapp",
     nonce: "0x0",
     calls: [{ contract_address: "0x0123...", entry_point: "stake", calldata: ["0x3e8"] }],
@@ -949,13 +951,15 @@ const resp = await walletV6.strk20Balances(myWallet, [ETH, STRK]);
 // ]
 ```
 
-## wallet_strk20SubaccountCommitment :
+## wallet_strk20ShadowAccountCommitment :
 ### Usage :
-Compute the commitment of a STRK20 sub-account of the current account, for a given DAPP. The commitment is computed locally by the wallet from the private state of the user ; **no transaction is sent**.
+Compute the commitment of a STRK20 shadow account of the current account, for a given DAPP. The commitment is computed locally by the wallet from the private state of the user ; **no transaction is sent**.
+> [!WARNING]
+> Renamed in spec 0.10.4-rc.1 : this command was `wallet_strk20SubaccountCommitment` in 0.10.4-rc.0. As the sub-accounts only existed in this unreleased version, no alias is provided : a wallet implementing rc.0 answers only to the old name.
 ### Input :
 ```typescript
-dapp_name: STRK20_DAPP_NAME  // The DAPP that scopes the sub-account(s) (required)
-nonce?: FELT                 // The sub-account nonce. If omitted, the partial commitment is returned.
+dapp_name: STRK20_DAPP_NAME  // The DAPP that scopes the shadow account(s) (required)
+nonce?: FELT                 // The shadow account nonce. If omitted, the partial commitment is returned.
 api_version?: string
 ```
 See [STRK20 Privacy Protocol types](#strk20-privacy-protocol-types-) for the `STRK20_DAPP_NAME` type.
@@ -964,9 +968,9 @@ See [STRK20 Privacy Protocol types](#strk20-privacy-protocol-types-) for the `ST
 response : string // a felt
 ```
 ### Behavior :
-- If `nonce` is provided, returns the full commitment of this single sub-account : `hash(partial_commitment, nonce)`. Each nonce selects a distinct and deterministic sub-account for this user + DAPP.
-- If `nonce` is omitted, returns the partial (nonce independent) commitment : `hash(identity_key, dapp_name)`, where `identity_key` is derived from the user, its viewing key, and the address of the sub-account anonymizer. This partial commitment is shared by all the sub-accounts that the user derives for this DAPP ; it can be published once, to let a DAPP recognize all the sub-accounts of a user, without disclosing any individual nonce.
-- The commitment is not the address of the sub-account : it's the salt used at its deployment. The address itself is not provided by the Wallet API.
+- If `nonce` is provided, returns the full commitment of this single shadow account : `hash(partial_commitment, nonce)`. Each nonce selects a distinct and deterministic shadow account for this user + DAPP.
+- If `nonce` is omitted, returns the partial (nonce independent) commitment : `hash(identity_key, dapp_name)`, where `identity_key` is derived from the user, its viewing key, and the address of the shadow account anonymizer. This partial commitment is shared by all the shadow accounts that the user derives for this DAPP ; it can be published once, to let a DAPP recognize all the shadow accounts of a user, without disclosing any individual nonce.
+- The commitment is not the address of the shadow account : it's the salt used at its deployment. The address itself is not provided by the Wallet API.
 - If the account is not registered in the STRK20 privacy protocol :
 ```typescript
 interface NOT_REGISTERED {
@@ -997,18 +1001,18 @@ interface UNKNOWN_ERROR {
 ```
 ### Example :
 ```typescript
-// full commitment of the sub-account #0 of this DAPP :
-const resp = await walletV6.strk20SubaccountCommitment(myWallet, "myDapp", "0x0");
+// full commitment of the shadow account #0 of this DAPP :
+const resp = await walletV6.strk20ShadowAccountCommitment(myWallet, "myDapp", "0x0");
 // resp = "0x5f2e..."
 
-// partial commitment, shared by all the sub-accounts of this DAPP :
-const resp2 = await walletV6.strk20SubaccountCommitment(myWallet, "myDapp");
+// partial commitment, shared by all the shadow accounts of this DAPP :
+const resp2 = await walletV6.strk20ShadowAccountCommitment(myWallet, "myDapp");
 // resp2 = "0x71ba..."
 ```
 
 # STRK20 Privacy Protocol types :
 
-The STRK20 privacy protocol enables private token operations using ZK proofs. It supports five action types (deposit, withdraw, transfer, invoke, subaccount_invoke). All amounts are expressed in the token's smallest unit.
+The STRK20 privacy protocol enables private token operations using ZK proofs. It supports five action types (deposit, withdraw, transfer, invoke, shadow_account_invoke). All amounts are expressed in the token's smallest unit.
 
 ```typescript
 // ZK proof produced by wallet_strk20PrepareInvoke
@@ -1025,7 +1029,7 @@ type STRK20_CALL_AND_PROOF = {
 }
 
 // Wallet-resolved placeholder substituted by the wallet during action assembly.
-// Usable only in the calldata of an `invoke` action (a `subaccount_invoke` action
+// Usable only in the calldata of an `invoke` action (a `shadow_account_invoke` action
 // automatically receives all the open notes created in the transaction).
 // Allowed patterns:
 //   ${openNoteIds[N]} — expands to the ID of the Nth open note created in the same transaction, i.e. the Nth `transfer` action with amount === "OPEN" (0-based index)
@@ -1065,28 +1069,28 @@ type STRK20_INVOKE_ACTION = {
   calldata: STRK20_CALLDATA_ITEM[]
 }
 
-// Identifies the DAPP that scopes a set of STRK20 sub-accounts, as a single felt :
+// Identifies the DAPP that scopes a set of STRK20 shadow accounts, as a single felt :
 // either a 0x-prefixed felt, or a human-readable ASCII string of 31 characters max,
 // that the wallet encodes as a Cairo short string. No pattern in the spec.
 type STRK20_DAPP_NAME = string
 
-// How much of the token balance of the sub-account a settled open note collects.
+// How much of the token balance of the shadow account a settled open note collects.
 type STRK20_COLLECT_POLICY = {
-  type: 'all' | 'diff' | 'exact'  // 'all' : the whole token balance of the sub-account
+  type: 'all' | 'diff' | 'exact'  // 'all' : the whole token balance of the shadow account
                                   // 'diff' : only the balance gained during this interaction
                                   // 'exact' : the amount below
   amount?: string   // required if and only if type is 'exact'
 }
 
-// Invoke one or more contract calls through the sub-account of the user for a DAPP,
-// routed by the sub-account anonymizer. The proceeds of the calls are settled into the
+// Invoke one or more contract calls through the shadow account of the user for a DAPP,
+// routed by the shadow account anonymizer. The proceeds of the calls are settled into the
 // open notes created in the same transaction (transfer actions with amount "OPEN"),
 // so the number of open notes filled by this action must match the number created.
-type STRK20_SUBACCOUNT_INVOKE_ACTION = {
-  type: 'subaccount_invoke'
+type STRK20_SHADOW_ACCOUNT_INVOKE_ACTION = {
+  type: 'shadow_account_invoke'
   dapp_name: STRK20_DAPP_NAME
-  nonce: string           // Each nonce selects a distinct sub-account for this user + DAPP.
-  calls: INVOKE_CALL[]    // The calls to execute through the sub-account, in order (min 1).
+  nonce: string           // Each nonce selects a distinct shadow account for this user + DAPP.
+  calls: INVOKE_CALL[]    // The calls to execute through the shadow account, in order (min 1).
                           // With WalletAccountV6, these calls are starknet.js `Call` (camelCase) ;
                           // the class converts them to/from this spec shape.
   collect_policy: STRK20_COLLECT_POLICY  // A single policy applied to every open note settled by this action.
@@ -1102,7 +1106,7 @@ type STRK20_ACTION =
   | STRK20_WITHDRAW_ACTION
   | STRK20_TRANSFER_ACTION
   | STRK20_INVOKE_ACTION
-  | STRK20_SUBACCOUNT_INVOKE_ACTION
+  | STRK20_SHADOW_ACCOUNT_INVOKE_ACTION
 
 type STRK20_BALANCE_ENTRY = {
   token: string    // token contract address
@@ -1138,7 +1142,7 @@ Expected behavior:
 |        wallet_strk20InvokeTransaction          |  Unlock UI  |  DAPP connect UI  |  UI for STRK20 transaction  |Unlock UI |
 |          wallet_strk20PrepareInvoke            |  Unlock UI  |  DAPP connect UI  |  UI for STRK20 transaction preparation  |Unlock UI |
 |            wallet_strk20Balances               |  Unlock UI  |  DAPP connect UI  |  silent return balance array  |Unlock UI |
-|      wallet_strk20SubaccountCommitment         |  Unlock UI  |  DAPP connect UI  |  silent return a string  |Unlock UI |
+|     wallet_strk20ShadowAccountCommitment       |  Unlock UI  |  DAPP connect UI  |  silent return a string  |Unlock UI |
 
 # Wallet API version :
 
@@ -1152,7 +1156,7 @@ const resp = await myWallet.features['starknet:walletApi'].request({
 });
 // resp = "0x534e5f5345504f4c4941"
 ```
-## Error :<!-- omit from toc -->s
+## Errors :<!-- omit from toc -->
 In case of version not supported by the Wallet, an Error is returned : 
 ```typescript
 interface API_VERSION_NOT_SUPPORTED {

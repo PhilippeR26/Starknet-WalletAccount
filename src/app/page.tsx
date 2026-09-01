@@ -16,6 +16,27 @@ import WalletAccountV6Tag from './components/client/WalletHandle/WalletAccountV6
 import { useFrontendProvider } from './components/client/provider/providerContext';
 import LowerBanner from "./components/client/LowerBanner";
 
+// Shared look for the four tab triggers: the selected one is a solid ink slab with white
+// text, the others stay quiet until hovered. Kept in one place so the four stay in sync.
+const tabStyle = {
+  fontWeight: "bold",
+  rounded: "l2",
+  // The three states sit far apart on the ramp on purpose - 500 for the idle label, 600
+  // for the active fill, 800 for its hover. Packed any closer they read as one blue.
+  color: { base: "ink.500", _dark: "ink.200" },
+  transition: "background-color 150ms ease, color 150ms ease",
+  _hover: { bg: "ink.muted" },
+  _selected: {
+    bg: "ink.solid",
+    color: "ink.contrast",
+    shadow: "sm",
+    // Nested, so the selector is [data-selected]:hover and outranks the bare :hover above.
+    // As siblings they tie on specificity and the hover background wins, repainting the
+    // active tab near-white under its white label. Darken on hover rather than lighten.
+    _hover: { bg: { base: "ink.800", _dark: "ink.700" } },
+  },
+};
+
 export default function Page() {
   const addressAccountFromContext = useStoreWallet(state => state.address);
   const { setAddressAccount } = useStoreWallet(state => state);
@@ -75,17 +96,16 @@ export default function Page() {
               </Center>
               <br />
               <Tabs.Root
-                variant="enclosed"
-                colorScheme='facebook'
+                variant="plain"
+                colorPalette="ink"
                 size="lg"
                 defaultValue="blockChain"
                 fitted >
-                <Tabs.List bg="bg.muted" rounded="l3" p="1" >
-
-                  <Tabs.Trigger fontWeight={"bold"} value="blockChain"> BlockChain</Tabs.Trigger>
-                  <Tabs.Trigger fontWeight={"bold"} value="walletAPI"> Wallet API</Tabs.Trigger>
-                  <Tabs.Trigger fontWeight={"bold"} value="walletAccount"> WalletAccount</Tabs.Trigger>
-                  <Tabs.Trigger fontWeight={"bold"} value="walletAccountV6"> WalletAccountV6</Tabs.Trigger>
+                <Tabs.List bg="ink.subtle" borderWidth="1px" borderColor="ink.emphasized" rounded="l3" p="1.5" gap="1" >
+                  <Tabs.Trigger {...tabStyle} value="blockChain">BlockChain</Tabs.Trigger>
+                  <Tabs.Trigger {...tabStyle} value="walletAPI">Wallet API</Tabs.Trigger>
+                  <Tabs.Trigger {...tabStyle} value="walletAccount">WalletAccount</Tabs.Trigger>
+                  <Tabs.Trigger {...tabStyle} value="walletAccountV6">WalletAccountV6</Tabs.Trigger>
                 </Tabs.List>
                 <Tabs.Content value="blockChain">
                   <Box bg='pink.200' color='black' borderWidth='1px' borderRadius='md'>

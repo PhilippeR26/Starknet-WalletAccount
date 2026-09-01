@@ -333,7 +333,7 @@ export default function Strk20Panel() {
       if (!provider) {
         return { ok: false, title: "Cannot verify (no provider)", rows: [{ label: "tx", value: shortHex(txHash) }] };
       }
-      const helperHex = num.toHex(constants.Strk20EchoHelperAddress);
+      const helperHex = num.toHex(constants.Strk20EchoHelperAddress[frontendProviderIndex]);
       const selInvoked = num.toHex(hash.getSelectorFromName("Invoked"));
       // Privacy-pool txs verify a STARK proof on-chain and can take minutes to be
       // ACCEPTED_ON_L2, so allow a long budget (retries * retryInterval).
@@ -421,7 +421,7 @@ export default function Strk20Panel() {
       show("echo invoke (blocked)", "Connect a wallet first (open note recipient = connected account).");
       return;
     }
-    const helper = num.toHex(constants.Strk20EchoHelperAddress);
+    const helper = num.toHex(constants.Strk20EchoHelperAddress[frontendProviderIndex]);
     // ${poolAddress} / ${openNoteIds[0]} are literal placeholder strings the wallet
     // substitutes during assembly — they must NOT be hex-normalized.
     const actions: WALLET_API.STRK20_ACTION[] = [

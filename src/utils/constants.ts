@@ -16,8 +16,15 @@ export const myFrontendProviders: ProviderInterface[] = [
     new RpcProvider({ nodeUrl: "https://starknet-testnet.public.blastapi.io/rpc/v0_7" }),
     new RpcProvider({ nodeUrl: "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_10/" + process.env.NEXT_PUBLIC_PROVIDER_URL })];
 
-// STRK20 echo invoke helper (Mainnet) — round-trips STRK through an open note.
-export const Strk20EchoHelperAddress = "0x78ae662e0cc6d1ab2cfeaf2a51ba8783d88e31886f88a794d142f95a6f8735b";
+// STRK20 echo invoke helper — round-trips STRK through an open note. Same class hash
+// 0x02a4482a13cb7f70dce6f7ba99c4ee6ce404379abeddd9b831b6bf24eb71e137 on both networks;
+// Sepolia holds several instances of it, the oldest one is used here.
+// Same index as myFrontendProviders.
+export const Strk20EchoHelperAddress: string[] = [
+    "0x78ae662e0cc6d1ab2cfeaf2a51ba8783d88e31886f88a794d142f95a6f8735b", // mainnet
+    "0x00", // testnet deprecated
+    "0x04A51911a44eB4339fdB8704191F3b283bF80860F4ED29431d52592A2D35045e", // sepolia
+];
 
 // STRK20 shadow accounts : the DAPP name scoping this DAPP's shadow accounts. The wallet
 // encodes it as a Cairo short string (31 chars max). Not whitelisted anywhere : any DAPP

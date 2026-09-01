@@ -175,7 +175,7 @@ export default function WalletAccountV6Tag() {
       setResultComplex("Connect a wallet first (open note recipient = connected account).");
       return;
     }
-    const helper = num.toHex(constants.Strk20EchoHelperAddress);
+    const helper = num.toHex(constants.Strk20EchoHelperAddress[myFrontendProviderIndex]);
     // "OPEN" / ${poolAddress} / ${openNoteIds[0]} are literal placeholder strings the
     // wallet substitutes during assembly — they must NOT be hex-normalized.
     const actions: STRK20_ACTION[] = [
@@ -208,7 +208,7 @@ export default function WalletAccountV6Tag() {
       if (!provider) {
         return { ok: false, title: "Cannot verify (no provider)", rows: [{ label: "tx", value: shortHex(txHash) }] };
       }
-      const helperHex = num.toHex(constants.Strk20EchoHelperAddress);
+      const helperHex = num.toHex(constants.Strk20EchoHelperAddress[myFrontendProviderIndex]);
       const selInvoked = num.toHex(hash.getSelectorFromName("Invoked"));
       const receipt: any = await provider.waitForTransaction(txHash, {
         retries: 400,

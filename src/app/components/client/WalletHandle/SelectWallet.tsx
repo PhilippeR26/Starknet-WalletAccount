@@ -164,7 +164,7 @@ export default function SelectWallet() {
                             handleSelectedWallet(wallet.wallet);
                           }} >
                           <Image src={iconW} width={30} />
-                          {wallet.wallet.name + ' ' + wallet.wallet.version}
+                          {wallet.wallet.name + ' ' + wallet.wallet.features["starknet:walletApi"].walletVersion}
                         </Button>
                       </> : <>
                         <Button id={"wId" + index.toString()}
@@ -176,7 +176,7 @@ export default function SelectWallet() {
                           disabled={true}
                         >
                           <Image src={iconW} width={30} />
-                          {wallet.wallet.name + ' ' + wallet.wallet.version + " not compatible!"}
+                          {wallet.wallet.name + ' ' + wallet.wallet.features["starknet:walletApi"].walletVersion + " not compatible!"}
                         </Button>
                       </>}
                     </>

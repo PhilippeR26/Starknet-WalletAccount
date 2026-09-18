@@ -182,7 +182,7 @@ export default function WalletApiTag() {
             <SimpleGrid minChildWidth="320px" gap="20px" paddingBottom="40px">
                 <Box bg="green.200" color='black' borderWidth='1px' borderRadius='lg'>
                     <Center>.name : {selectedWallet?.name} </Center>
-                    <Center>.version : {selectedWallet?.version} </Center>
+                    <Center>.walletVersion : {selectedWallet?.features["starknet:walletApi"].walletVersion} </Center>
                     <Center>.icon : {typeof (selectedWallet?.icon) === "string" && selectedWallet?.icon.slice(0, 30)  } </Center>
                 </Box>
                 {/*<Box bg="green.200" color='black' borderWidth='1px' borderRadius='lg'>*/}

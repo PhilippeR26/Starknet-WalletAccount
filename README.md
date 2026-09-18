@@ -25,10 +25,10 @@ The `Wallet API` tab is exposing all the low level entry points of this API :
 ![](./Images/Api.png)
 
 ### WalletAccount usage :
-The `WalletAccount` tab allows you to test some features of this new Starknet.js class.
+The `WalletAccount` tab allows you to test some features of the Starknet.js `WalletAccountV6` class, and the `WalletAccountV6` tab its STRK20 privacy methods.
 ![](./Images/WalletAccount.png)
 Let's see more in detail this WalletAccount.  
-It's very similar to a Starknet.js `Account` class. There is anyway a huge difference : the private key is hold in a browser wallet (as ArgentX or Braavos), and any signature is managed by the wallet.  
+It's very similar to a Starknet.js `Account` class. There is anyway a huge difference : the private key is hold in a browser wallet (as Ready or Braavos), and any signature is managed by the wallet.  
 The architecture is : 
 <p align="center">
   <img src="./Images/architecture.png" />
@@ -37,16 +37,19 @@ The architecture is :
 If you want to read Starknet, the WalletAccount will read directly the blockchain. That's why at the initialization of a WalletAccount, you need to put in the parameters a Provider instance. It will be used for all reading activities.
 
 If you want to write to Starknet, the WalletAccount will ask to the Wallet to sign and send the transaction.  
-As several Wallets can be installed in your browser, the WalletAccount needs the ID of one of the available wallets. You can ask to get-starknet to display a list of available wallets and to provide as a response the ID of the selected wallet.  
-You can also create your own UI to select the wallet. In this DAPP, I have created a custom UI [here](./src/app/components/client/WalletHandle/SelectWallet.tsx).  
+As several Wallets can be installed in your browser, the WalletAccount needs one of them. The get-starknet discovery store lists every wallet that announces itself through the wallet standard, and you pick one from that list.  
+You then create your own UI to select the wallet. In this DAPP, I have created a custom UI [here](./src/app/components/client/WalletHandle/SelectWallet.tsx).  
 So, you instantiate a new Wallet account with :
 ```typescript
-import { connect } from "get-starknet"; // v4.0.8
-import { WalletAccount } from "starknet"; // v8.6.0
-const myFrontendProvider = "https://free-rpc.nethermind.io/sepolia-juno/v0_7";
-// UI to select a wallet :
-const selectedWallet = await connect({ modalMode: "alwaysAsk", modalTheme: "light" }); 
-const my_WAccount = new WalletAccount(myFrontendProvider, selectedWallet);
+import { createStore } from "@starknet-io/get-starknet-discovery"; // v6.0.6
+import { constants, RpcProvider, WalletAccountV6 } from "starknet"; // v11.0.1
+
+// Any RPC node ; a network name lets Starknet.js pick a default public one.
+const myFrontendProvider = new RpcProvider({ nodeUrl: constants.NetworkName.SN_SEPOLIA });
+// The wallets installed in the browser, to feed your selection UI :
+const availableWallets = createStore().getWallets();
+const selectedWallet = availableWallets[0];
+const my_WAccount = await WalletAccountV6.connect(myFrontendProvider, selectedWallet);
 ```
 
 Then you can use all the power of Starknet.js, exactly as a with a normal Account instance.  
@@ -59,7 +62,15 @@ And you have some extra functionalities :
 
 For a local usage :  
 
-First, run the development server:
+First, create a `.env.local` file at the root of the project, containing your [Alchemy](https://www.alchemy.com/) API key :
+
+```
+NEXT_PUBLIC_PROVIDER_URL="<your-alchemy-api-key>"
+```
+
+This key is appended to the Alchemy RPC endpoints of Mainnet and Sepolia. Without it, neither network answers.
+
+Then, run the development server:
 
 ```bash
 npm i
@@ -69,7 +80,7 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.  
 <kbd>CTRL</kbd> + <kbd>SHIFT</kbd> + <kbd>I</kbd> to see debug information.
 
-The DAPP is made in the next.js framework. Coded in Typescript. Using Starknet.js v6.8.0, get-starknet v4, Next.js framework, Zustand context & Chaka-ui components.
+The DAPP is coded in Typescript, using Starknet.js v11.0.1, get-starknet v6, the Next.js 16 framework, Zustand context & Chakra-ui components.
 
 ## Deploy on Vercel 🎊 :
 

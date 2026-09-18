@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Contract, uint256, shortString } from "starknet";
+import { CairoBytes31, Contract, num, uint256 } from "starknet";
 
 import { useStoreBlock } from "../Block/blockContext";
 import { useStoreWallet } from '../../Wallet/walletContext';
@@ -35,7 +35,7 @@ export default function GetBalance({ tokenAddress }: Props) {
 
         myContract.symbol()
             .then((resp: any) => {
-                const res2 = shortString.decodeShortString(resp.symbol);
+                const res2 = new CairoBytes31(num.toHex(resp.symbol)).decodeUtf8();
                 console.log("ressymbol=", res2);
                 setSymbol(res2);
             })

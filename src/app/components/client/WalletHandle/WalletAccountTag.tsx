@@ -4,7 +4,7 @@ import { Tooltip } from "@/components/ui/tooltip"
 import { useEffect } from "react";
 import { useState } from "react";
 import styles from '../../../page.module.css'
-import { Contract, WalletAccount, json, num, shortString, validateAndParseAddress, type TypedData, constants as SNconstants, stark, ec } from "starknet";
+import { CairoBytes31, Contract, WalletAccount, json, num, validateAndParseAddress, type TypedData, constants as SNconstants, stark, ec } from "starknet";
 import { rejectContract } from "@/app/contracts/reject.sierra.json";
 import { RejectContractAddress, accountClass, myFrontendProviders } from "@/utils/constants";
 import { useFrontendProvider } from "../provider/providerContext";
@@ -241,7 +241,7 @@ export default function WalletAccountTag() {
                     <Center fontSize={14} color={"darkred"}> my frontend provider Id : {myFrontendProviderIndex}  </Center>
                     <Center fontSize={13} color={"darkred"}> contractAddress : {validateAndParseAddress(testContract.address)}  </Center>
                     <Center fontSize={13} color={"darkred"}> WalletAccountAddress : {!!myWalletAccount?.address ? validateAndParseAddress(myWalletAccount.address) : "address not available"}  </Center>
-                    <Center fontSize={13} color={"darkred"}> WalletAccountChain : {shortString.decodeShortString(chainIdWA)}  </Center>
+                    <Center fontSize={13} color={"darkred"}> WalletAccountChain : {new CairoBytes31(num.toHex(chainIdWA)).decodeUtf8()}</Center>
                 </>
                 <>
                     <p>Read with my own frontend provider :</p>

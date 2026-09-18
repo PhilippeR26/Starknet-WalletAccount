@@ -450,22 +450,32 @@ export default function Strk20Panel() {
     await run("example: OPEN mismatch (expected to fail)", actions, kind, simulateFlag);
   }
 
-  async function queryBalances(tokens: string[]) {
+  async function queryBalances(tokens: string[], validUntil?: number) {
     if (!wallet) return;
     let resp: string;
     try {
-      const r = await walletV6.strk20Balances(wallet, tokens);
+      const r = await walletV6.strk20Balances(wallet, tokens, validUntil);
       resp = formatResult(r);
     } catch (err: any) {
       resp = formatError(err);
     }
-    show(
-      tokens.length === 0
-        ? "balances ALL shielded (empty array)"
-        : `balances ${tokens.join(", ")}`,
-      resp
-    );
+    const scope =
+      tokens.length === 0 ? "ALL shielded (empty array)" : tokens.join(", ");
+    // The requested authorization window is half of what a run tests here, so the
+    // result dialog records it: two runs otherwise produce the same title.
+    const window =
+      validUntil === undefined
+        ? "wallet default window"
+        : `valid until ${validUntil} (${new Date(validUntil * 1000).toLocaleTimeString()})`;
+    show(`balances ${scope} — ${window}`, resp);
   }
+
+  // The token list as the Balances field spells it, shared by the query buttons.
+  const parsedBalanceTokens = (): string[] =>
+    balanceTokens
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
 
   return (
     <Box
@@ -617,21 +627,24 @@ export default function Strk20Panel() {
             onChange={(e) => setBalanceTokens(e.currentTarget.value)}
           />
         </Field.Root>
-        <HStack>
+        <HStack flexWrap="wrap">
+          <Button
+            {...BTN_STYLE}
+            colorPalette="blue"
+            variant="surface"
+            onClick={() => queryBalances(parsedBalanceTokens())}
+          >
+            Query
+          </Button>
           <Button
             {...BTN_STYLE}
             colorPalette="blue"
             variant="surface"
             onClick={() =>
-              queryBalances(
-                balanceTokens
-                  .split(",")
-                  .map((t) => t.trim())
-                  .filter((t) => t.length > 0)
-              )
+              queryBalances(parsedBalanceTokens(), Math.floor(Date.now() / 1000) + 60)
             }
           >
-            Query
+            Query (valid 1&apos;)
           </Button>
           <Button {...BTN_STYLE} colorPalette="blue" variant="surface" onClick={() => queryBalances([])}>
             All shielded tokens (empty array)

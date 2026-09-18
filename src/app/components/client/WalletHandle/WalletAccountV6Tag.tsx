@@ -11,7 +11,7 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { hash, json, num, shortString, validateAndParseAddress } from "starknet";
+import { CairoBytes31, hash, json, num, validateAndParseAddress } from "starknet";
 import type { STRK20_ACTION } from "starknet";
 import styles from "../../../page.module.css";
 import * as constants from "@/utils/constants";
@@ -311,7 +311,7 @@ export default function WalletAccountV6Tag() {
           )}
           <Center fontSize={14} color={"darkred"}> my frontend provider Id : {myFrontendProviderIndex} </Center>
           <Center fontSize={13} color={"darkred"}> WalletAccountAddress : {!!myWalletAccount?.address ? validateAndParseAddress(myWalletAccount.address) : "address not available"} </Center>
-          <Center fontSize={13} color={"darkred"}> WalletAccountChain : {chainIdWA ? shortString.decodeShortString(chainIdWA) : "N/A"} </Center>
+          <Center fontSize={13} color={"darkred"}> WalletAccountChain : {chainIdWA ? new CairoBytes31(num.toHex(chainIdWA)).decodeUtf8() : "N/A"}</Center>
         </>
 
         <>

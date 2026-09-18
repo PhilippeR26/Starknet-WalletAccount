@@ -61,8 +61,8 @@ export default function Page() {
     <Provider>
       <div>
         <p className={styles.bgText}>
-          Test WalletAccountV6 of Starknet.js v10.7.0 <br></br>
-          with get-starknet v6.0.4 and Wallet API v0.10.4-beta.2
+          Test WalletAccountV6 of Starknet.js v11.0.1 <br></br>
+          with get-starknet v6.0.6 and Wallet API v0.10.4
         </p>
         <Center>
           <Image src={starknetJsImg} alt='starknet.js' width={150} />

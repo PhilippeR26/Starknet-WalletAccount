@@ -1,7 +1,7 @@
 import { Box, Center, Dialog, useDisclosure } from "@chakra-ui/react";
 import { Button } from "@chakra-ui/react";
 import { Tooltip } from "@/components/ui/tooltip";
-import { CallData, GetBlockResponse, constants as SNconstants, TypedData, cairo, ec, encode, hash, json, shortString, stark, addAddressPadding, walletV6, Contract, type Call, type Calldata } from "starknet";
+import { CairoBytes31, CallData, GetBlockResponse, constants as SNconstants, TypedData, cairo, ec, encode, hash, json, num, stark, addAddressPadding, walletV6, Contract, type Call, type Calldata } from "starknet";
 import type { WalletWithStarknetFeatures as WalletWithStarknetFeaturesV6 } from '@starknet-io/get-starknet-wallet-standard/features';
 import { useEffect, useState } from "react";
 
@@ -94,7 +94,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
       case "wallet_requestChainId": {
         if (myWallet && walletV6Cast) {
           const response = await walletV6.requestChainId(walletV6Cast);
-          const respText: string = response === null ? "null" : shortString.decodeShortString(response);
+          const respText: string = response === null ? "null" : new CairoBytes31(num.toHex(response)).decodeUtf8();
           setResponse(response + " (" + respText + ")");
           onOpen();
         }
@@ -146,7 +146,7 @@ export default function RpcWalletCommand({ command, symbol, param, tip }: Props)
       case "wallet_addStarknetChain": {
         const myChainId: WALLET_API.AddStarknetChainParameters = {
           id: param,
-          chain_id: shortString.encodeShortString(param),  // A 0x-prefixed hexadecimal string
+          chain_id: CairoBytes31.fromText(param).toHexString(),  // A 0x-prefixed hexadecimal string
           chain_name: param,
           rpc_urls: ["http://192.168.1.44:6060"],
           native_currency: {

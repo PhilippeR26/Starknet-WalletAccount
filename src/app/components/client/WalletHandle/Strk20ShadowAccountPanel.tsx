@@ -30,6 +30,11 @@ const BTN_STYLE = { paddingX: "20px" } as const;
 // The wallet does not always raise its window by itself when a request arrives, which
 // looks like the DAPP hanging. Say so rather than leave the log silent.
 const WALLET_HINT = "waiting for the wallet — open it manually if nothing pops up\n";
+// Reading a shielded balance needs a user approval, and that approval is time limited.
+// The verification reads it twice, before and after the operation, so one window is
+// requested up front and reused for both reads: only the first one should prompt. Three
+// minutes is meant to span proof generation, submission and waitForTransaction.
+const BALANCE_WINDOW_S = 180;
 
 // Signed STRK amount, for the "before → after" lines of the verification.
 function signedStrk(amount: bigint): string {
@@ -196,16 +201,16 @@ export default function Strk20ShadowAccountPanel() {
     return uint256.uint256ToBN({ low: r[0], high: r[1] });
   }
 
-  async function shieldedStrk(): Promise<bigint> {
+  async function shieldedStrk(validUntil?: number): Promise<bigint> {
     if (!wallet) return 0n;
-    const entries = await walletV6.strk20Balances(wallet, [TOKEN]);
+    const entries = await walletV6.strk20Balances(wallet, [TOKEN], validUntil);
     const entry = entries.find((e) => BigInt(e.token) === BigInt(TOKEN));
     return entry ? BigInt(entry.balance) : 0n;
   }
 
-  async function snapshot(shadowAccount: string): Promise<Balances> {
+  async function snapshot(shadowAccount: string, validUntil?: number): Promise<Balances> {
     const [shielded, shadow, user] = await Promise.all([
-      shieldedStrk(),
+      shieldedStrk(validUntil),
       publicStrk(shadowAccount),
       connectedAddress ? publicStrk(connectedAddress) : Promise.resolve(0n),
     ]);
@@ -265,7 +270,10 @@ export default function Strk20ShadowAccountPanel() {
     }
     const label = `fund shadow account — public ERC-20 transfer of 1 STRK (no STRK20 action)`;
     show(label, `shadow account : ${shadowAccount}\n`);
-    const before = await snapshot(shadowAccount);
+    // One authorization for the whole operation, reused by the "after" read below, so
+    // only this first snapshot should raise the wallet.
+    const balanceWindow = Math.floor(Date.now() / 1000) + BALANCE_WINDOW_S;
+    const before = await snapshot(shadowAccount, balanceWindow);
     append(WALLET_HINT);
     let txH: string;
     try {
@@ -286,7 +294,7 @@ export default function Strk20ShadowAccountPanel() {
     append(`transaction_hash = ${txH}\nWaiting for the receipt…\n`);
     try {
       await provider.waitForTransaction(txH, { retries: 100, retryInterval: 3000 });
-      const after = await snapshot(shadowAccount);
+      const after = await snapshot(shadowAccount, balanceWindow);
       const gained = after.shadowAccount - before.shadowAccount;
       append(
         `\n--- verification ---\n${balanceReport(before, after)}\n\n` +
@@ -327,7 +335,10 @@ export default function Strk20ShadowAccountPanel() {
       `sweep shadow account → shielded — collect_policy "${policy.type}"` +
       (policy.type === "exact" ? ` (${formatBalance(BigInt(policy.amount), 18)} STRK)` : "");
     show(label, `shadow account : ${shadowAccount}\n`);
-    const before = await snapshot(shadowAccount);
+    // One authorization for the whole operation, reused by the "after" read below, so
+    // only this first snapshot should raise the wallet.
+    const balanceWindow = Math.floor(Date.now() / 1000) + BALANCE_WINDOW_S;
+    const before = await snapshot(shadowAccount, balanceWindow);
 
     // `diff` needs an incoming transfer during the interaction : approve the shadow
     // account first, from the wallet's base account (a public, non-STRK20 transaction).
@@ -394,7 +405,7 @@ export default function Strk20ShadowAccountPanel() {
       const receipt: any = await provider.waitForTransaction(txH, { retries: 400, retryInterval: 3000 });
       const reverted =
         receipt?.execution_status === "REVERTED" || (receipt?.isSuccess && !receipt.isSuccess());
-      const after = await snapshot(shadowAccount);
+      const after = await snapshot(shadowAccount, balanceWindow);
       const collected = before.shadowAccount - after.shadowAccount;
 
       // The shielded delta is NOT the pass criterion : the wallet inserts its own fee

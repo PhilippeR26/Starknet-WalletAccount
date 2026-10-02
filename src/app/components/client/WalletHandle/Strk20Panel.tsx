@@ -14,6 +14,7 @@ import {
   Separator,
   Stack,
   Text,
+  Textarea,
   useDisclosure,
 } from "@chakra-ui/react";
 import { hash, json, num, walletV6 } from "starknet";
@@ -205,7 +206,7 @@ export default function Strk20Panel() {
 
   // Block C — balances state
   const [balanceTokens, setBalanceTokens] = useState<string>(
-    `${constants.addrETH},${constants.addrSTRK}`
+    `${constants.addrETH}\n${constants.addrSTRK}`
   );
 
   const recipientNeeded = actionType === "withdraw" || actionType === "transfer";
@@ -471,11 +472,12 @@ export default function Strk20Panel() {
   }
 
   // The token list as the Balances field spells it, shared by the query buttons.
+  // One address per line; commas and spaces are accepted as separators too.
   const parsedBalanceTokens = (): string[] =>
-    balanceTokens
-      .split(",")
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
+    balanceTokens.split(/[\s,]+/).filter((t) => t.length > 0);
+
+  // Shown in the Balances label, so a long list is never mistaken for a single token.
+  const balanceCount = parsedBalanceTokens().length;
 
   return (
     <Box
@@ -620,9 +622,14 @@ export default function Strk20Panel() {
       {/* Block C — balances */}
       <Stack gap="8px" maxW="520px" margin="0 auto">
         <Field.Root>
-          <Field.Label>Balances — tokens (comma-separated)</Field.Label>
-          <Input
+          <Field.Label>
+            Balances — {balanceCount} {balanceCount === 1 ? "token" : "tokens"} (one address per line)
+          </Field.Label>
+          <Textarea
             {...FIELD_STYLE}
+            autoresize
+            fontSize="xs"
+            spellCheck={false}
             value={balanceTokens}
             onChange={(e) => setBalanceTokens(e.currentTarget.value)}
           />

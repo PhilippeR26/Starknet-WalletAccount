@@ -2,7 +2,7 @@ import { Center, Dialog, Image, Portal, StackSeparator, VStack } from "@chakra-u
 import { Button } from "@chakra-ui/react";
 import { useStoreWallet } from "../../Wallet/walletContext";
 import { useFrontendProvider } from "../provider/providerContext";
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
 import { useState } from "react";
 import { walletV6, validateAndParseAddress, constants as SNconstants, WalletAccountV6 } from "starknet";
 import { WALLET_API } from "@starknet-io/types-js";
@@ -20,21 +20,6 @@ type ValidWallet = {
   isValid: boolean;
 }
 
-export async function scanObjectForWalletsCustom(
-  obj: Record<string, any> // Browser window object
-): Promise<ValidWallet[]> {
-  const store: Store = createStore();
-  const wallets: WalletWithStarknetFeatures[] = store.getWallets();
-  console.log("List of starknet wallets", wallets);
-  const validWallets: ValidWallet[] = await Promise.all(wallets.map(
-    async (wallet: WalletWithStarknetFeatures) => {
-      let isValid = await checkCompatibility(wallet);
-      return { wallet: wallet, isValid: isValid } as ValidWallet;
-    }
-  ))
-  console.log(validWallets);
-  return validWallets;
-}
 async function checkCompatibility(myWallet: WalletWithStarknetFeatures) {
   let isCompatible: boolean = false;
   try {
@@ -96,13 +81,39 @@ export default function SelectWallet() {
 
   useEffect(
     () => {
-      const fetchData = async () => {
-        const res: ValidWallet[] = await scanObjectForWalletsCustom(window);
-        return res
-      }
       console.log("Launch select wallet window.");
-      fetchData().then((wallets) => setWalletList(wallets));
-      return () => { }
+      const store: Store = createStore();
+      const testedWallets = new Set<WalletWithStarknetFeatures>(); // wallet objects whose compatibility test was launched
+      let currentWallets: readonly WalletWithStarknetFeatures[] = [];
+      let cancelled = false;
+
+      const onWalletsChange = (wallets: readonly WalletWithStarknetFeatures[]) => {
+        console.log("List of starknet wallets", wallets);
+        currentWallets = wallets;
+        // Drop the wallets that left the store.
+        setWalletList(prev => prev.filter(item => wallets.some(w => w.name === item.wallet.name)));
+        wallets.filter(w => !testedWallets.has(w)).forEach(async (wallet) => {
+          testedWallets.add(wallet);
+          const isValid = await checkCompatibility(wallet);
+          // Ignore a result arriving after unmount, or for a wallet object the store has since replaced.
+          if (cancelled || !currentWallets.includes(wallet)) return;
+          const newItem: ValidWallet = { wallet: wallet, isValid: isValid };
+          setWalletList(prev => {
+            const sameNameIndex = prev.findIndex(item => item.wallet.name === wallet.name);
+            // New wallets go to the bottom of the list; a replaced wallet keeps its place.
+            return sameNameIndex === -1
+              ? [...prev, newItem]
+              : prev.map((item, index) => index === sameNameIndex ? newItem : item);
+          });
+        });
+      };
+
+      onWalletsChange(store.getWallets());
+      const unsubscribe = store.subscribe(onWalletsChange);
+      return () => {
+        cancelled = true;
+        unsubscribe();
+      }
     },
     []
   )
@@ -152,7 +163,7 @@ export default function SelectWallet() {
                 {
                   walletList.map((wallet: ValidWallet, index: number) => {
                     const iconW: string = typeof (wallet.wallet.icon) == "string" ? wallet.wallet.icon : wallet.wallet.icon;
-                    return <>
+                    return <Fragment key={wallet.wallet.name}>
                       {wallet.isValid ? <>
                         <Button id={"wId" + index.toString()}
                           // backgroundColor="gray.100"
@@ -179,7 +190,7 @@ export default function SelectWallet() {
                           {wallet.wallet.name + ' ' + wallet.wallet.features["starknet:walletApi"].walletVersion + " not compatible!"}
                         </Button>
                       </>}
-                    </>
+                    </Fragment>
                   })
                 }
               </VStack>

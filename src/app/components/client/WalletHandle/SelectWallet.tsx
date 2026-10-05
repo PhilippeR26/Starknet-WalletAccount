@@ -2,86 +2,43 @@ import { Center, Dialog, Image, Portal, StackSeparator, VStack } from "@chakra-u
 import { Button } from "@chakra-ui/react";
 import { useStoreWallet } from "../../Wallet/walletContext";
 import { useFrontendProvider } from "../provider/providerContext";
-import { Fragment, useEffect } from "react";
+import { useEffect } from "react";
 import { useState } from "react";
 import { walletV6, validateAndParseAddress, constants as SNconstants, WalletAccountV6 } from "starknet";
 import { WALLET_API } from "@starknet-io/types-js";
 import { myFrontendProviders } from "@/utils/constants";
 import { DIALOG_BACKDROP, DIALOG_CONTENT, DIALOG_HEADER } from "./dialogStyle";
 import { createStore, type Store } from "@starknet-io/get-starknet-discovery";
-import type {
-  WalletWithStarknetFeatures,
-  StandardEventsChangeProperties,
-} from '@starknet-io/get-starknet-wallet-standard/features';
-
-
-type ValidWallet = {
-  wallet: WalletWithStarknetFeatures;
-  isValid: boolean | undefined; // undefined while the compatibility check is running
-}
+import type { WalletWithStarknetFeatures } from '@starknet-io/get-starknet-wallet-standard/features';
 
 const PERMISSIONS_RETRY_MS = 3000;
 const PERMISSIONS_MAX_ATTEMPTS = 3;
 
-// Asks the wallet for its permissions to find out whether it speaks the Wallet API, and reports the verdict through onVerdict.
-// An extension still starting up may leave the request unanswered: it is sent again every PERMISSIONS_RETRY_MS, up to PERMISSIONS_MAX_ATTEMPTS times.
-// The first answer wins (a rejection means "not compatible"). If nothing answers, the verdict is "not compatible", and a late answer still overrides it.
-// Returns a function that cancels the check.
-function startCompatibilityCheck(
-  wallet: WalletWithStarknetFeatures,
-  onVerdict: (isValid: boolean) => void
-): () => void {
-  const startTime = performance.now();
-  const elapsed = () => Math.round(performance.now() - startTime) + " ms";
-  let attempts = 0;
-  let answered = false;
-  let cancelled = false;
-  let timerId: ReturnType<typeof setTimeout> | undefined;
+const wait = (ms: number) => new Promise<"timeout">(resolve => setTimeout(() => resolve("timeout"), ms));
 
-  const answer = (isValid: boolean, detail: unknown = "") => {
-    if (answered || cancelled) return;
-    answered = true;
-    clearTimeout(timerId);
-    console.log("Wallet", wallet.name, isValid ? "is compatible" : "is NOT compatible", "(answer after " + elapsed() + ")", detail);
-    onVerdict(isValid);
-  };
-
-  const sendRequest = () => {
-    attempts += 1;
-    console.log("Wallet", wallet.name, "- wallet_getPermissions, attempt", attempts);
-    Promise.resolve()
-      .then(() => wallet.features["starknet:walletApi"].request({ type: "wallet_getPermissions" }))
-      .then(() => answer(true), (err: unknown) => answer(false, err));
-    timerId = setTimeout(() => {
-      if (attempts < PERMISSIONS_MAX_ATTEMPTS) {
-        sendRequest();
-      } else {
-        console.log("Wallet", wallet.name, "- no answer after", elapsed());
-        onVerdict(false);
+// Asks the wallet for its permissions to find out whether it speaks the Wallet API.
+// An extension still starting up may never answer the first request, so the request is sent again after PERMISSIONS_RETRY_MS, up to PERMISSIONS_MAX_ATTEMPTS times.
+async function checkCompatibility(wallet: WalletWithStarknetFeatures): Promise<boolean> {
+  for (let attempt = 1; attempt <= PERMISSIONS_MAX_ATTEMPTS; attempt++) {
+    try {
+      const answer = await Promise.race([
+        wallet.features["starknet:walletApi"].request({ type: "wallet_getPermissions" }),
+        wait(PERMISSIONS_RETRY_MS),
+      ]);
+      if (answer !== "timeout") {
+        console.log(`Wallet ${wallet.name} is compatible (attempt ${attempt})`);
+        return true;
       }
-    }, PERMISSIONS_RETRY_MS);
-  };
-
-  sendRequest();
-  return () => {
-    cancelled = true;
-    clearTimeout(timerId);
-  };
+    } catch (err) {
+      console.log(`Wallet ${wallet.name} is NOT compatible:`, err);
+      return false; // the wallet answered with an error
+    }
+  }
+  console.log(`Wallet ${wallet.name} did not answer after ${PERMISSIONS_MAX_ATTEMPTS} attempts`);
+  return false;
 }
 
-// Fields required on a window.starknet* object to be taken for a wallet (same check as get-starknet-discovery, injected-wallet.ts).
-const INJECTED_WALLET_FIELDS = ["id", "name", "version", "icon", "request", "on", "off"];
-const INJECTED_WALLET_POLL_MS = 250;
-
-// Keys of window holding a complete injected wallet (window.starknet, window.starknet_braavos, ...).
-function listInjectedWalletKeys(): string[] {
-  return Object.getOwnPropertyNames(window).filter((key: string) => {
-    if (!key.startsWith("starknet")) return false;
-    const candidate = (window as Record<string, any>)[key];
-    return typeof candidate === "object" && candidate !== null
-      && INJECTED_WALLET_FIELDS.every(field => field in candidate);
-  });
-}
+const INJECTED_WALLET_POLL_MS = 250; // how often window is checked for a newly injected wallet
 
 export default function SelectWallet() {
 
@@ -101,7 +58,8 @@ export default function SelectWallet() {
   const setChain = useStoreWallet(state => state.setChain);
   const setAddressAccount = useStoreWallet(state => state.setAddressAccount);
 
-  const [walletList, setWalletList] = useState<ValidWallet[]>([]);
+  const [wallets, setWallets] = useState<readonly WalletWithStarknetFeatures[]>([]);
+  const [verdicts, setVerdicts] = useState<Map<WalletWithStarknetFeatures, boolean>>(new Map()); // no verdict yet = still checking
 
   async function handleSelectedWallet(selectedWallet: WalletWithStarknetFeatures) {
     setMyWallet(selectedWallet); // zustand
@@ -130,52 +88,47 @@ export default function SelectWallet() {
     setWalletApi(await walletV6.supportedSpecs(selectedWallet));
   }
 
+  // Wallet discovery, done with the get-starknet-discovery store. A wallet reaches the page in one of three ways:
+  // - a window.starknet* object, scanned once when the store is created;
+  // - a wallet-standard or EIP-6963 registration, reported to store.subscribe() whenever it happens;
+  // - a window.starknet* object injected after that scan, which the store does not report: see the polling below.
+  // Every wallet is then tested with wallet_getPermissions and listed in the dialog as soon as the store reports it.
   useEffect(
     () => {
       console.log("Launch select wallet window.");
       const store: Store = createStore();
-      const checks = new Map<WalletWithStarknetFeatures, () => void>(); // running compatibility checks, with their cancel function
+      const checkedWallets = new Set<WalletWithStarknetFeatures>(); // wallet objects whose compatibility check was launched
+      let cancelled = false;
 
-      const onWalletsChange = (wallets: readonly WalletWithStarknetFeatures[]) => {
-        console.log("List of starknet wallets", wallets);
-        // Drop the wallets that left the store; new wallets go to the bottom of the list, still unchecked.
-        // A replaced wallet keeps its place until its replacement has a verdict.
-        setWalletList(prev => {
-          const kept = prev.filter(item => wallets.some(w => w.name === item.wallet.name));
-          const added = wallets
-            .filter(w => !kept.some(item => item.wallet.name === w.name))
-            .map((w): ValidWallet => ({ wallet: w, isValid: undefined }));
-          return [...kept, ...added];
-        });
-        // Cancel the checks of wallet objects that left the store, start those of the new ones.
-        checks.forEach((cancel, wallet) => {
-          if (wallets.includes(wallet)) return;
-          cancel();
-          checks.delete(wallet);
-        });
-        wallets.filter(w => !checks.has(w)).forEach(wallet => {
-          checks.set(wallet, startCompatibilityCheck(wallet, isValid => {
-            setWalletList(prev => prev.map(item => item.wallet.name === wallet.name ? { wallet: wallet, isValid: isValid } : item));
-          }));
+      const onWalletsChange = (list: readonly WalletWithStarknetFeatures[]) => {
+        console.log("List of starknet wallets", list);
+        setWallets(list);
+        list.filter(w => !checkedWallets.has(w)).forEach(async (wallet) => {
+          checkedWallets.add(wallet);
+          const isValid = await checkCompatibility(wallet);
+          if (!cancelled) setVerdicts(prev => new Map(prev).set(wallet, isValid));
         });
       };
 
-      onWalletsChange(store.getWallets());
-      const unsubscribe = store.subscribe(onWalletsChange);
+      onWalletsChange(store.getWallets()); // wallets already known
+      const unsubscribe = store.subscribe(onWalletsChange); // wallets registering later
 
       // The store scans window.starknet* only once, at creation, and emits nothing when a wallet is injected later.
-      // Poll for new keys and ask the store to scan again; a refresh re-attaches listeners on every injected wallet, so only refresh on a new key.
-      const knownKeys = new Set<string>(listInjectedWalletKeys()); // already scanned by createStore()
+      // Poll the number of starknet* keys of window and ask the store to scan again when it changes.
+      // (A scan re-attaches listeners on every injected wallet, so it is only done when a new key appears.)
+      // _refreshInjectedWallets() carries an underscore (not documented), but it is part of the Store type of get-starknet-discovery 6.0.6.
+      const countKeys = () => Object.getOwnPropertyNames(window).filter(key => key.startsWith("starknet")).length;
+      let knownCount = countKeys(); // already scanned by createStore()
       const intervalId = setInterval(() => {
-        const newKeys = listInjectedWalletKeys().filter(key => !knownKeys.has(key));
-        if (newKeys.length === 0) return;
-        newKeys.forEach(key => knownKeys.add(key));
-        console.log("New injected wallet detected:", newKeys);
+        const count = countKeys();
+        if (count === knownCount) return;
+        knownCount = count;
+        console.log("New starknet* key detected on window, scanning again.");
         store._refreshInjectedWallets();
       }, INJECTED_WALLET_POLL_MS);
 
       return () => {
-        checks.forEach(cancel => cancel());
+        cancelled = true;
         clearInterval(intervalId);
         unsubscribe();
       }
@@ -226,46 +179,22 @@ export default function SelectWallet() {
                 align='stretch'
               >
                 {
-                  walletList.map((wallet: ValidWallet, index: number) => {
-                    const iconW: string = typeof (wallet.wallet.icon) == "string" ? wallet.wallet.icon : wallet.wallet.icon;
-                    return <Fragment key={wallet.wallet.name}>
-                      {wallet.isValid === undefined ? <>
-                        <Button id={"wId" + index.toString()}
-                          fontSize='lg'
-                          fontWeight='bold'
-                          variant="surface"
-                          disabled={true}
-                        >
-                          <Image src={iconW} width={30} />
-                          {wallet.wallet.name + ' ' + wallet.wallet.features["starknet:walletApi"].walletVersion + " checking..."}
-                        </Button>
-                      </> : wallet.isValid ? <>
-                        <Button id={"wId" + index.toString()}
-                          // backgroundColor="gray.100"
-                          // color={"black"}
-                          variant="surface"
-                          fontSize='lg'
-                          fontWeight='bold'
-                          onClick={() => {
-                            handleSelectedWallet(wallet.wallet);
-                          }} >
-                          <Image src={iconW} width={30} />
-                          {wallet.wallet.name + ' ' + wallet.wallet.features["starknet:walletApi"].walletVersion}
-                        </Button>
-                      </> : <>
-                        <Button id={"wId" + index.toString()}
-                          fontSize='lg'
-                          fontWeight='bold'
-                          variant="surface"
-
-                          backgroundColor="orange"
-                          disabled={true}
-                        >
-                          <Image src={iconW} width={30} />
-                          {wallet.wallet.name + ' ' + wallet.wallet.features["starknet:walletApi"].walletVersion + " not compatible!"}
-                        </Button>
-                      </>}
-                    </Fragment>
+                  // The store lists the newest wallet first (get-starknet-discovery 6.0.6): reverse it so that new wallets are added at the bottom and no button moves under the cursor.
+                  [...wallets].reverse().map((wallet: WalletWithStarknetFeatures, index: number) => {
+                    const isValid = verdicts.get(wallet); // undefined while the check is running
+                    const status = isValid === undefined ? " checking..." : isValid ? "" : " not compatible!";
+                    return <Button key={wallet.name} id={"wId" + index.toString()}
+                      variant="surface"
+                      fontSize='lg'
+                      fontWeight='bold'
+                      backgroundColor={isValid === false ? "orange" : undefined}
+                      disabled={!isValid}
+                      onClick={() => {
+                        handleSelectedWallet(wallet);
+                      }} >
+                      <Image src={wallet.icon} width={30} />
+                      {wallet.name + ' ' + wallet.features["starknet:walletApi"].walletVersion + status}
+                    </Button>
                   })
                 }
               </VStack>

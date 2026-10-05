@@ -20,6 +20,20 @@ type ValidWallet = {
   isValid: boolean;
 }
 
+// Fields required on a window.starknet* object to be taken for a wallet (same check as get-starknet-discovery, injected-wallet.ts).
+const INJECTED_WALLET_FIELDS = ["id", "name", "version", "icon", "request", "on", "off"];
+const INJECTED_WALLET_POLL_MS = 250;
+
+// Keys of window holding a complete injected wallet (window.starknet, window.starknet_braavos, ...).
+function listInjectedWalletKeys(): string[] {
+  return Object.getOwnPropertyNames(window).filter((key: string) => {
+    if (!key.startsWith("starknet")) return false;
+    const candidate = (window as Record<string, any>)[key];
+    return typeof candidate === "object" && candidate !== null
+      && INJECTED_WALLET_FIELDS.every(field => field in candidate);
+  });
+}
+
 async function checkCompatibility(myWallet: WalletWithStarknetFeatures) {
   let isCompatible: boolean = false;
   try {
@@ -110,8 +124,21 @@ export default function SelectWallet() {
 
       onWalletsChange(store.getWallets());
       const unsubscribe = store.subscribe(onWalletsChange);
+
+      // The store scans window.starknet* only once, at creation, and emits nothing when a wallet is injected later.
+      // Poll for new keys and ask the store to scan again; a refresh re-attaches listeners on every injected wallet, so only refresh on a new key.
+      const knownKeys = new Set<string>(listInjectedWalletKeys()); // already scanned by createStore()
+      const intervalId = setInterval(() => {
+        const newKeys = listInjectedWalletKeys().filter(key => !knownKeys.has(key));
+        if (newKeys.length === 0) return;
+        newKeys.forEach(key => knownKeys.add(key));
+        console.log("New injected wallet detected:", newKeys);
+        store._refreshInjectedWallets();
+      }, INJECTED_WALLET_POLL_MS);
+
       return () => {
         cancelled = true;
+        clearInterval(intervalId);
         unsubscribe();
       }
     },

@@ -17,7 +17,56 @@ import type {
 
 type ValidWallet = {
   wallet: WalletWithStarknetFeatures;
-  isValid: boolean;
+  isValid: boolean | undefined; // undefined while the compatibility check is running
+}
+
+const PERMISSIONS_RETRY_MS = 3000;
+const PERMISSIONS_MAX_ATTEMPTS = 3;
+
+// Asks the wallet for its permissions to find out whether it speaks the Wallet API, and reports the verdict through onVerdict.
+// An extension still starting up may leave the request unanswered: it is sent again every PERMISSIONS_RETRY_MS, up to PERMISSIONS_MAX_ATTEMPTS times.
+// The first answer wins (a rejection means "not compatible"). If nothing answers, the verdict is "not compatible", and a late answer still overrides it.
+// Returns a function that cancels the check.
+function startCompatibilityCheck(
+  wallet: WalletWithStarknetFeatures,
+  onVerdict: (isValid: boolean) => void
+): () => void {
+  const startTime = performance.now();
+  const elapsed = () => Math.round(performance.now() - startTime) + " ms";
+  let attempts = 0;
+  let answered = false;
+  let cancelled = false;
+  let timerId: ReturnType<typeof setTimeout> | undefined;
+
+  const answer = (isValid: boolean, detail: unknown = "") => {
+    if (answered || cancelled) return;
+    answered = true;
+    clearTimeout(timerId);
+    console.log("Wallet", wallet.name, isValid ? "is compatible" : "is NOT compatible", "(answer after " + elapsed() + ")", detail);
+    onVerdict(isValid);
+  };
+
+  const sendRequest = () => {
+    attempts += 1;
+    console.log("Wallet", wallet.name, "- wallet_getPermissions, attempt", attempts);
+    Promise.resolve()
+      .then(() => wallet.features["starknet:walletApi"].request({ type: "wallet_getPermissions" }))
+      .then(() => answer(true), (err: unknown) => answer(false, err));
+    timerId = setTimeout(() => {
+      if (attempts < PERMISSIONS_MAX_ATTEMPTS) {
+        sendRequest();
+      } else {
+        console.log("Wallet", wallet.name, "- no answer after", elapsed());
+        onVerdict(false);
+      }
+    }, PERMISSIONS_RETRY_MS);
+  };
+
+  sendRequest();
+  return () => {
+    cancelled = true;
+    clearTimeout(timerId);
+  };
 }
 
 // Fields required on a window.starknet* object to be taken for a wallet (same check as get-starknet-discovery, injected-wallet.ts).
@@ -32,18 +81,6 @@ function listInjectedWalletKeys(): string[] {
     return typeof candidate === "object" && candidate !== null
       && INJECTED_WALLET_FIELDS.every(field => field in candidate);
   });
-}
-
-async function checkCompatibility(myWallet: WalletWithStarknetFeatures) {
-  let isCompatible: boolean = false;
-  try {
-
-    const _permissions = (await myWallet.features["starknet:walletApi"].request({ type: "wallet_getPermissions" })) as string[];
-    isCompatible = true;
-  } catch {
-    (err: any) => { console.log("Wallet compatibility failed.\n", err) };
-  }
-  return isCompatible;
 }
 
 export default function SelectWallet() {
@@ -97,28 +134,29 @@ export default function SelectWallet() {
     () => {
       console.log("Launch select wallet window.");
       const store: Store = createStore();
-      const testedWallets = new Set<WalletWithStarknetFeatures>(); // wallet objects whose compatibility test was launched
-      let currentWallets: readonly WalletWithStarknetFeatures[] = [];
-      let cancelled = false;
+      const checks = new Map<WalletWithStarknetFeatures, () => void>(); // running compatibility checks, with their cancel function
 
       const onWalletsChange = (wallets: readonly WalletWithStarknetFeatures[]) => {
         console.log("List of starknet wallets", wallets);
-        currentWallets = wallets;
-        // Drop the wallets that left the store.
-        setWalletList(prev => prev.filter(item => wallets.some(w => w.name === item.wallet.name)));
-        wallets.filter(w => !testedWallets.has(w)).forEach(async (wallet) => {
-          testedWallets.add(wallet);
-          const isValid = await checkCompatibility(wallet);
-          // Ignore a result arriving after unmount, or for a wallet object the store has since replaced.
-          if (cancelled || !currentWallets.includes(wallet)) return;
-          const newItem: ValidWallet = { wallet: wallet, isValid: isValid };
-          setWalletList(prev => {
-            const sameNameIndex = prev.findIndex(item => item.wallet.name === wallet.name);
-            // New wallets go to the bottom of the list; a replaced wallet keeps its place.
-            return sameNameIndex === -1
-              ? [...prev, newItem]
-              : prev.map((item, index) => index === sameNameIndex ? newItem : item);
-          });
+        // Drop the wallets that left the store; new wallets go to the bottom of the list, still unchecked.
+        // A replaced wallet keeps its place until its replacement has a verdict.
+        setWalletList(prev => {
+          const kept = prev.filter(item => wallets.some(w => w.name === item.wallet.name));
+          const added = wallets
+            .filter(w => !kept.some(item => item.wallet.name === w.name))
+            .map((w): ValidWallet => ({ wallet: w, isValid: undefined }));
+          return [...kept, ...added];
+        });
+        // Cancel the checks of wallet objects that left the store, start those of the new ones.
+        checks.forEach((cancel, wallet) => {
+          if (wallets.includes(wallet)) return;
+          cancel();
+          checks.delete(wallet);
+        });
+        wallets.filter(w => !checks.has(w)).forEach(wallet => {
+          checks.set(wallet, startCompatibilityCheck(wallet, isValid => {
+            setWalletList(prev => prev.map(item => item.wallet.name === wallet.name ? { wallet: wallet, isValid: isValid } : item));
+          }));
         });
       };
 
@@ -137,7 +175,7 @@ export default function SelectWallet() {
       }, INJECTED_WALLET_POLL_MS);
 
       return () => {
-        cancelled = true;
+        checks.forEach(cancel => cancel());
         clearInterval(intervalId);
         unsubscribe();
       }
@@ -191,7 +229,17 @@ export default function SelectWallet() {
                   walletList.map((wallet: ValidWallet, index: number) => {
                     const iconW: string = typeof (wallet.wallet.icon) == "string" ? wallet.wallet.icon : wallet.wallet.icon;
                     return <Fragment key={wallet.wallet.name}>
-                      {wallet.isValid ? <>
+                      {wallet.isValid === undefined ? <>
+                        <Button id={"wId" + index.toString()}
+                          fontSize='lg'
+                          fontWeight='bold'
+                          variant="surface"
+                          disabled={true}
+                        >
+                          <Image src={iconW} width={30} />
+                          {wallet.wallet.name + ' ' + wallet.wallet.features["starknet:walletApi"].walletVersion + " checking..."}
+                        </Button>
+                      </> : wallet.isValid ? <>
                         <Button id={"wId" + index.toString()}
                           // backgroundColor="gray.100"
                           // color={"black"}

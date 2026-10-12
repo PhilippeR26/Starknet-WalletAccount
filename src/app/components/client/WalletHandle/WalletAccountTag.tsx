@@ -4,7 +4,7 @@ import { Tooltip } from "@/components/ui/tooltip"
 import { useEffect } from "react";
 import { useState } from "react";
 import styles from '../../../page.module.css'
-import { CairoBytes31, Contract, WalletAccount, json, num, validateAndParseAddress, type TypedData, constants as SNconstants, stark, ec } from "starknet";
+import { CairoBytes31, Contract, json, num, validateAndParseAddress, type TypedData, constants as SNconstants, stark, ec } from "starknet";
 import { rejectContract } from "@/app/contracts/reject.sierra.json";
 import { RejectContractAddress, accountClass, myFrontendProviders } from "@/utils/constants";
 import { useFrontendProvider } from "../provider/providerContext";
@@ -259,7 +259,7 @@ export default function WalletAccountTag() {
                     ) : null}
                 </>
                 <>
-                    <p>Read with a WalletAccount (that uses my own frontend provider) :</p>
+                    <p>Read with a WalletAccountV6 (that uses my own frontend provider) :</p>
                     <Button
                         variant="surface"
                         onClick={() => {
@@ -274,7 +274,7 @@ export default function WalletAccountTag() {
                     ) : null}
                 </>
                 <>
-                    <p>Invoke with a WalletAccount :</p>
+                    <p>Invoke with a WalletAccountV6 :</p>
                     <Button
                         variant="surface"
                         onClick={() => {
@@ -290,7 +290,7 @@ export default function WalletAccountTag() {
                     ) : null}
                 </>
                 <>
-                    <p>Declare with a WalletAccount :</p>
+                    <p>Declare with a WalletAccountV6 :</p>
                     <Tooltip
                         openDelay={400}
                         showArrow
@@ -308,7 +308,7 @@ export default function WalletAccountTag() {
 
                 </>
                 <>
-                    <p>Deploy contract with a WalletAccount :</p>
+                    <p>Deploy contract with a WalletAccountV6 :</p>
                     <Button
                         variant="surface"
                         onClick={() => {
@@ -323,7 +323,7 @@ export default function WalletAccountTag() {
                     ) : null}
                 </>
                 <>
-                    <p>Deploy account with a WalletAccount :</p>
+                    <p>Deploy account with a WalletAccountV6 :</p>
                     <Button
                         variant="surface"
                         onClick={() => {
@@ -338,7 +338,7 @@ export default function WalletAccountTag() {
                     ) : null}
                 </>
                 <>
-                    <p>Sign message with a WalletAccount :</p>
+                    <p>Sign message with a WalletAccountV6 :</p>
                     <Button
                         variant="surface"
                         onClick={() => {

@@ -61,7 +61,7 @@ export default function Page() {
     <Provider>
       <div>
         <p className={styles.bgText}>
-          Test WalletAccountV6 of Starknet.js v11.0.1 <br></br>
+          Test WalletAccountV6 of Starknet.js v11.2.0 <br></br>
           with get-starknet v6.0.6 and Wallet API v0.10.4
         </p>
         <Center>
@@ -104,8 +104,8 @@ export default function Page() {
                 <Tabs.List bg="ink.subtle" borderWidth="1px" borderColor="ink.emphasized" rounded="l3" p="1.5" gap="1" >
                   <Tabs.Trigger {...tabStyle} value="blockChain">BlockChain</Tabs.Trigger>
                   <Tabs.Trigger {...tabStyle} value="walletAPI">Wallet API</Tabs.Trigger>
-                  <Tabs.Trigger {...tabStyle} value="walletAccount">WalletAccount</Tabs.Trigger>
-                  <Tabs.Trigger {...tabStyle} value="walletAccountV6">WalletAccountV6</Tabs.Trigger>
+                  <Tabs.Trigger {...tabStyle} value="walletAccount">WalletAccountV6</Tabs.Trigger>
+                  <Tabs.Trigger {...tabStyle} value="walletAccountV6">WalletAccountV6 STRK20</Tabs.Trigger>
                 </Tabs.List>
                 <Tabs.Content value="blockChain">
                   <Box bg='pink.200' color='black' borderWidth='1px' borderRadius='md'>

@@ -4,7 +4,7 @@ import { Provider } from "@/components/ui/provider"
 
 export const metadata: Metadata = {
   title: 'Starknet-WalletAccount',
-  description: 'test of WalletAccount for Starknet',
+  description: 'test of WalletAccountV6 for Starknet',
   icons: {
     icon: "./favicon.ico",
   },

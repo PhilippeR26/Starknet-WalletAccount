@@ -15,8 +15,8 @@ export async function callRequest(call: Omit<WALLET_API.RpcMessage, "result">): 
     try {
         resp = await (myWallet.features["starknet:walletApi"] as any).request(call);
 
-    } catch {
-        (err: any) => { console.log("Wallet request", call.type, " failed.\n", err) };
+    } catch (err: any) {
+        console.log("Wallet request", call.type, " failed.\n", err);
         crash = true;
     }
     console.log("request", call.type, "resp =", resp, ", crash =", crash);

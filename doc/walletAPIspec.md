@@ -1,5 +1,6 @@
 # Starknet Wallet API documentation
 
+> version : v1.5.3 06/november/2026, add the "Optional parameters" section : the wallet handles a member set to `undefined` exactly like a missing member, at any level of the request.  
 > version : v1.5.2 18/september/2026, in accordance with the officially released spec 0.10.4 (no longer a release candidate): `wallet_strk20Balances` accepts an optional `valid_until`, the requested expiry of the balance-read authorization, bump minimum requirements to get-starknet v6.0.6 and Starknet.js v11.0.1.  
 > version : v1.5.1 17/august/2026, in accordance with spec 0.10.4-rc.1, rename STRK20 sub-accounts to shadow accounts (`wallet_strk20ShadowAccountCommitment`, `shadow_account_invoke` action, `STRK20_SHADOW_ACCOUNT_INVOKE_ACTION` type), distinguish the versions of `wallet_supportedSpecs` and `wallet_supportedWalletApi`, bump minimum requirements to get-starknet v6.0.4 and Starknet.js v10.7.0.  
 > version : v1.5.0 31/july/2026, in accordance with spec 0.10.4-rc.0, add STRK20 sub-accounts (wallet_strk20SubaccountCommitment, `subaccount_invoke` action, STRK20_DAPP_NAME & STRK20_COLLECT_POLICY types), clarify who adds the STRK20 fee action, bump minimum requirements to get-starknet v6.0.3 and Starknet.js v10.6.0.  
@@ -43,6 +44,7 @@ This document is a documentation of the new interface between DAPPS and Starknet
 - [STRK20 Privacy Protocol types :](#strk20-privacy-protocol-types-)
 - [Behavior summary table :](#behavior-summary-table-)
 - [Wallet API version :](#wallet-api-version-)
+- [Optional parameters :](#optional-parameters-)
 
 
 # Connect the wallet :
@@ -1172,3 +1174,14 @@ interface API_VERSION_NOT_SUPPORTED {
   message: 'An error occurred (API_VERSION_NOT_SUPPORTED)';
 }
 ```
+
+# Optional parameters :
+
+A parameter shown with a `?` is optional : the DAPP can omit it. In JavaScript, the DAPP can also send it with the value `undefined`. Example : `{ tokens: [], valid_until: undefined }`. Both forms mean the same thing : reading a missing member also gives `undefined`, and `JSON.stringify` removes a member set to `undefined`.
+
+The wallet must handle a member set to `undefined` exactly like a missing member. This applies at any level of the request :
+- `params` itself, for a command without required parameter.
+- a parameter, like `valid_until` of `wallet_strk20Balances`.
+- a nested field, like the `calldata` of a call or the `name` of a typed data `domain`.
+
+The wallet must not reject such a request with an INVALID_REQUEST_PAYLOAD error.

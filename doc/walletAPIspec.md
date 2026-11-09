@@ -1,5 +1,6 @@
 # Starknet Wallet API documentation
 
+> version : v1.6.0 09/november/2026, in accordance with spec 0.10.5-rc.0, add the STRK20 `register` action (`STRK20_REGISTER_ACTION` type) : the DAPP requests the registration of the account in the privacy pool with `wallet_strk20InvokeTransaction` or `wallet_strk20PrepareInvoke`, instead of relying on a transparent registration by the wallet ; the wallet adds no fee action to a `register` request. Typing this action needs the next releases of get-starknet and Starknet.js, aligned on spec 0.10.5.  
 > version : v1.5.3 06/november/2026, add the "Optional parameters" section : the wallet handles a member set to `undefined` exactly like a missing member, at any level of the request.  
 > version : v1.5.2 18/september/2026, in accordance with the officially released spec 0.10.4 (no longer a release candidate): `wallet_strk20Balances` accepts an optional `valid_until`, the requested expiry of the balance-read authorization, bump minimum requirements to get-starknet v6.0.6 and Starknet.js v11.0.1.  
 > version : v1.5.1 17/august/2026, in accordance with spec 0.10.4-rc.1, rename STRK20 sub-accounts to shadow accounts (`wallet_strk20ShadowAccountCommitment`, `shadow_account_invoke` action, `STRK20_SHADOW_ACCOUNT_INVOKE_ACTION` type), distinguish the versions of `wallet_supportedSpecs` and `wallet_supportedWalletApi`, bump minimum requirements to get-starknet v6.0.4 and Starknet.js v10.7.0.  
@@ -70,7 +71,7 @@ const response = await walletV6.addInvokeTransaction(myWallet, { calls: [myCallA
 ```
 
 > [!WARNING]
-> **get-starknet V5 is not compatible with wallet API spec 0.10.4.** Use get-starknet V6.0.6 or later.
+> **get-starknet V5 is not compatible with wallet API spec 0.10.5.** Use get-starknet V6.0.6 or later.
 
 > [!TIP]
 > Starknet.js v11.0.1 proposes also the `WalletAccountV6` class to code at a higher and more comfortable level.
@@ -731,7 +732,7 @@ response : string[]
 ```
 ### Behavior :
 - The response is an array of strings. Each string is the semver of a supported Starknet JSON-RPC spec version, following full semantic versioning (major.minor.patch, the patch part being optional). A pre-release suffix is accepted here ; examples : `0.10.2`, `0.10.4-rc.1`.
-- These are the versions of the **full node** JSON-RPC spec, distinct from the Wallet API versions of `wallet_supportedWalletApi`. Both specs share one version number in the same repository, but from v0.10.4 onward each release changes only one of them : the releases 0.10.3 and 0.10.4 changed the Wallet API only, so the current full node spec is still `0.10.2`.
+- These are the versions of the **full node** JSON-RPC spec, distinct from the Wallet API versions of `wallet_supportedWalletApi`. Both specs share one version number in the same repository, but from v0.10.4 onward each release changes only one of them : the releases 0.10.3, 0.10.4 and 0.10.5-rc.0 left the full node spec unchanged, so it is still `0.10.2`.
 ### Example :
 ```typescript
 const resp = await walletV6.supportedSpecs(myWallet);
@@ -748,18 +749,18 @@ No parameters.
 response : string[]
 ```
 ### Behavior :
-- The response is an array of strings: the full semver of the latest Wallet API version supported by the wallet, plus any past supported versions. Each string follows full semantic versioning (major.minor.patch) ; example : `0.10.4`.
-- Contrary to `wallet_supportedSpecs`, a pre-release suffix is **not** accepted here : a wallet implementing the spec 0.10.4-rc.1 answers `0.10.4`.
+- The response is an array of strings: the full semver of the latest Wallet API version supported by the wallet, plus any past supported versions. Each string follows full semantic versioning (major.minor.patch) ; example : `0.10.5`.
+- Contrary to `wallet_supportedSpecs`, a pre-release suffix is **not** accepted here : a wallet implementing the spec 0.10.5-rc.0 answers `0.10.5`.
 - These versions refer to Wallet API releases only : the wallet bumps them only when a release changes the Wallet API spec, whatever it answers to `wallet_supportedSpecs`.
 ### Example :
 ```typescript
 const resp = await walletV6.supportedWalletApi(myWallet);
-// resp = ["0.7.0","0.10.4"]
+// resp = ["0.7.0","0.10.5"]
 ```
 
 ## wallet_strk20InvokeTransaction :
 ### Usage :
-Execute one or more STRK20 privacy protocol actions in a single transaction. The wallet builds the calldata, generates the ZK proof and submits the transaction. This is the all-in-one alternative to the `wallet_strk20PrepareInvoke` + `wallet_addInvokeTransaction` two-step flow.
+Execute one or more STRK20 privacy protocol actions in a single transaction. The wallet builds the calldata, generates the ZK proof and submits the transaction. This is the all-in-one alternative to the `wallet_strk20PrepareInvoke` + `wallet_addInvokeTransaction` two-step flow. It can also register the account in the privacy pool, with a single `register` action.
 > [!WARNING]
 > ZK proof generation is required. This call can take significantly longer than `wallet_addInvokeTransaction`. The dApp must tolerate long-running calls.
 ### Input :
@@ -774,9 +775,10 @@ response : { transaction_hash: string }
 ```
 ### Behavior :
 - The wallet shows an approval UI for the privacy actions. If the user approves, the wallet generates the ZK proof, submits the transaction and returns the transaction hash.
-- As the wallet is the submitter, it adds the fee action itself : a `withdraw` action covering the paymaster/relayer fee, on top of the actions provided by the DAPP. So the fee is taken from the private balance of the user.
+- As the wallet is the submitter, it adds the fee action itself : a `withdraw` action covering the paymaster fee, on top of the actions provided by the DAPP. So the fee is taken from the private balance of the user. Exception : a `register` request gets no fee action, as an account not registered yet has no private balance ; the spec does not define how this fee is paid.
+- A `register` action registers the current account in the privacy pool that the wallet uses on the current network. It must be the only action of the request, and the account must not be registered yet ; otherwise INVALID_REQUEST_PAYLOAD is returned.
 - If the number of open notes filled by `invoke` actions does not match the number of open notes created by `transfer` actions with `"OPEN"` as amount, INVALID_REQUEST_PAYLOAD is returned (before the proof generation).
-- Registration into the privacy pool is handled transparently by the wallet. If the account is not registered :
+- A request without `register` action needs an account already registered in the privacy pool. Otherwise :
 ```typescript
 interface NOT_REGISTERED {
   code: 118;
@@ -830,6 +832,15 @@ const resp = await walletV6.strk20InvokeTransaction(myWallet, [
 ]);
 // resp = { transaction_hash: "0x..." }
 ```
+### Example of registration :
+```typescript
+// Register the current account in the privacy pool, once, before using the other STRK20 commands.
+// The `register` action must be alone in its request.
+const resp = await walletV6.strk20InvokeTransaction(myWallet, [{ type: "register" }]);
+// resp = { transaction_hash: "0x..." }
+```
+> [!NOTE]
+> Typing the `register` action needs the next releases of get-starknet and Starknet.js, aligned on spec 0.10.5 (not yet published).
 ### Example with a shadow account :
 ```typescript
 const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
@@ -873,6 +884,8 @@ response : STRK20_CALL_AND_PROOF
 ### Behavior :
 - Returns the assembled `call` and its `proof`. Pass both directly to `wallet_addInvokeTransaction` to submit the transaction.
 - As the DAPP is the submitter, the wallet adds **no** fee withdrawal action : the DAPP submits the transaction and pays its fee (with its own paymaster or sponsor account).
+- A `register` action follows the same rules as with `wallet_strk20InvokeTransaction` : alone in its request, for an account not registered yet ; otherwise INVALID_REQUEST_PAYLOAD. A request without `register` action needs a registered account ; otherwise NOT_REGISTERED.
+- Preparing a `register` action registers nothing : the account is registered by the transaction that the DAPP submits with the returned call.
 - If the number of open notes filled by `invoke` actions does not match the number of open notes created by `transfer` actions with `"OPEN"` as amount, INVALID_REQUEST_PAYLOAD is returned (before the proof generation).
 - When `simulate: true`, the proof fields (`data`, `output`, `proof_facts`) are present but empty — the returned call cannot be submitted on-chain.
 - Errors are the same as `wallet_strk20InvokeTransaction` (NOT_REGISTERED, INSUFFICIENT_PRIVATE_BALANCE, PRIVACY_LEAK, INVALID_REQUEST_PAYLOAD, USER_REFUSED_OP, API_VERSION_NOT_SUPPORTED, UNKNOWN_ERROR).
@@ -918,7 +931,7 @@ response : STRK20_BALANCE_ENTRY[]
 - If `tokens` is an empty array, returns one entry per shielded token the wallet currently holds in the privacy pool (order unspecified).
 - Reading a private balance requires the user approval, and this approval is time limited. `valid_until` requests when it expires : inside that window, the next reads can be answered without asking the user again.
 - `valid_until` is a request : the wallet stays free to grant a shorter window, and applies its own default one when the parameter is omitted.
-- If the account is not registered in the STRK20 privacy protocol :
+- If the account is not registered in the STRK20 privacy protocol (to register it, see the [registration example](#example-of-registration-)) :
 ```typescript
 interface NOT_REGISTERED {
   code: 118;
@@ -981,7 +994,7 @@ response : string // a felt
 - If `nonce` is provided, returns the full commitment of this single shadow account : `hash(partial_commitment, nonce)`. Each nonce selects a distinct and deterministic shadow account for this user + DAPP.
 - If `nonce` is omitted, returns the partial (nonce independent) commitment : `hash(identity_key, dapp_name)`, where `identity_key` is derived from the user, its viewing key, and the address of the shadow account anonymizer. This partial commitment is shared by all the shadow accounts that the user derives for this DAPP ; it can be published once, to let a DAPP recognize all the shadow accounts of a user, without disclosing any individual nonce.
 - The commitment is not the address of the shadow account : it's the salt used at its deployment. The address itself is not provided by the Wallet API.
-- If the account is not registered in the STRK20 privacy protocol :
+- If the account is not registered in the STRK20 privacy protocol (to register it, see the [registration example](#example-of-registration-)) :
 ```typescript
 interface NOT_REGISTERED {
   code: 118;
@@ -1022,7 +1035,7 @@ const resp2 = await walletV6.strk20ShadowAccountCommitment(myWallet, "myDapp");
 
 # STRK20 Privacy Protocol types :
 
-The STRK20 privacy protocol enables private token operations using ZK proofs. It supports five action types (deposit, withdraw, transfer, invoke, shadow_account_invoke). All amounts are expressed in the token's smallest unit.
+The STRK20 privacy protocol enables private token operations using ZK proofs. It supports six action types (register, deposit, withdraw, transfer, invoke, shadow_account_invoke). All amounts are expressed in the token's smallest unit.
 
 ```typescript
 // ZK proof produced by wallet_strk20PrepareInvoke
@@ -1047,6 +1060,13 @@ type STRK20_CALL_AND_PROOF = {
 type STRK20_CALLDATA_PLACEHOLDER = string
 
 type STRK20_CALLDATA_ITEM = string | STRK20_CALLDATA_PLACEHOLDER
+
+// Register the current account in the STRK20 privacy pool that the wallet uses on the current network.
+// `type` is the only member : the DAPP chooses neither the account nor the pool.
+// Must be the only action of the request. An already registered account gets INVALID_REQUEST_PAYLOAD.
+type STRK20_REGISTER_ACTION = {
+  type: 'register'
+}
 
 // Deposit public tokens from the user's account into the privacy pool (always to self)
 type STRK20_DEPOSIT_ACTION = {
@@ -1112,6 +1132,7 @@ type INVOKE_CALL = {
 }
 
 type STRK20_ACTION =
+  | STRK20_REGISTER_ACTION
   | STRK20_DEPOSIT_ACTION
   | STRK20_WITHDRAW_ACTION
   | STRK20_TRANSFER_ACTION

@@ -1,5 +1,6 @@
 # Starknet Wallet API documentation
 
+> version : v1.6.1 16/november/2026, in accordance with the officially released spec 0.10.5, bump minimum requirements to get-starknet v6.1.4 and Starknet.js v11.7.0.  
 > version : v1.6.0 09/november/2026, in accordance with spec 0.10.5-rc.0, add the STRK20 `register` action (`STRK20_REGISTER_ACTION` type) : the DAPP requests the registration of the account in the privacy pool with `wallet_strk20InvokeTransaction` or `wallet_strk20PrepareInvoke`, instead of relying on a transparent registration by the wallet ; the wallet adds no fee action to a `register` request. Typing this action needs the next releases of get-starknet and Starknet.js, aligned on spec 0.10.5.  
 > version : v1.5.3 06/november/2026, add the "Optional parameters" section : the wallet handles a member set to `undefined` exactly like a missing member, at any level of the request.  
 > version : v1.5.2 18/september/2026, in accordance with the officially released spec 0.10.4 (no longer a release candidate): `wallet_strk20Balances` accepts an optional `valid_until`, the requested expiry of the balance-read authorization, bump minimum requirements to get-starknet v6.0.6 and Starknet.js v11.0.1.  
@@ -51,8 +52,8 @@ This document is a documentation of the new interface between DAPPS and Starknet
 # Connect the wallet :
 You have first to select which wallet to use. With get-starknet v6 discovery :
 ```typescript
-import { createStore, type Store } from '@starknet-io/get-starknet-discovery'; // v6.0.6 min
-import type { WalletWithStarknetFeatures } from '@starknet-io/get-starknet-wallet-standard/features'; // v6.0.6
+import { createStore, type Store } from '@starknet-io/get-starknet-discovery'; // v6.1.4 min
+import type { WalletWithStarknetFeatures } from '@starknet-io/get-starknet-wallet-standard/features'; // v6.1.4
 
 const store: Store = createStore();
 const walletsList: WalletWithStarknetFeatures[] = store.getWallets();
@@ -60,9 +61,9 @@ const walletsList: WalletWithStarknetFeatures[] = store.getWallets();
 const myWallet: WalletWithStarknetFeatures = walletsList[1]; // example: 2nd wallet
 ```
 
-Once you have `myWallet`, you can call any wallet API command via the `walletV6` helpers from Starknet.js v11.0.1 :
+Once you have `myWallet`, you can call any wallet API command via the `walletV6` helpers from Starknet.js v11.7.0 :
 ```typescript
-import { walletV6, type Call } from 'starknet'; // v11.0.1 min
+import { walletV6, type Call } from 'starknet'; // v11.7.0 min
 
 const myCall: Call = myContract.populate("increase_balance", { amount: 200 });
 // Convert starknet.js Call (camelCase) to wallet API Call (snake_case):
@@ -71,10 +72,10 @@ const response = await walletV6.addInvokeTransaction(myWallet, { calls: [myCallA
 ```
 
 > [!WARNING]
-> **get-starknet V5 is not compatible with wallet API spec 0.10.5.** Use get-starknet V6.0.6 or later.
+> **get-starknet V5 is not compatible with wallet API spec 0.10.5.** Use get-starknet V6.1.4 or later.
 
 > [!TIP]
-> Starknet.js v11.0.1 proposes also the `WalletAccountV6` class to code at a higher and more comfortable level.
+> Starknet.js v11.7.0 proposes also the `WalletAccountV6` class to code at a higher and more comfortable level.
 
 # Subscription to events :
 With get-starknet v6, both account and network changes are delivered through a single `change` event. The callback receives a `StandardEventsChangeProperties` object whose `accounts` array reflects the new wallet state.
@@ -85,7 +86,7 @@ At each change of account, only the address is updated.
 ### Subscription :
 ```typescript
 import type { StandardEventsChangeProperties } from '@wallet-standard/features';
-import { walletV6 } from 'starknet'; // v11.0.1 min
+import { walletV6 } from 'starknet'; // v11.7.0 min
 
 const handleChange = (change: StandardEventsChangeProperties) => {
     if (change.accounts?.length) {
@@ -105,7 +106,7 @@ unsubscribe(); // call the function returned by subscribeWalletEvent to stop rec
 ```
 
 # Available commands : 
-All these commands can be called via the `walletV6` helpers from Starknet.js v11.0.1. The function name mirrors the command name in camelCase (exception: `wallet_signTypedData` is wrapped as `signMessage`) :
+All these commands can be called via the `walletV6` helpers from Starknet.js v11.7.0. The function name mirrors the command name in camelCase (exception: `wallet_signTypedData` is wrapped as `signMessage`) :
 
 > [!NOTE]
 > **Spec vs library naming**: The official JSON-RPC spec uses snake_case for all parameter names. `@starknet-io/types-js` and Starknet.js generally follow the same naming, with one exception: the spec parameter `invoke_transaction` in `wallet_addInvokeTransaction` is mapped to `calls` in `@starknet-io/types-js`. Input sections below use spec parameter names; code examples use the types-js/Starknet.js names.
@@ -514,7 +515,7 @@ const resp = await walletV6.addInvokeTransaction(myWallet, { calls: [myCallAPI] 
 ### High-level example (WalletAccountV6) :
 `WalletAccountV6.execute()` accepts starknet.js `Call` directly — the conversion to wallet API format is handled internally :
 ```typescript
-import { WalletAccountV6, type Call } from 'starknet'; // v11.0.1 min
+import { WalletAccountV6, type Call } from 'starknet'; // v11.7.0 min
 
 // myWalletAccount is a WalletAccountV6 instance
 const myCall: Call = myContract.populate("increase_balance", { amount: 200 });
@@ -732,7 +733,7 @@ response : string[]
 ```
 ### Behavior :
 - The response is an array of strings. Each string is the semver of a supported Starknet JSON-RPC spec version, following full semantic versioning (major.minor.patch, the patch part being optional). A pre-release suffix is accepted here ; examples : `0.10.2`, `0.10.4-rc.1`.
-- These are the versions of the **full node** JSON-RPC spec, distinct from the Wallet API versions of `wallet_supportedWalletApi`. Both specs share one version number in the same repository, but from v0.10.4 onward each release changes only one of them : the releases 0.10.3, 0.10.4 and 0.10.5-rc.0 left the full node spec unchanged, so it is still `0.10.2`.
+- These are the versions of the **full node** JSON-RPC spec, distinct from the Wallet API versions of `wallet_supportedWalletApi`. Both specs share one version number in the same repository, but from v0.10.4 onward each release changes only one of them : the releases 0.10.3, 0.10.4 and 0.10.5 left the full node spec unchanged, so it is still `0.10.2`.
 ### Example :
 ```typescript
 const resp = await walletV6.supportedSpecs(myWallet);
@@ -839,8 +840,6 @@ const resp = await walletV6.strk20InvokeTransaction(myWallet, [
 const resp = await walletV6.strk20InvokeTransaction(myWallet, [{ type: "register" }]);
 // resp = { transaction_hash: "0x..." }
 ```
-> [!NOTE]
-> Typing the `register` action needs the next releases of get-starknet and Starknet.js, aligned on spec 0.10.5 (not yet published).
 ### Example with a shadow account :
 ```typescript
 const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";

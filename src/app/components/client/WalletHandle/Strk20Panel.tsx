@@ -28,8 +28,9 @@ import { DIALOG_BACKDROP, DIALOG_CONTENT, DIALOG_FOOTER, DIALOG_HEADER } from ".
 
 // Single-action builder (Block A). `invoke` is intentionally excluded: it is only
 // meaningful bundled with a `transfer "OPEN"` (+ `withdraw`), so it lives in the
-// multi-action examples (Block B), not here.
-type ActionType = "deposit" | "withdraw" | "transfer";
+// multi-action examples (Block B), not here. `register` (wallet API 0.10.5) has no
+// field and must be alone in its request, so it fits this single-action builder.
+type ActionType = "register" | "deposit" | "withdraw" | "transfer";
 
 // All token-manipulating actions are fixed to STRK (project decision).
 const TOKEN = constants.addrSTRK;
@@ -251,6 +252,8 @@ export default function Strk20Panel() {
 
   function describe(action: WALLET_API.STRK20_ACTION): string {
     switch (action.type) {
+      case "register":
+        return "register (no field)";
       case "deposit":
         return `deposit STRK amount=${action.amount}`;
       case "withdraw":
@@ -267,6 +270,9 @@ export default function Strk20Panel() {
 
   function buildAction(): WALLET_API.STRK20_ACTION {
     switch (actionType) {
+      case "register":
+        // `type` is the only member: the wallet picks the account and the pool.
+        return { type: "register" };
       case "deposit":
         // FELT amounts must be 0x-prefixed hex; the input holds a decimal string.
         return { type: "deposit", token: TOKEN, amount: num.toHex(amount) };
@@ -393,13 +399,52 @@ export default function Strk20Panel() {
     }
   }
 
+  // Fetch the receipt of a registration and report whether the transaction succeeded.
+  // No registration event is decoded here: the verdict relies on the execution status
+  // only. Returns a pass/fail verdict (never throws).
+  async function verifyAccepted(txHash: string): Promise<Verdict> {
+    try {
+      const provider = constants.myFrontendProviders[frontendProviderIndex];
+      if (!provider) {
+        return { ok: false, title: "Cannot verify (no provider)", rows: [{ label: "tx", value: shortHex(txHash) }] };
+      }
+      // Same long budget as verifyEcho: privacy-pool txs verify a proof on-chain.
+      const receipt: any = await provider.waitForTransaction(txHash, {
+        retries: 400,
+        retryInterval: 3000,
+      });
+      const r = receipt?.value ?? receipt;
+      const execution: string = r?.execution_status ?? "unknown";
+      const finality: string = r?.finality_status ?? "unknown";
+      const ok = execution === "SUCCEEDED";
+      return {
+        ok,
+        title: ok ? "Registration transaction succeeded" : `Registration transaction: ${execution}`,
+        rows: [
+          { label: "execution_status", value: execution, ok },
+          { label: "finality_status", value: finality },
+          { label: "tx", value: shortHex(txHash) },
+        ],
+      };
+    } catch (err: any) {
+      const msg = err?.message ?? String(err);
+      return {
+        ok: false,
+        title: `Could not fetch the receipt — ${msg}`,
+        rows: [{ label: "tx", value: shortHex(txHash) }],
+      };
+    }
+  }
+
   // Block A — single action.
   async function send(kind: "prepare" | "invoke") {
     if (recipientNeeded && !recipient) {
       show(`${actionType} (blocked)`, `Recipient is required for ${actionType}.`);
       return;
     }
-    await run(actionType, [buildAction()], kind, simulate);
+    // A submitted registration is checked on-chain (receipt execution status).
+    const verify = actionType === "register" ? verifyAccepted : undefined;
+    await run(actionType, [buildAction()], kind, simulate, verify);
   }
 
   // Block B, example 1 — deposit 5 STRK, then transfer a fixed 1 STRK back to self.
@@ -449,6 +494,16 @@ export default function Strk20Panel() {
       { type: "transfer", token: TOKEN, amount: "OPEN", recipient: connectedAddress },
     ];
     await run("example: OPEN mismatch (expected to fail)", actions, kind, simulateFlag);
+  }
+
+  // Block B, example 4 — `register` mixed with another action. Wallet API 0.10.5 requires
+  // `register` to be alone in its request: the wallet must answer INVALID_REQUEST_PAYLOAD.
+  async function runRegisterMixed(kind: "prepare" | "invoke", simulateFlag: boolean) {
+    const actions: WALLET_API.STRK20_ACTION[] = [
+      { type: "register" },
+      { type: "deposit", token: TOKEN, amount: num.toHex(ONE_STRK) },
+    ];
+    await run("example: register + deposit 1 STRK (expected to fail)", actions, kind, simulateFlag);
   }
 
   async function queryBalances(tokens: string[], validUntil?: number) {
@@ -502,6 +557,7 @@ export default function Strk20Panel() {
               value={actionType}
               onChange={(e) => setActionType(e.currentTarget.value as ActionType)}
             >
+              <option value="register">register</option>
               <option value="deposit">deposit</option>
               <option value="withdraw">withdraw</option>
               <option value="transfer">transfer</option>
@@ -510,10 +566,19 @@ export default function Strk20Panel() {
           </NativeSelect.Root>
         </Field.Root>
 
-        <Field.Root>
-          <Field.Label>Token (fixed)</Field.Label>
-          <Input {...FIELD_STYLE} value="STRK" readOnly />
-        </Field.Root>
+        {/* `register` has no field: an explanation replaces Token and Amount. */}
+        {actionType === "register" ? (
+          <Text fontSize="sm" color="gray.700">
+            register has no field: the wallet registers the connected account in its privacy
+            pool. It must be alone in its request; an already registered account gets
+            INVALID_REQUEST_PAYLOAD.
+          </Text>
+        ) : (
+          <>
+            <Field.Root>
+              <Field.Label>Token (fixed)</Field.Label>
+              <Input {...FIELD_STYLE} value="STRK" readOnly />
+            </Field.Root>
 
             <Field.Root>
               <Field.Label>Amount (smallest unit)</Field.Label>
@@ -524,6 +589,8 @@ export default function Strk20Panel() {
                 onChange={handleAmountChange}
               />
             </Field.Root>
+          </>
+        )}
 
             {recipientNeeded && (
               <Field.Root required>
@@ -614,6 +681,16 @@ export default function Strk20Panel() {
             "this up-front (INVALID_REQUEST_PAYLOAD), before any proof or fee."
           }
           onRun={runOpenMismatch}
+        />
+
+        <ExampleCard
+          warn
+          title="4 — register + deposit 1 STRK (expected to fail)"
+          description={
+            "register must be alone in its request (wallet API 0.10.5): the wallet " +
+            "must reject this with INVALID_REQUEST_PAYLOAD."
+          }
+          onRun={runRegisterMixed}
         />
       </Stack>
 

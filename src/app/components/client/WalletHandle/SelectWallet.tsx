@@ -116,7 +116,7 @@ export default function SelectWallet() {
       // The store scans window.starknet* only once, at creation, and emits nothing when a wallet is injected later.
       // Poll the number of starknet* keys of window and ask the store to scan again when it changes.
       // (A scan re-attaches listeners on every injected wallet, so it is only done when a new key appears.)
-      // _refreshInjectedWallets() carries an underscore (not documented), but it is part of the Store type of get-starknet-discovery 6.0.6.
+      // _refreshInjectedWallets() carries an underscore (not documented), but it is part of the Store type of get-starknet-discovery 6.1.4.
       const countKeys = () => Object.getOwnPropertyNames(window).filter(key => key.startsWith("starknet")).length;
       let knownCount = countKeys(); // already scanned by createStore()
       const intervalId = setInterval(() => {
@@ -179,7 +179,7 @@ export default function SelectWallet() {
                 align='stretch'
               >
                 {
-                  // The store lists the newest wallet first (get-starknet-discovery 6.0.6): reverse it so that new wallets are added at the bottom and no button moves under the cursor.
+                  // The store lists the newest wallet first (get-starknet-discovery 6.1.4): reverse it so that new wallets are added at the bottom and no button moves under the cursor.
                   [...wallets].reverse().map((wallet: WalletWithStarknetFeatures, index: number) => {
                     const isValid = verdicts.get(wallet); // undefined while the check is running
                     const status = isValid === undefined ? " checking..." : isValid ? "" : " not compatible!";

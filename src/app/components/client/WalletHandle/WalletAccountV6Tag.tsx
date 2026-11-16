@@ -64,6 +64,7 @@ export default function WalletAccountV6Tag() {
   const isMainnet = myFrontendProviderIndex === 0;
 
   // Per-action result text (raw tx hash / receipt / error).
+  const [resultRegister, setResultRegister] = useState<string>("");
   const [resultBalances, setResultBalances] = useState<string>("");
   const [resultShield, setResultShield] = useState<string>("");
   const [resultUnshield, setResultUnshield] = useState<string>("");
@@ -116,6 +117,14 @@ export default function WalletAccountV6Tag() {
     }
     return txH;
   }
+
+  // Register the connected account in the wallet's privacy pool (wallet API 0.10.5).
+  // `register` must be alone in its request; an already registered account gets
+  // INVALID_REQUEST_PAYLOAD from the wallet.
+  const handleRegister = async () => {
+    setResultRegister("");
+    await submit([{ type: "register" }], setResultRegister);
+  };
 
   // Query the private (shielded) balances of ALL tokens held in the pool — empty array
   // means "all shielded tokens". Read via the WalletAccountV6 instance method.
@@ -312,6 +321,26 @@ export default function WalletAccountV6Tag() {
           <Center fontSize={14} color={"darkred"}> my frontend provider Id : {myFrontendProviderIndex} </Center>
           <Center fontSize={13} color={"darkred"}> WalletAccountAddress : {!!myWalletAccount?.address ? validateAndParseAddress(myWalletAccount.address) : "address not available"} </Center>
           <Center fontSize={13} color={"darkred"}> WalletAccountChain : {chainIdWA ? new CairoBytes31(num.toHex(chainIdWA)).decodeUtf8() : "N/A"}</Center>
+        </>
+
+        <>
+          <p>
+            Register : <b>the connected account, once</b>
+          </p>
+          <Text fontSize={13} color={"gray.700"} maxW="520px" textAlign="center">
+            Registers the account in the wallet&apos;s privacy pool. It must be alone in its
+            request; an already registered account gets INVALID_REQUEST_PAYLOAD.
+          </Text>
+          <Button variant="surface" disabled={!isMainnet} onClick={handleRegister}>
+            Register
+          </Button>
+          {resultRegister ? (
+            <Box bg="green.200" color="black" borderWidth="1px" borderColor="green.800" borderRadius="md" p={1} marginTop={2}>
+              <Text className={styles.text1} whiteSpace="pre-wrap" wordBreak="break-all">
+                result : {resultRegister}
+              </Text>
+            </Box>
+          ) : null}
         </>
 
         <>
